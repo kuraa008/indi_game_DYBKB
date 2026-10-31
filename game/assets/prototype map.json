@@ -1,0 +1,497 @@
+{
+  "generator": "MapForge",
+  "version": 1,
+  "meta": {
+    "units": "метры",
+    "up": "Y",
+    "rotations": "градусы (X,Y,Z)"
+  },
+  "sceneComment": "Небольшая арена для перестрелки: игрок появляется на юге, в центре — колонна и ящик для укрытия, тёплый свет сверху.",
+  "sceneSize": [
+    34,
+    4.257,
+    30.25
+  ],
+  "objects": [
+    {
+      "id": 61,
+      "type": "cube",
+      "name": "Стена северная",
+      "position": [
+        -0.5,
+        1,
+        -18.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        30,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 62,
+      "type": "cube",
+      "name": "Стена западная",
+      "position": [
+        -15.5,
+        1,
+        -3.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        30
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 66,
+      "type": "marker",
+      "name": "Спавн игрока",
+      "position": [
+        -9,
+        3.575,
+        -13
+      ],
+      "rotation": [
+        0,
+        25895.696,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#63d6c4",
+      "visible": true,
+      "showLabel": true,
+      "comment": "точка появления игрока, лицом к центру"
+    },
+    {
+      "id": 69,
+      "type": "cube",
+      "name": "Стена западная (копия)",
+      "position": [
+        -6.5,
+        1,
+        -13.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        10
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 70,
+      "type": "cube",
+      "name": "Стена северная (копия)",
+      "position": [
+        -5.5,
+        1,
+        -8.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        15,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 71,
+      "type": "cube",
+      "name": "Стена западная (копия) (копия)",
+      "position": [
+        0,
+        1,
+        -13.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 72,
+      "type": "cube",
+      "name": "Стена северная (копия)",
+      "position": [
+        -0.5,
+        1,
+        11
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        30,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 73,
+      "type": "cube",
+      "name": "Стена северная (копия) (копия)",
+      "position": [
+        -5.5,
+        1,
+        -4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        15,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 74,
+      "type": "cube",
+      "name": "Стена западная (копия) (копия)",
+      "position": [
+        -4.5,
+        1,
+        1
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        10
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 75,
+      "type": "cube",
+      "name": "Стена северная (копия) (копия)",
+      "position": [
+        -12,
+        1,
+        5.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        10,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 76,
+      "type": "cube",
+      "name": "Стена северная (копия) (копия) (копия)",
+      "position": [
+        5.5,
+        1,
+        3.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        13,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 77,
+      "type": "cube",
+      "name": "Стена западная (копия)",
+      "position": [
+        14.5,
+        1,
+        -3.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        30
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 78,
+      "type": "cube",
+      "name": "Стена западная (копия) (копия) (копия)",
+      "position": [
+        5,
+        1,
+        3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        10
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 79,
+      "type": "cube",
+      "name": "Стена западная (копия) (копия) (копия)",
+      "position": [
+        9,
+        1,
+        -13.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 80,
+      "type": "cube",
+      "name": "Стена западная (копия) (копия)",
+      "position": [
+        4.5,
+        1,
+        -13.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        2,
+        10
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены"
+    },
+    {
+      "id": 81,
+      "type": "cube",
+      "name": "Стена северная (копия) (копия) (копия)",
+      "position": [
+        9.5,
+        1,
+        -6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        15,
+        2,
+        0.5
+      ],
+      "color": "#7d8590",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ограждение арены, нельзя пройти"
+    },
+    {
+      "id": 82,
+      "type": "cube",
+      "name": "Куб 1",
+      "position": [
+        -0.9,
+        0.5,
+        10.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#c9664a",
+      "visible": true,
+      "showLabel": true,
+      "comment": "Дверь"
+    },
+    {
+      "id": 83,
+      "type": "marker",
+      "name": "Спавн игрока (копия)",
+      "position": [
+        9.5,
+        3.807,
+        -1.5
+      ],
+      "rotation": [
+        0,
+        24993.401,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#63d6c4",
+      "visible": true,
+      "showLabel": true,
+      "comment": "Враг"
+    },
+    {
+      "id": 84,
+      "type": "marker",
+      "name": "Спавн игрока (копия) (копия)",
+      "position": [
+        7,
+        3.766,
+        6.5
+      ],
+      "rotation": [
+        0,
+        24651.269,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#63d6c4",
+      "visible": true,
+      "showLabel": true,
+      "comment": "ключ"
+    },
+    {
+      "id": 85,
+      "type": "marker",
+      "name": "Спавн игрока (копия) (копия) (копия)",
+      "position": [
+        -4.5,
+        3.688,
+        -15
+      ],
+      "rotation": [
+        0,
+        24126.629,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#63d6c4",
+      "visible": true,
+      "showLabel": true,
+      "comment": "Лом"
+    }
+  ]
+}

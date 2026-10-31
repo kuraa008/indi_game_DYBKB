@@ -1,0 +1,15 @@
+Godot Engine v4.7.1.stable.mono.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: Camera is physically inside cabinet behind doors
+PASS: Player collider is disabled in wardrobe
+PASS: Hidden collider stays disabled on next frame
+PASS: Near plane preserves close interior walls
+PASS: Exit restores position, collision and camera
+PASS: View faces out of rotated cabinet
+🧠 [AI MAIN] Активен основной профиль ИИ (user://skinwalker_ai_profile.json): срез=0.55, скептицизм=0.00, засада=4.0c, скорость=4.6
+SCRIPT ERROR: Invalid assignment of property or key 'search_points' with value of type 'Array' on a base object of type 'CharacterBody3D (Enemy.gd)'.
+   at: _ready (res://scratch/test_hiding_ai.gd:56)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scratch/test_hiding_ai.gd:56)

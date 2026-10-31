@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cpolygonsw1"]
+
+[ext_resource type="Script" path="res://scripts/Polygon.gd" id="1_polygon"]
+
+[node name="Polygon" type="Node3D"]
+script = ExtResource("1_polygon")

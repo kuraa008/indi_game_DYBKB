@@ -1,0 +1,17 @@
+Godot Engine v4.7.1.stable.mono.official.a13da4feb - https://godotengine.org
+Vulkan 1.4.325 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1650
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: WASAPI: Initialize failed with error 0xffffffff80070005.
+   at: audio_device_init (drivers/wasapi/audio_driver_wasapi.cpp:405)
+   GDScript backtrace (most recent call first):
+       [0] _setup_microphone_bus (res://scripts/MicrophoneDetector.gd:53)
+ERROR: WASAPI: init_input_device error
+   at: input_start (drivers/wasapi/audio_driver_wasapi.cpp:1013)
+   GDScript backtrace (most recent call first):
+       [0] _setup_microphone_bus (res://scripts/MicrophoneDetector.gd:53)
+ERROR: Condition "f.is_null()" is true.
+   at: _save_to_cache (servers/rendering/renderer_rd/shader_rd.cpp:696)
+CAPTURE OUTDOOR: 0
+CAPTURE INDOOR: 0

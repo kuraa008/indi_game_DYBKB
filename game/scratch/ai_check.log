@@ -1,0 +1,22 @@
+Godot Engine v4.7.1.stable.mono.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: Footsteps/environment create no marker
+PASS: Bottle creates one marker
+PASS: Marker uses impact world position under transformed scene
+PASS: Ring and text visible through walls
+PASS: Label3D outline property works
+PASS: Neither human role receives pain
+AI report saved: C:/Users/tabam/Desktop/Escape in skinwalker/game/scratch/ai_human_test.json
+PASS: Export supports human-controlled monster
+🧠 [AI MAIN] Активен основной профиль ИИ (user://skinwalker_ai_profile.json): срез=0.55, скептицизм=0.00, засада=4.0c, скорость=4.6
+PASS: AI monster receives pain and score penalty
+PASS: Zero-motion watchdog activates without a steering direction
+PASS: Watchdog chooses a navigable detour
+PASS: Recovery detour passes full body collision check beside a wall
+PASS: Restart clears recovery state
+AI report saved: C:/Users/tabam/Desktop/Escape in skinwalker/game/scratch/ai_test.json
+PASS: AI report is valid JSON with rules and diagnostics
+PASS: Training demonstration exports samples and desired tactics
+AI CHANGE TEST FAILURES: 0

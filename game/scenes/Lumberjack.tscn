@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://clumberjack01"]
+
+[ext_resource type="Script" path="res://scripts/Lumberjack.gd" id="1_lj"]
+
+[node name="Lumberjack" type="CharacterBody3D"]
+script = ExtResource("1_lj")

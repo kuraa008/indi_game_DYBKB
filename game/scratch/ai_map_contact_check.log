@@ -1,0 +1,15 @@
+Godot Engine v4.7.1.stable.mono.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+NAVMESH SPAWN DISTANCE: 172.235305786133
+NAVMESH POLYGONS: 15193 iteration=2 bounds=[P: (-193.16, -10.25, -73.8), S: (194.96, 32.45, 324.6)]
+NAV DEBUG: vertices=[P: (-192.76, 0.0, -73.4), S: (194.2, 18.15, 323.8)] world_map=RID(1816771166208) region_map=RID(1816771166208) server_region_map=RID(1816771166208) active=true region_count=1 enabled=true
+REGION DEBUG: [P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)] iteration=1 region_closest=(0.0, 0.0, 0.0)
+REAL MAP ROUTE: (-172.0, -0.004832, -9.0) -> (-175.0, -0.004058, -22.0) props=19
+MAP PROGRESS: (-172.018, 0.014638, -9.077951) path=2 pending=false expanded=0
+PASS: Real map route completed; recoveries=0
+MAP DOOR APPROACHES: (-161.2, 0.325, -33.8) / (-161.2, 0.325, -36.2)
+MAP PROGRESS: (-161.2, 0.300938, -33.88) path=2 pending=false expanded=0
+PASS: Real map route completed; recoveries=0
+REAL MAP FAILURES: 1

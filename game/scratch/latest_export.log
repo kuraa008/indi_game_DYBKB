@@ -1,0 +1,360 @@
+Godot Engine v4.7.1.stable.mono.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+[   0% ] first_scan_filesystem | Started Инициализация проекта (5 steps)
+[   0% ] first_scan_filesystem | Сканирование структуры файлов…
+[  16% ] first_scan_filesystem | Загрузка глобальных имен классов…
+[  33% ] first_scan_filesystem | Проверка GDExtensions…
+[  50% ] first_scan_filesystem | Создание скриптов автозагрузки…
+[  66% ] first_scan_filesystem | Инициализация плагинов…
+[  83% ] first_scan_filesystem | Начало сканирование файлов…
+[ DONE ] first_scan_filesystem
+
+[   0% ] update_scripts_classes | Started Регистрация глобальных классов… (11 steps)
+[   0% ] update_scripts_classes | 
+[   8% ] update_scripts_classes | 
+[  16% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | PlayerHands
+[  75% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[ DONE ] update_scripts_classes
+
+[   0% ] _update_scan_actions | Started Сканирование действий… (2 steps)
+[   0% ] _update_scan_actions | high_indoor.png
+[  33% ] _update_scan_actions | high_outdoor.png
+[ DONE ] _update_scan_actions
+
+[   0% ] reimport | Started Импорт или повторный импорт ассетов (2 steps)
+[   0% ] reimport | Подготовка файлов к повторному импорту…
+[  33% ] reimport | Подготовка файлов к повторному импорту…
+[   0% ] reimport | Выполнение предимпортных операций…
+[   0% ] reimport | high_indoor.png
+[  33% ] reimport | high_outdoor.png
+[  66% ] reimport | Завершение импорта активов…
+[ DONE ] reimport
+
+[   0% ] reimport | Started Импорт или повторный импорт ассетов (2 steps)
+[   0% ] reimport | Выполнение операций после реимпорта…
+[ DONE ] reimport
+
+[   0% ] savepack | Started Упаковывание (102 steps)
+[   1% ] savepack | Сохранение файла: res://.godot/imported/bag_close.wav-7edf4f1eccfb40578ca81088f664eeb7.sample
+[   1% ] savepack | Сохранение файла: res://assets/audio/bag_close.wav.import
+[   1% ] savepack | Сохранение файла: res://.godot/imported/bag_item_select.wav-f1d75c7a5366c3c222476bcde46cedb3.sample
+[   1% ] savepack | Сохранение файла: res://assets/audio/bag_item_select.wav.import
+[   2% ] savepack | Сохранение файла: res://.godot/imported/bag_open.wav-a98038b5d201c58b106a375dfdabbc2d.sample
+[   2% ] savepack | Сохранение файла: res://assets/audio/bag_open.wav.import
+[   2% ] savepack | Сохранение файла: res://.godot/imported/blow_candle.wav-bebb2f20824adbdc24937a8da27e6cfa.sample
+[   2% ] savepack | Сохранение файла: res://assets/audio/blow_candle.wav.import
+[   3% ] savepack | Сохранение файла: res://.godot/imported/car_crash.wav-fe16ceb3b42f563d06ef36d5ed6afd25.sample
+[   3% ] savepack | Сохранение файла: res://assets/audio/car_crash.wav.import
+[   4% ] savepack | Сохранение файла: res://.godot/imported/car_engine.wav-0abbbb8c78d7dad2629933daed6799e6.sample
+[   4% ] savepack | Сохранение файла: res://assets/audio/car_engine.wav.import
+[   4% ] savepack | Сохранение файла: res://.godot/imported/car_horn.wav-931a62a31868a85f9773c318631ca750.sample
+[   4% ] savepack | Сохранение файла: res://assets/audio/car_horn.wav.import
+[   5% ] savepack | Сохранение файла: res://.godot/imported/car_steam.wav-12145cd8282bea51c04c41fd69b5cb81.sample
+[   5% ] savepack | Сохранение файла: res://assets/audio/car_steam.wav.import
+[   6% ] savepack | Сохранение файла: res://.godot/imported/clock_bell.wav-63a4d060d988d49ca561f2c4b73af7e7.sample
+[   6% ] savepack | Сохранение файла: res://assets/audio/clock_bell.wav.import
+[   6% ] savepack | Сохранение файла: res://.godot/imported/clock_tick.wav-ccb7d0301c366c26ac87fdbf46a107df.sample
+[   6% ] savepack | Сохранение файла: res://assets/audio/clock_tick.wav.import
+[   7% ] savepack | Сохранение файла: res://.godot/imported/electric_hum.wav-43c3804978880e3e4a106c97afe08efa.sample
+[   7% ] savepack | Сохранение файла: res://assets/audio/electric_hum.wav.import
+[   8% ] savepack | Сохранение файла: res://.godot/imported/electric_shock.wav-b9c483a868f0f8630da2903f170eec43.sample
+[   8% ] savepack | Сохранение файла: res://assets/audio/electric_shock.wav.import
+[   8% ] savepack | Сохранение файла: res://.godot/imported/electric_spark.wav-f6ba32a495ae396be41944cabc5e9f9b.sample
+[   8% ] savepack | Сохранение файла: res://assets/audio/electric_spark.wav.import
+[   9% ] savepack | Сохранение файла: res://.godot/imported/fuse_insert.wav-4bbe67c31125d9e1dfd34d41f99a7397.sample
+[   9% ] savepack | Сохранение файла: res://assets/audio/fuse_insert.wav.import
+[   9% ] savepack | Сохранение файла: res://.godot/imported/maglock_release.wav-ff3d8a59cd6ee72d1a1a30c49784d317.sample
+[   9% ] savepack | Сохранение файла: res://assets/audio/maglock_release.wav.import
+[  10% ] savepack | Сохранение файла: res://.godot/imported/menu_hover.wav-43b4bb9b21286c4ab6cdf98067e54e9a.sample
+[  10% ] savepack | Сохранение файла: res://assets/audio/menu_hover.wav.import
+[  11% ] savepack | Сохранение файла: res://.godot/imported/menu_select.wav-405430500dc8fe34d980e140463133bc.sample
+[  11% ] savepack | Сохранение файла: res://assets/audio/menu_select.wav.import
+[  11% ] savepack | Сохранение файла: res://.godot/imported/monster_step.wav-c011efeb22eb747184ada87c1f3628ba.sample
+[  11% ] savepack | Сохранение файла: res://assets/audio/monster_step.wav.import
+[  12% ] savepack | Сохранение файла: res://.godot/imported/player_step.wav-bd4a79bf6aad2c2e219fb1fe8fce8eea.sample
+[  12% ] savepack | Сохранение файла: res://assets/audio/player_step.wav.import
+[  13% ] savepack | Сохранение файла: res://.godot/imported/safe_click.wav-a16d6383154bde5195b33720d102e87f.sample
+[  13% ] savepack | Сохранение файла: res://assets/audio/safe_click.wav.import
+[  13% ] savepack | Сохранение файла: res://.godot/imported/safe_open.wav-8d6a2f50d7244205f841a6cf700022f5.sample
+[  13% ] savepack | Сохранение файла: res://assets/audio/safe_open.wav.import
+[  14% ] savepack | Сохранение файла: res://.godot/imported/skinwalker_scream.wav-ca3a2826c23aced0e8f63f5814afc942.sample
+[  14% ] savepack | Сохранение файла: res://assets/audio/skinwalker_scream.wav.import
+[  15% ] savepack | Сохранение файла: res://.godot/imported/switch_pull.wav-dd3a532a97b13c2ac9086250dcc16178.sample
+[  15% ] savepack | Сохранение файла: res://assets/audio/switch_pull.wav.import
+[  15% ] savepack | Сохранение файла: res://.godot/imported/tires_screech.wav-ad18105fa184d8ad618c70928471429d.sample
+[  15% ] savepack | Сохранение файла: res://assets/audio/tires_screech.wav.import
+[  16% ] savepack | Сохранение файла: res://.godot/imported/toilet_flush.wav-9aa2efc3d28ecb6bb1792ea0447b03d2.sample
+[  16% ] savepack | Сохранение файла: res://assets/audio/toilet_flush.wav.import
+[  16% ] savepack | Сохранение файла: res://.godot/imported/tv_static.wav-07aaa576b0a0b900118594cda4bd46ff.sample
+[  16% ] savepack | Сохранение файла: res://assets/audio/tv_static.wav.import
+[  17% ] savepack | Сохранение файла: res://assets/shaders/city_building.gdshader
+[  18% ] savepack | Сохранение файла: res://.godot/imported/monster_back.png-62e53fe576991b98db189c449ba415f9.ctex
+[  18% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_back.png.import
+[  18% ] savepack | Сохранение файла: res://.godot/imported/monster_front.png-fcde1a084d78c1b628c3a8315f24fcf7.ctex
+[  18% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_front.png.import
+[  19% ] savepack | Сохранение файла: res://.godot/imported/monster_front_idle.png-3bed37d95823ab6ee3457021d89b5580.ctex
+[  19% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_front_idle.png.import
+[  20% ] savepack | Сохранение файла: res://.godot/imported/monster_front_walk_0.png-0117be309585f5cbf75a380c9558c479.ctex
+[  20% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_front_walk_0.png.import
+[  20% ] savepack | Сохранение файла: res://.godot/imported/monster_front_walk_1.png-5d124fa7d7051589f6817c335866af51.ctex
+[  20% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_front_walk_1.png.import
+[  21% ] savepack | Сохранение файла: res://.godot/imported/monster_front_walk_2.png-b324e290a1ea627bbaacf9b8765ab887.ctex
+[  21% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_front_walk_2.png.import
+[  22% ] savepack | Сохранение файла: res://.godot/imported/monster_left.png-653b3e0d01df92fda3be76c1098b6274.ctex
+[  22% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_left.png.import
+[  22% ] savepack | Сохранение файла: res://.godot/imported/monster_left_walk_0.png-78478a4bcd15513766214d87f414a8d3.ctex
+[  22% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_left_walk_0.png.import
+[  23% ] savepack | Сохранение файла: res://.godot/imported/monster_left_walk_1.png-43859aa6b7fce5e9b6bb9560984872c4.ctex
+[  23% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_left_walk_1.png.import
+[  23% ] savepack | Сохранение файла: res://.godot/imported/monster_right.png-aaba33954718c4f1aef27b6e2b4f034e.ctex
+[  23% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_right.png.import
+[  24% ] savepack | Сохранение файла: res://.godot/imported/monster_right_walk_0.png-f82d736f45552b1ca3bcd1b13b2c7de1.ctex
+[  24% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_right_walk_0.png.import
+[  25% ] savepack | Сохранение файла: res://.godot/imported/monster_right_walk_1.png-ffcbe424f19453eb543c62c7ebd0c4fa.ctex
+[  25% ] savepack | Сохранение файла: res://assets/textures/enemy_character/monster_right_walk_1.png.import
+[  25% ] savepack | Сохранение файла: res://.godot/imported/hero_arm_left.png-be4d81d87025f0c94181363b18ed9575.ctex
+[  25% ] savepack | Сохранение файла: res://assets/textures/player_character/hero_arm_left.png.import
+[  26% ] savepack | Сохранение файла: res://.godot/imported/hero_arm_right.png-4075f6fd785e2e1a139ba39a666fc4be.ctex
+[  26% ] savepack | Сохранение файла: res://assets/textures/player_character/hero_arm_right.png.import
+[  27% ] savepack | Сохранение файла: res://.godot/imported/player_back.png-58431f6e581536c9c504bb1059796ccb.ctex
+[  27% ] savepack | Сохранение файла: res://assets/textures/player_character/player_back.png.import
+[  27% ] savepack | Сохранение файла: res://.godot/imported/player_front.png-2a8d1f577fe669f86db6e0b304473ef7.ctex
+[  27% ] savepack | Сохранение файла: res://assets/textures/player_character/player_front.png.import
+[  28% ] savepack | Сохранение файла: res://.godot/imported/player_left.png-de6892bdb42568b2774b0c1f4bdd3765.ctex
+[  28% ] savepack | Сохранение файла: res://assets/textures/player_character/player_left.png.import
+[  29% ] savepack | Сохранение файла: res://.godot/imported/player_legs.png-85d191f7aef2e1e7313936b747dac53b.ctex
+[  29% ] savepack | Сохранение файла: res://assets/textures/player_character/player_legs.png.import
+[  29% ] savepack | Сохранение файла: res://.godot/imported/player_legs_walk_0.png-d7b627a05fbbf7c4943add824d5d2d95.ctex
+[  29% ] savepack | Сохранение файла: res://assets/textures/player_character/player_legs_walk_0.png.import
+[  30% ] savepack | Сохранение файла: res://.godot/imported/player_legs_walk_1.png-add2770c817a08a594e90c3d8ecc1f63.ctex
+[  30% ] savepack | Сохранение файла: res://assets/textures/player_character/player_legs_walk_1.png.import
+[  30% ] savepack | Сохранение файла: res://.godot/imported/player_leg_l.png-4230c150334015709f3896cfb563c50c.ctex
+[  30% ] savepack | Сохранение файла: res://assets/textures/player_character/player_leg_l.png.import
+[  31% ] savepack | Сохранение файла: res://.godot/imported/player_leg_r.png-77fcc6172a3e69ac4ae8e912af66bb9a.ctex
+[  31% ] savepack | Сохранение файла: res://assets/textures/player_character/player_leg_r.png.import
+[  32% ] savepack | Сохранение файла: res://.godot/imported/player_right.png-1f8253fbb049106a03c00402f1210a72.ctex
+[  32% ] savepack | Сохранение файла: res://assets/textures/player_character/player_right.png.import
+[  32% ] savepack | Сохранение файла: res://.godot/imported/backpack_bg.png-2aef94742e5e618ff0695f4823fa4f48.ctex
+[  32% ] savepack | Сохранение файла: res://assets/textures/ui/backpack_bg.png.import
+[  33% ] savepack | Сохранение файла: res://.godot/imported/hero_hand_holding_left.png-2c9af7545b1315446db69f69457101d1.ctex
+[  33% ] savepack | Сохранение файла: res://assets/textures/ui/hero_hand_holding_left.png.import
+[  33% ] savepack | Сохранение файла: res://.godot/imported/hero_hand_holding_right.png-45883070a4e157358c88c68bcae7f14e.ctex
+[  33% ] savepack | Сохранение файла: res://assets/textures/ui/hero_hand_holding_right.png.import
+[  33% ] savepack | Сохранение файла: res://.godot/imported/hero_hand_left.png-a486a6e02ee841ee392fb70663e28585.ctex
+[  33% ] savepack | Сохранение файла: res://assets/textures/ui/hero_hand_left.png.import
+[  34% ] savepack | Сохранение файла: res://.godot/imported/hero_hand_right.png-40ab955d525767604e00c7a4eaa7a9fc.ctex
+[  34% ] savepack | Сохранение файла: res://assets/textures/ui/hero_hand_right.png.import
+[  35% ] savepack | Сохранение файла: res://.godot/imported/horror_film_grunge_overlay.png-2e872e282346e234088ca846f506003e.ctex
+[  35% ] savepack | Сохранение файла: res://assets/textures/ui/horror_film_grunge_overlay.png.import
+[  35% ] savepack | Сохранение файла: res://.godot/imported/menu_brush_banner.png-fce7284a9f6ea3f8a4b21c5cb91a97ae.ctex
+[  35% ] savepack | Сохранение файла: res://assets/textures/ui/menu_brush_banner.png.import
+[  36% ] savepack | Сохранение файла: res://.godot/imported/real_backpack_bag.png-a816e0b1a4dc2370d8cfc94c0060685d.ctex
+[  36% ] savepack | Сохранение файла: res://assets/textures/ui/real_backpack_bag.png.import
+[  36% ] savepack | Сохранение файла: res://.godot/imported/skinwalker_bed_stare.jpg-e4022683c23a876d24edfbc8e21d6b58.ctex
+[  36% ] savepack | Сохранение файла: res://assets/textures/ui/skinwalker_bed_stare.jpg.import
+[  37% ] savepack | Сохранение файла: res://.godot/imported/skinwalker_closet_stare.jpg-51b1703810ebebf86fb1824e89fd4b8b.ctex
+[  37% ] savepack | Сохранение файла: res://assets/textures/ui/skinwalker_closet_stare.jpg.import
+[  38% ] savepack | Сохранение файла: res://.godot/imported/skinwalker_jumpscare_sheet.png-b9879cc48a25dadd074abe98b97f273b.ctex
+[  38% ] savepack | Сохранение файла: res://assets/textures/ui/skinwalker_jumpscare_sheet.png.import
+[  38% ] savepack | Сохранение файла: res://.godot/imported/blood_wall.png-f7b3b1aa49b5a00ae2b57725f24bb51b.ctex
+[  38% ] savepack | Сохранение файла: res://assets/textures/blood_wall.png.import
+[  39% ] savepack | Сохранение файла: res://.godot/imported/brick_dark.png-805e110c74e8bc09d9405614ae9a8a9a.ctex
+[  39% ] savepack | Сохранение файла: res://assets/textures/brick_dark.png.import
+[  40% ] savepack | Сохранение файла: res://.godot/imported/brick_red.png-5b0d8fb51c940825c03cde773f29c928.ctex
+[  40% ] savepack | Сохранение файла: res://assets/textures/brick_red.png.import
+[  40% ] savepack | Сохранение файла: res://.godot/imported/city_windows.png-65872a67703411280ae2dfbb111e55ea.ctex
+[  40% ] savepack | Сохранение файла: res://assets/textures/city_windows.png.import
+[  41% ] savepack | Сохранение файла: res://.godot/imported/concrete_grunge.png-79ab0ca62c6a92b109a7da8c8a8dc148.ctex
+[  41% ] savepack | Сохранение файла: res://assets/textures/concrete_grunge.png.import
+[  42% ] savepack | Сохранение файла: res://.godot/imported/door_barn_rustic.png-09353e558186081e25ed0031b1c3bfb6.ctex
+[  42% ] savepack | Сохранение файла: res://assets/textures/door_barn_rustic.png.import
+[  42% ] savepack | Сохранение файла: res://.godot/imported/door_classic_panel.png-32374594255e1be02ab2facdf838e944.ctex
+[  42% ] savepack | Сохранение файла: res://assets/textures/door_classic_panel.png.import
+[  43% ] savepack | Сохранение файла: res://.godot/imported/door_dark_oak.png-a6ca817b781501620ed0339633db4c1d.ctex
+[  43% ] savepack | Сохранение файла: res://assets/textures/door_dark_oak.png.import
+[  43% ] savepack | Сохранение файла: res://.godot/imported/door_metal_reinforced.png-5d0b610b2b162cbba6836fbbbe5da032.ctex
+[  43% ] savepack | Сохранение файла: res://assets/textures/door_metal_reinforced.png.import
+[  44% ] savepack | Сохранение файла: res://.godot/imported/door_peeling_paint.png-4fd838f557f1467a99aba2390e582ffc.ctex
+[  44% ] savepack | Сохранение файла: res://assets/textures/door_peeling_paint.png.import
+[  45% ] savepack | Сохранение файла: res://.godot/imported/door_smooth_walnut.png-ff6708239f0c7985140d3f0565aea6b1.ctex
+[  45% ] savepack | Сохранение файла: res://assets/textures/door_smooth_walnut.png.import
+[  45% ] savepack | Сохранение файла: res://.godot/imported/highway_asphalt.png-ac42690192c949108f38f845fc0a65ef.ctex
+[  45% ] savepack | Сохранение файла: res://assets/textures/highway_asphalt.png.import
+[  46% ] savepack | Сохранение файла: res://.godot/imported/moon_glow.png-9e3cc9f7b3c1e2d533fdb95c2cd73c2e.ctex
+[  46% ] savepack | Сохранение файла: res://assets/textures/moon_glow.png.import
+[  47% ] savepack | Сохранение файла: res://.godot/imported/moon_surface.png-e189d476d38de7b2fc8a564c2916e11c.ctex
+[  47% ] savepack | Сохранение файла: res://assets/textures/moon_surface.png.import
+[  47% ] savepack | Сохранение файла: res://.godot/imported/mountain_rock.png-3f55ce1adff62b6651fd94e1cde380d8.ctex
+[  47% ] savepack | Сохранение файла: res://assets/textures/mountain_rock.png.import
+[  48% ] savepack | Сохранение файла: res://.godot/imported/Olen.png-ed04fa6619cd830a1502ef686feec5a6.ctex
+[  48% ] savepack | Сохранение файла: res://assets/textures/Olen.png.import
+[  49% ] savepack | Сохранение файла: res://.godot/imported/painting_entity.png-2b3e172d13dfd6415bd4f866510a0904.ctex
+[  49% ] savepack | Сохранение файла: res://assets/textures/painting_entity.png.import
+[  49% ] savepack | Сохранение файла: res://.godot/imported/painting_landscape.png-ff49e1b7bff9ce78038d5f4bec2d54e7.ctex
+[  49% ] savepack | Сохранение файла: res://assets/textures/painting_landscape.png.import
+[  50% ] savepack | Сохранение файла: res://.godot/imported/painting_moon.png-72234a005fccd3e84e42551870dd7691.ctex
+[  50% ] savepack | Сохранение файла: res://assets/textures/painting_moon.png.import
+[  50% ] savepack | Сохранение файла: res://.godot/imported/painting_portrait.png-40c8ae1ce7f882e340858685b7eabfcd.ctex
+[  50% ] savepack | Сохранение файла: res://assets/textures/painting_portrait.png.import
+[  51% ] savepack | Сохранение файла: res://.godot/imported/painting_skinwalker.png-c2eaf9da9f71405f66c4cb240f072c42.ctex
+[  51% ] savepack | Сохранение файла: res://assets/textures/painting_skinwalker.png.import
+[  52% ] savepack | Сохранение файла: res://.godot/imported/painting_vintage.png-17b8caf0a8cc587a5d90416e8a5ee506.ctex
+[  52% ] savepack | Сохранение файла: res://assets/textures/painting_vintage.png.import
+[  52% ] savepack | Сохранение файла: res://.godot/imported/pine_leaves.png-fdc24c9e9696c9ac535024c079e10af1.ctex
+[  52% ] savepack | Сохранение файла: res://assets/textures/pine_leaves.png.import
+[  53% ] savepack | Сохранение файла: res://.godot/imported/rusted_metal.png-1a6d45d12355dc4e5051b013d36d9b11.ctex
+[  53% ] savepack | Сохранение файла: res://assets/textures/rusted_metal.png.import
+[  54% ] savepack | Сохранение файла: res://.godot/imported/test_wood.png-82968b61c980c943c06c8757d65762ce.ctex
+[  54% ] savepack | Сохранение файла: res://assets/textures/test_wood.png.import
+[  54% ] savepack | Сохранение файла: res://.godot/imported/tile_morgue.png-3021c75579b594bc1671f1e56f8207b8.ctex
+[  54% ] savepack | Сохранение файла: res://assets/textures/tile_morgue.png.import
+[  55% ] savepack | Сохранение файла: res://.godot/imported/tree_drawing_claws.png-8fa1cd3a3b2b9028f7a2171a0375846b.ctex
+[  55% ] savepack | Сохранение файла: res://assets/textures/tree_drawing_claws.png.import
+[  56% ] savepack | Сохранение файла: res://.godot/imported/tree_drawing_skinwalker.png-43b37946d362d86dfcaa04ccb8ab90fc.ctex
+[  56% ] savepack | Сохранение файла: res://assets/textures/tree_drawing_skinwalker.png.import
+[  56% ] savepack | Сохранение файла: res://.godot/imported/tree_drawing_warning.png-846f893c06791798a688b522f8f9ca83.ctex
+[  56% ] savepack | Сохранение файла: res://assets/textures/tree_drawing_warning.png.import
+[  57% ] savepack | Сохранение файла: res://.godot/imported/wallpaper_vintage.png-5e4a5604c55f4bd3f84f9f8351aec636.ctex
+[  57% ] savepack | Сохранение файла: res://assets/textures/wallpaper_vintage.png.import
+[  57% ] savepack | Сохранение файла: res://.godot/imported/wood_planks.png-00b83a5686d3ce4c145392468ab02de7.ctex
+[  57% ] savepack | Сохранение файла: res://assets/textures/wood_planks.png.import
+[  58% ] savepack | Сохранение файла: res://.godot/imported/ambient1.mp3-1d0b745de601b5c2ced2397cf7ce550e.mp3str
+[  58% ] savepack | Сохранение файла: res://assets/ambient1.mp3.import
+[  59% ] savepack | Сохранение файла: res://.godot/imported/dreamambient.mp3-bbaa290a1b913a160f1b4c354c51a766.mp3str
+[  59% ] savepack | Сохранение файла: res://assets/dreamambient.mp3.import
+[  59% ] savepack | Сохранение файла: res://.godot/imported/heart.mp3-694cbce0ec6b6b17b39c25064b5235df.mp3str
+[  59% ] savepack | Сохранение файла: res://assets/heart.mp3.import
+[  60% ] savepack | Сохранение файла: res://assets/map.json
+[  61% ] savepack | Сохранение файла: res://assets/map_official.json
+[  61% ] savepack | Сохранение файла: res://.godot/imported/menu.mp3-5bdb779c4c8d29d0762151592fec75a6.mp3str
+[  61% ] savepack | Сохранение файла: res://assets/menu.mp3.import
+[  62% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-445bd94a022045f88be6633e8b6695f4-night_env.res
+[  63% ] savepack | Сохранение файла: res://.godot/imported/Olen.png-1dd637d338c04cf7b663e4ec6012cd22.ctex
+[  63% ] savepack | Сохранение файла: res://assets/Olen.png.import
+[  63% ] savepack | Сохранение файла: res://assets/prototype map.json
+[  64% ] savepack | Сохранение файла: res://.godot/imported/scream.mp3-eeda037e3959af0ae7ea8594f5659cd4.mp3str
+[  64% ] savepack | Сохранение файла: res://assets/scream.mp3.import
+[  64% ] savepack | Сохранение файла: res://assets/skinwalker_ai_profile.json
+[  65% ] savepack | Сохранение файла: res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex
+[  65% ] savepack | Сохранение файла: res://icon.svg.import
+[  66% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-c6484a9286d5ff3e9f427d9e29e23a9d-DebugEditor.scn
+[  66% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-e8b868f745946f74f22434b9ddd0af8d-Enemy.scn
+[  66% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-0c3ea229e4957af0cf15b2b953c22c12-IntroCutscene.scn
+[  67% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-4a24720ee5e787dbe30abc634fa3679d-Main.scn
+[  67% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-8e836f4621de545031f781562e7b3b7d-Menu.scn
+[  68% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-e8220e74d1354b9e6b168b513689419c-Player.scn
+[  69% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-5a815a785e34bd959cd7d6bcb5f61e5b-Polygon.scn
+[  69% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-265d4075b16d49ca73894f0093472f6c-Street.scn
+[  70% ] savepack | Сохранение файла: res://scenes/test.json
+[  70% ] savepack | Сохранение файла: res://.godot/exported/133200997/export-6ca4bde5298d4b015fcc65c6eb5e9ea1-UI.scn
+[  71% ] savepack | Сохранение файла: res://scenes/Карта_4.json
+[  72% ] savepack | Сохранение файла: res://scenes/Карта_6.json
+[  72% ] savepack | Сохранение файла: res://ai.json
+[  73% ] savepack | Сохранение файла: res://shaders/horror_cinematic.gdshader
+[  74% ] savepack | Сохранение файла: res://scripts/UI.gdc
+[  74% ] savepack | Сохранение файла: res://scripts/TextureHelper.gdc
+[  75% ] savepack | Сохранение файла: res://scripts/SurvivorBot.gdc
+[  76% ] savepack | Сохранение файла: res://scripts/Street.gdc
+[  76% ] savepack | Сохранение файла: res://scripts/Safe.gdc
+[  77% ] savepack | Сохранение файла: res://scripts/PrefabBuilder.gdc
+[  77% ] savepack | Сохранение файла: res://scripts/Polygon.gdc
+[  78% ] savepack | Сохранение файла: res://scripts/PlayerHands.gdc
+[  79% ] savepack | Сохранение файла: res://scripts/PlayerBody3D.gdc
+[  79% ] savepack | Сохранение файла: res://scripts/Player.gdc
+[  80% ] savepack | Сохранение файла: res://scripts/ParallaxHorizon.gdc
+[  81% ] savepack | Сохранение файла: res://scripts/OccultAltar.gdc
+[  81% ] savepack | Сохранение файла: res://scripts/MonsterClaws.gdc
+[  82% ] savepack | Сохранение файла: res://scripts/AcousticWave.gdc
+[  83% ] savepack | Сохранение файла: res://scripts/AIReport.gdc
+[  83% ] savepack | Сохранение файла: res://scripts/BreathSystem.gdc
+[  84% ] savepack | Сохранение файла: res://scripts/DebugEditor.gdc
+[  84% ] savepack | Сохранение файла: res://scripts/DebugOverlay.gdc
+[  85% ] savepack | Сохранение файла: res://scripts/DevConsole.gdc
+[  86% ] savepack | Сохранение файла: res://scripts/Door.gdc
+[  86% ] savepack | Сохранение файла: res://scripts/ElectricMaglock.gdc
+[  87% ] savepack | Сохранение файла: res://scripts/Enemy.gdc
+[  88% ] savepack | Сохранение файла: res://scripts/EnemyBehavior.gdc
+[  88% ] savepack | Сохранение файла: res://scripts/EnemyNavigator.gdc
+[  89% ] savepack | Сохранение файла: res://scripts/EnemyWorldActions.gdc
+[  90% ] savepack | Сохранение файла: res://scripts/FuseBox.gdc
+[  90% ] savepack | Сохранение файла: res://scripts/GameManager.gdc
+[  91% ] savepack | Сохранение файла: res://scripts/GrandfatherClock.gdc
+[  91% ] savepack | Сохранение файла: res://scripts/HorrorTV.gdc
+[  92% ] savepack | Сохранение файла: res://scripts/InteractiveCellar.gdc
+[  93% ] savepack | Сохранение файла: res://scripts/InteractiveStorage.gdc
+[  93% ] savepack | Сохранение файла: res://scripts/IntroCutscene.gdc
+[  94% ] savepack | Сохранение файла: res://scripts/Item.gdc
+[  95% ] savepack | Сохранение файла: res://scripts/LightSwitch.gdc
+[  95% ] savepack | Сохранение файла: res://scripts/Main.gdc
+[  96% ] savepack | Сохранение файла: res://scripts/Menu.gdc
+[  97% ] savepack | Сохранение файла: res://scripts/MicrophoneDetector.gdc
+[  97% ] savepack | Сохранение файла: res://scripts/Minimap.gdc
+[  98% ] savepack | Сохранение файла: res://scripts/MirrorReflection.gdc
+[  98% ] savepack | Сохранение файла: res://assets/night_env.tres.remap
+[  98% ] savepack | Сохранение файла: res://scenes/DebugEditor.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Enemy.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/IntroCutscene.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Main.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Menu.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Player.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Polygon.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/Street.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scenes/UI.tscn.remap
+[  98% ] savepack | Сохранение файла: res://scripts/UI.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/TextureHelper.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/SurvivorBot.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Street.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Safe.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/PrefabBuilder.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Polygon.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/PlayerHands.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/PlayerBody3D.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Player.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/ParallaxHorizon.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/OccultAltar.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/MonsterClaws.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/AcousticWave.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/AIReport.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/BreathSystem.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/DebugEditor.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/DebugOverlay.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/DevConsole.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Door.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/ElectricMaglock.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Enemy.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/EnemyBehavior.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/EnemyNavigator.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/EnemyWorldActions.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/FuseBox.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/GameManager.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/GrandfatherClock.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/HorrorTV.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/InteractiveCellar.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/InteractiveStorage.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/IntroCutscene.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Item.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/LightSwitch.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Main.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Menu.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/MicrophoneDetector.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/Minimap.gd.remap
+[  98% ] savepack | Сохранение файла: res://scripts/MirrorReflection.gd.remap
+[  98% ] savepack | Сохранение файла: res://.godot/global_script_class_cache.cfg
+[  98% ] savepack | Сохранение файла: res://icon.svg
+[  98% ] savepack | Сохранение файла: res://.godot/uid_cache.bin
+[  98% ] savepack | Сохранение файла: res://project.binary
+[ DONE ] savepack
+
+ERROR: Cannot save file 'C:/Users/tabam/AppData/Roaming/Godot/editor_settings-4.7.tres'.
+   at: save (scene/resources/resource_format_text.cpp:1768)
+ERROR: Error saving editor settings to C:/Users/tabam/AppData/Roaming/Godot/editor_settings-4.7.tres
+   at: save (editor/settings/editor_settings.cpp:1525)
