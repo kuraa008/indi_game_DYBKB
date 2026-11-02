@@ -23,7 +23,7 @@ const INVESTIGATE_SPEED: float = 2.22
 const CHASE_SPEED: float = 3.37
 const RELOAD_SPEED: float = 2.87
 const GRAVITY: float = 18.0
-const BASE_SPRITE_Y: float = 1.05
+
 
 var nav_agent: NavigationAgent3D = null
 var current_target_pos: Vector3 = Vector3.ZERO
@@ -76,22 +76,10 @@ var search_points: Array[Vector3] = []
 var search_index: int = 0
 var is_in_cutscene: bool = false
 
-# ── 4-ракурсный направленный спрайт персонажа ──
-var lumberjack_sprite: Sprite3D = null
-var tex_front: Texture2D = null
-var tex_front_walk_0: Texture2D = null
-var tex_front_walk_1: Texture2D = null
-var tex_back: Texture2D = null
-var tex_back_walk_0: Texture2D = null
-var tex_back_walk_1: Texture2D = null
-var tex_left: Texture2D = null
-var tex_left_walk_0: Texture2D = null
-var tex_left_walk_1: Texture2D = null
-var tex_right: Texture2D = null
-var tex_right_walk_0: Texture2D = null
-var tex_right_walk_1: Texture2D = null
+# ── Процедурная 3D-модель ──
+var model: LumberjackModel = null
+var headlamp_glow: OmniLight3D = null
 
-var _current_view: String = "front"
 var walk_cycle_t: float = 0.0
 var last_step_phase: int = 0
 
@@ -132,7 +120,6 @@ func _ready() -> void:
 	safe_margin = 0.03
 
 	_generate_sound_effects()
-	_load_textures()
 	_build_collision()
 	_build_visual_sprite()
 	_setup_navigation()
@@ -168,48 +155,12 @@ func _build_collision() -> void:
 	col.position = Vector3(0, 0.95, 0)
 	add_child(col)
 
-func _load_textures() -> void:
-	const DIR = "res://assets/textures/lumberjack/"
-	tex_front        = _try_load(DIR + "lumberjack_front.png")
-	tex_front_walk_0 = _try_load(DIR + "lumberjack_front_walk_0.png")
-	tex_front_walk_1 = _try_load(DIR + "lumberjack_front_walk_1.png")
-
-	tex_back         = _try_load(DIR + "lumberjack_back.png")
-	tex_back_walk_0  = _try_load(DIR + "lumberjack_back_walk_0.png")
-	tex_back_walk_1  = _try_load(DIR + "lumberjack_back_walk_1.png")
-
-	tex_left         = _try_load(DIR + "lumberjack_left.png")
-	tex_left_walk_0  = _try_load(DIR + "lumberjack_left_walk_0.png")
-	tex_left_walk_1  = _try_load(DIR + "lumberjack_left_walk_1.png")
-
-	tex_right        = _try_load(DIR + "lumberjack_right.png")
-	tex_right_walk_0 = _try_load(DIR + "lumberjack_right_walk_0.png")
-	tex_right_walk_1 = _try_load(DIR + "lumberjack_right_walk_1.png")
-
-func _try_load(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var res = load(path)
-		if res is Texture2D:
-			return res
-	if FileAccess.file_exists(path):
-		var img = Image.load_from_file(ProjectSettings.globalize_path(path))
-		if img and not img.is_empty():
-			return ImageTexture.create_from_image(img)
-	return null
-
 func _build_visual_sprite() -> void:
-	lumberjack_sprite = Sprite3D.new()
-	lumberjack_sprite.name = "LumberjackSprite"
-	lumberjack_sprite.texture = tex_front
-	lumberjack_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	# При высоте спрайта 1024px, pixel_size = 0.0022 дает рост персонажа ~2.0м в игре
-	lumberjack_sprite.pixel_size = 0.0022
-	lumberjack_sprite.position = Vector3(0, BASE_SPRITE_Y, 0)
-	lumberjack_sprite.shaded = true
-	lumberjack_sprite.double_sided = true
-	lumberjack_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	lumberjack_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	add_child(lumberjack_sprite)
+	# Лесоруб смотрит вдоль -Z, а модель построена лицом к +Z
+	model = LumberjackModel.new()
+	model.name = "LumberjackModel"
+	model.rotation.y = PI
+	add_child(model)
 
 	# Налобный фонарик охотника — светит ярким желтым пучком вперед по направлению взгляда
 	headlamp = SpotLight3D.new()
@@ -221,14 +172,16 @@ func _build_visual_sprite() -> void:
 	headlamp.spot_angle = 38.0
 	headlamp.spot_angle_attenuation = 0.85
 	headlamp.shadow_enabled = true
+	headlamp.light_cull_mask = 0xFFFFFFFF & ~2
 	add_child(headlamp)
 
-	var headlamp_glow = OmniLight3D.new()
+	headlamp_glow = OmniLight3D.new()
 	headlamp_glow.name = "HeadlampGlow"
 	headlamp_glow.position = Vector3(0, 1.65, 0.2)
 	headlamp_glow.light_color = Color(1.0, 0.82, 0.18)
 	headlamp_glow.light_energy = 0.9
 	headlamp_glow.omni_range = 2.2
+	headlamp_glow.light_cull_mask = 0xFFFFFFFF & ~2
 	add_child(headlamp_glow)
 
 	# Вспышка дула ружья (Muzzle Flash)
@@ -883,7 +836,9 @@ func _fire_shotgun() -> void:
 	# 1. Громкий звук выстрела
 	_play_sound(sfx_shot, gun_audio, 4.0)
 
-	# 2. Вспышка пороховых газов
+	# 2. Вспышка пороховых газов и отдача в руках
+	if model:
+		model.kick()
 	if muzzle_flash_light:
 		muzzle_flash_light.light_energy = 6.0
 	get_tree().create_timer(0.08).timeout.connect(func():
@@ -1197,90 +1152,33 @@ func _on_door_altered(door: Node3D, is_open_now: bool) -> void:
 			_set_nav_target(door.global_position)
 			_play_sound(sfx_grunt, voice_audio, 0.5)
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  4-ракурсная анимация спрайта (front, back, left, right)
-# ══════════════════════════════════════════════════════════════════════════════
-func _update_directional_sprite() -> void:
-	if not lumberjack_sprite:
-		return
-
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.001:
-		forward = Vector3(0, 0, -1)
-	else:
-		forward = forward.normalized()
-
-	var to_cam: Vector3 = Vector3.ZERO
-	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
-	if cam:
-		to_cam = cam.global_position - global_position
-		to_cam.y = 0.0
-	elif GameManager.player_ref and is_instance_valid(GameManager.player_ref):
-		to_cam = GameManager.player_ref.global_position - global_position
-		to_cam.y = 0.0
-
-	if to_cam.length_squared() < 0.001:
-		return
-	to_cam = to_cam.normalized()
-
-	var dot = forward.dot(to_cam)
-	var cross_y = forward.cross(to_cam).y
-
-	var front_thresh = 0.60 if _current_view == "front" else 0.70
-	var back_thresh  = -0.60 if _current_view == "back" else -0.70
-
-	if dot >= front_thresh:
-		_current_view = "front"
-	elif dot <= back_thresh:
-		_current_view = "back"
-	elif cross_y > 0.0:
-		_current_view = "left"
-	else:
-		_current_view = "right"
-
-func _apply_active_texture(is_moving: bool, step_frame: int) -> void:
-	if not lumberjack_sprite:
-		return
-
-	match _current_view:
-		"front":
-			if is_moving:
-				var t = tex_front_walk_0 if step_frame == 0 else tex_front_walk_1
-				lumberjack_sprite.texture = t if t else tex_front
-			else:
-				lumberjack_sprite.texture = tex_front
-		"back":
-			if is_moving:
-				var t = tex_back_walk_0 if step_frame == 0 else tex_back_walk_1
-				lumberjack_sprite.texture = t if t else tex_back
-			else:
-				lumberjack_sprite.texture = tex_back
-		"left":
-			if is_moving:
-				var t = tex_left_walk_0 if step_frame == 0 else tex_left_walk_1
-				lumberjack_sprite.texture = t if t else tex_left
-			else:
-				lumberjack_sprite.texture = tex_left
-		"right":
-			if is_moving:
-				var t = tex_right_walk_0 if step_frame == 0 else tex_right_walk_1
-				lumberjack_sprite.texture = t if t else tex_right
-			else:
-				lumberjack_sprite.texture = tex_right
-
 func _animate(delta: float) -> void:
-	if not lumberjack_sprite:
+	if not model:
 		return
-
-	_update_directional_sprite()
 
 	var move_vel = Vector2(velocity.x, velocity.z).length()
 	var is_moving = move_vel > 0.25
 
+	var mode := "idle"
+	match current_state:
+		State.AIMING, State.SHOOT, State.STAKEOUT_HIDING:
+			mode = "aim"
+		State.RELOAD:
+			mode = "reload"
+		_:
+			if is_moving:
+				mode = "run" if (current_state == State.CHASE and move_vel > 2.6) else "walk"
+	model.update_motion(delta, mode, move_vel if is_moving else 0.0)
+
+	# Вблизи лесоруб поворачивает голову к камере
+	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
+	if cam:
+		var near_cam: bool = global_position.distance_squared_to(cam.global_position) < 144.0
+		model.set_look_target(cam.global_position if near_cam else null)
+
+	# Звук шага на каждый полуоборот цикла походки
 	if is_moving:
-		walk_cycle_t += delta * (move_vel * 3.8)
-		var step_frame = int(walk_cycle_t) % 2
+		var step_frame := int(model.phase / PI)
 		if step_frame != last_step_phase:
 			last_step_phase = step_frame
 			if not lumberjack_step_streams.is_empty():
@@ -1290,18 +1188,14 @@ func _animate(delta: float) -> void:
 			else:
 				_play_sound(sfx_step, step_audio, -15.0, randf_range(0.88, 1.12))
 
-		_apply_active_texture(true, step_frame)
-
-		var step_bob = abs(sin(walk_cycle_t * PI)) * 0.035
-		lumberjack_sprite.position.y = BASE_SPRITE_Y - step_bob
-
-		var step_sway = sin(walk_cycle_t * PI) * 0.025
-		lumberjack_sprite.rotation.z = step_sway
-	else:
-		walk_cycle_t = 0.0
-		_apply_active_texture(false, 0)
-		lumberjack_sprite.position.y = lerp(lumberjack_sprite.position.y, BASE_SPRITE_Y, delta * 6.0)
-		lumberjack_sprite.rotation.z = lerp(lumberjack_sprite.rotation.z, 0.0, delta * 6.0)
+	# Налобный фонарик и вспышка дула следуют за головой и стволом
+	var head_pos := to_local(model.get_head_position())
+	if headlamp and is_instance_valid(headlamp):
+		headlamp.position = head_pos
+	if headlamp_glow and is_instance_valid(headlamp_glow):
+		headlamp_glow.position = head_pos
+	if muzzle_flash_light and is_instance_valid(muzzle_flash_light):
+		muzzle_flash_light.position = to_local(model.get_muzzle_position())
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  Генерация процедурных звуковых эффектов

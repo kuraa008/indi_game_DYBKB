@@ -497,6 +497,7 @@ static func _add(sf: Surf, geo: Dictionary, bone: int = -1, tint: Color = Color.
 	var base := sf.v.size()
 	var nrm := PackedVector3Array()
 	nrm.resize(pts.size())
+	nrm.fill(Vector3.ZERO)
 	var flip: bool = not geo.up
 	for i in rows - 1:
 		for j in nu:
@@ -504,7 +505,7 @@ static func _add(sf: Surf, geo: Dictionary, bone: int = -1, tint: Color = Color.
 			var b := (i + 1) * st + j
 			var c := i * st + j + 1
 			var d := (i + 1) * st + j + 1
-			var fn := (pts[b] - pts[a]).cross(pts[c] - pts[a]) + (pts[d] - pts[c]).cross(pts[b] - pts[c])
+			var fn := (pts[b] - pts[a]).cross(pts[c] - pts[a]) + (pts[b] - pts[c]).cross(pts[d] - pts[c])
 			if flip:
 				fn = -fn
 			nrm[a] += fn
