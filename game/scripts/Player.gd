@@ -2599,7 +2599,7 @@ func die(killer: Variant = null) -> void:
 		var to_player = global_position - enemy.global_position
 		to_player.y = 0.0
 		if to_player.length_squared() > 0.01:
-			enemy.rotation.y = atan2(to_player.x, to_player.z)
+			enemy.rotation.y = atan2(-to_player.x, -to_player.z)
 
 		var enemy_head_pos: Vector3 = enemy.global_position + Vector3(0, 1.45, 0)
 		var to_enemy: Vector3 = enemy_head_pos - camera.global_position

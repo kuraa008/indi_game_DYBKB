@@ -2319,13 +2319,6 @@ func _load_ui_texture(path: String) -> Texture2D:
 func _play_jumpscare() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
-	var jumpscare_container = Control.new()
-	jumpscare_container.name = "RealHorrorJumpscare"
-	jumpscare_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	jumpscare_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(jumpscare_container)
-
-	# ── 1. ЗВУКОВОЙ ТЕРРОР: мощнейший многослойный взрыв ─────────────
 	var is_lumberjack = false
 	if GameManager and is_instance_valid(GameManager.last_killer):
 		var k = GameManager.last_killer
@@ -2334,33 +2327,34 @@ func _play_jumpscare() -> void:
 		if "lumberjack" in k_name or "лесопил" in k_name or "дед" in k_name or "lumberjack" in k_script:
 			is_lumberjack = true
 
-	if is_lumberjack:
-		# Сокрушительный выстрел из ружья в упор
-		var snd_shot = AudioStreamPlayer.new()
-		var st_shot = load("res://assets/audio/shotgun_shot.mp3") if ResourceLoader.exists("res://assets/audio/shotgun_shot.mp3") else null
-		if st_shot:
-			snd_shot.stream = st_shot
-			snd_shot.volume_db = 6.0
-			jumpscare_container.add_child(snd_shot)
-			snd_shot.play()
+	if not is_lumberjack:
+		_play_skinwalker_jumpscare()
+		return
 
-		# Зловещий тяжелый храп/хрип деда над поверженной жертвой
-		var snd_ded = AudioStreamPlayer.new()
-		var st_ded = load("res://assets/ded.mp3") if ResourceLoader.exists("res://assets/ded.mp3") else null
-		if st_ded:
-			snd_ded.stream = st_ded
-			snd_ded.volume_db = 4.0
-			jumpscare_container.add_child(snd_ded)
-			snd_ded.play()
-	else:
-		# Новый мощный пронзительный скример монстра-скинвокера
-		var snd_skinwalker = AudioStreamPlayer.new()
-		var st_skinwalker = load("res://assets/scream.mp3") if ResourceLoader.exists("res://assets/scream.mp3") else load("res://assets/audio/skinwalker_scream.wav")
-		if st_skinwalker:
-			snd_skinwalker.stream = st_skinwalker
-			snd_skinwalker.volume_db = 6.5
-			jumpscare_container.add_child(snd_skinwalker)
-			snd_skinwalker.play()
+	var jumpscare_container = Control.new()
+	jumpscare_container.name = "RealHorrorJumpscare"
+	jumpscare_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	jumpscare_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_ctrl.add_child(jumpscare_container)
+
+	# ── 1. ЗВУКОВОЙ ТЕРРОР: мощнейший многослойный взрыв ─────────────
+	# Сокрушительный выстрел из ружья в упор
+	var snd_shot = AudioStreamPlayer.new()
+	var st_shot = load("res://assets/audio/shotgun_shot.mp3") if ResourceLoader.exists("res://assets/audio/shotgun_shot.mp3") else null
+	if st_shot:
+		snd_shot.stream = st_shot
+		snd_shot.volume_db = 6.0
+		jumpscare_container.add_child(snd_shot)
+		snd_shot.play()
+
+	# Зловещий тяжелый храп/хрип деда над поверженной жертвой
+	var snd_ded = AudioStreamPlayer.new()
+	var st_ded = load("res://assets/ded.mp3") if ResourceLoader.exists("res://assets/ded.mp3") else null
+	if st_ded:
+		snd_ded.stream = st_ded
+		snd_ded.volume_db = 4.0
+		jumpscare_container.add_child(snd_ded)
+		snd_ded.play()
 
 	# Глухой удар / сокрушительный саб-бас (костеломный импакт удара)
 	var snd_impact = AudioStreamPlayer.new()
@@ -2510,6 +2504,23 @@ func _play_jumpscare() -> void:
 	_show_death_screen()
 
 
+func _play_skinwalker_jumpscare() -> void:
+	var scare := SkinwalkerScare.new()
+	add_child(scare)
+	await scare.finished
+	if not is_inside_tree() or not is_instance_valid(root_ctrl):
+		return
+	var blackout = ColorRect.new()
+	blackout.name = "Blackout"
+	blackout.set_anchors_preset(Control.PRESET_FULL_RECT)
+	blackout.color = Color.BLACK
+	blackout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_ctrl.add_child(blackout)
+	if is_instance_valid(scare):
+		scare.queue_free()
+	_show_death_screen()
+
+
 func clear_end_screens() -> void:
 	for node in end_screens:
 		if is_instance_valid(node):
@@ -2519,6 +2530,9 @@ func clear_end_screens() -> void:
 		for ch in root_ctrl.get_children():
 			if ch.name in ["RealHorrorJumpscare", "BloodWash", "Blackout"]:
 				ch.queue_free()
+	for ch in get_children():
+		if ch is SkinwalkerScare:
+			ch.queue_free()
 	if GameManager:
 		GameManager.game_ended = false
 		GameManager.is_reading_note = false

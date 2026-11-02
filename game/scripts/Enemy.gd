@@ -2,24 +2,8 @@ extends EnemyBehavior
 
 var col_node:       CollisionShape3D
 var col_shape:      CapsuleShape3D
-var monster_sprite: Sprite3D
+var model:          SkinwalkerModel
 
-# Текстуры для разных ракурсов и шагов
-var tex_monster_front_idle:   Texture2D
-var tex_monster_front_walk_0: Texture2D
-var tex_monster_front_walk_1: Texture2D
-
-var tex_monster_back:         Texture2D
-
-var tex_monster_left_idle:    Texture2D
-var tex_monster_left_walk_0:  Texture2D
-var tex_monster_left_walk_1:  Texture2D
-
-var tex_monster_right_idle:   Texture2D
-var tex_monster_right_walk_0: Texture2D
-var tex_monster_right_walk_1: Texture2D
-
-var _current_view:   String = ""
 var walk_cycle_t:    float = 0.0
 var last_step_phase: int = 0
 var step_audio:      AudioStreamPlayer3D
@@ -28,9 +12,6 @@ var creepy_sounds:   Array[AudioStream] = []
 var creepy_timer:    float = 7.0
 var eye_spot:        SpotLight3D = null
 var eye_glow:        OmniLight3D = null
-
-const BASE_SPRITE_Y: float = 1.165
-
 
 func _build_visual() -> void:
 	# Коллизия монстра (высота 2.0м, проходит в стандартные двери 2.2м)
@@ -42,21 +23,11 @@ func _build_visual() -> void:
 	col_node.position = Vector3(0, 0.95, 0)
 	add_child(col_node)
 
-	_load_monster_textures()
-
-	# Основной направленный билборд-спрайт
-	monster_sprite = Sprite3D.new()
-	monster_sprite.name = "MonsterSprite"
-	monster_sprite.texture = tex_monster_front_idle
-	monster_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	# При высоте персонажа 880px в холсте 1024, pixel_size = 0.0026 дает высоту 2.3м в мире
-	monster_sprite.pixel_size = 0.0026
-	monster_sprite.position = Vector3(0, BASE_SPRITE_Y, 0)
-	monster_sprite.shaded = true
-	monster_sprite.double_sided = true
-	monster_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	monster_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	add_child(monster_sprite)
+	# Процедурная 3D-модель скинвокера (модель смотрит вдоль +Z, а враг — вдоль -Z)
+	model = SkinwalkerModel.new()
+	model.name = "SkinwalkerModel"
+	model.rotation.y = PI
+	add_child(model)
 
 	# 3D звук тяжёлых зловещих шагов скинуокера
 	step_audio = AudioStreamPlayer3D.new()
@@ -156,103 +127,6 @@ func _try_load_res(path: String) -> Resource:
 		return load(path)
 	return null
 
-func _load_monster_textures() -> void:
-	const BASE_DIR = "res://assets/textures/enemy_character/"
-	tex_monster_front_idle   = _try_load_tex(BASE_DIR + "monster_front.png")
-	tex_monster_front_walk_0 = _try_load_tex(BASE_DIR + "monster_front_walk_0.png")
-	tex_monster_front_walk_1 = _try_load_tex(BASE_DIR + "monster_front_walk_1.png")
-
-	tex_monster_back         = _try_load_tex(BASE_DIR + "monster_back.png")
-
-	tex_monster_left_idle    = _try_load_tex(BASE_DIR + "monster_left.png")
-	tex_monster_left_walk_0  = _try_load_tex(BASE_DIR + "monster_left_walk_0.png")
-	tex_monster_left_walk_1  = _try_load_tex(BASE_DIR + "monster_left_walk_1.png")
-
-	tex_monster_right_idle   = _try_load_tex(BASE_DIR + "monster_right.png")
-	tex_monster_right_walk_0 = _try_load_tex(BASE_DIR + "monster_right_walk_0.png")
-	tex_monster_right_walk_1 = _try_load_tex(BASE_DIR + "monster_right_walk_1.png")
-
-func _try_load_tex(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		return load(path) as Texture2D
-	return null
-
-# ══════════════════════════════════════════════
-#  Расчет ракурса и анимация монстра
-# ══════════════════════════════════════════════
-func _update_directional_sprite() -> void:
-	if not monster_sprite:
-		return
-
-	# Вектор направления взгляда монстра в горизонтальной плоскости (в Godot -Z это вперед)
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.001:
-		forward = Vector3(0, 0, -1)
-	else:
-		forward = forward.normalized()
-
-	var to_cam: Vector3 = Vector3.ZERO
-	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
-	if cam:
-		to_cam = cam.global_position - global_position
-		to_cam.y = 0.0
-	elif GameManager.player_ref and is_instance_valid(GameManager.player_ref):
-		to_cam = GameManager.player_ref.global_position - global_position
-		to_cam.y = 0.0
-
-	if to_cam.length_squared() < 0.001:
-		return
-	to_cam = to_cam.normalized()
-
-	_calculate_and_apply_view(forward, to_cam)
-
-func _calculate_and_apply_view(forward: Vector3, to_cam: Vector3) -> void:
-	var dot = forward.dot(to_cam)
-	var cross_y = forward.cross(to_cam).y
-
-	# Порог с гистерезисом для предотвращения дерганий на границах
-	var front_thresh = 0.60 if _current_view == "front" else 0.70
-	var back_thresh  = -0.60 if _current_view == "back" else -0.70
-
-	var view: String
-	if dot >= front_thresh:
-		view = "front"
-	elif dot <= back_thresh:
-		view = "back"
-	elif cross_y > 0.0:
-		view = "left"
-	else:
-		view = "right"
-
-	_current_view = view
-
-func _apply_active_texture(is_moving: bool, step_frame: int) -> void:
-	if not monster_sprite:
-		return
-
-	match _current_view:
-		"front":
-			if is_moving:
-				var t = tex_monster_front_walk_0 if step_frame == 0 else tex_monster_front_walk_1
-				monster_sprite.texture = t if t else tex_monster_front_idle
-			else:
-				monster_sprite.texture = tex_monster_front_idle
-		"back":
-			monster_sprite.texture = tex_monster_back
-		"left":
-			if is_moving:
-				var t = tex_monster_left_walk_0 if step_frame == 0 else tex_monster_left_walk_1
-				monster_sprite.texture = t if t else tex_monster_left_idle
-			else:
-				monster_sprite.texture = tex_monster_left_idle
-		"right":
-			if is_moving:
-				var t = tex_monster_right_walk_0 if step_frame == 0 else tex_monster_right_walk_1
-				monster_sprite.texture = t if t else tex_monster_right_idle
-			else:
-				monster_sprite.texture = tex_monster_right_idle
-
 func _play_footstep() -> void:
 	if step_audio and step_audio.stream:
 		step_audio.pitch_scale = randf_range(0.85, 1.15)
@@ -277,56 +151,52 @@ func _play_heavy_footstep() -> void:
 		p.finished.connect(p.queue_free)
 
 func _animate(delta: float) -> void:
-	if not monster_sprite:
+	if not model:
 		return
-
-	_update_directional_sprite()
 
 	var move_vel = Vector2(velocity.x, velocity.z).length()
 	var is_moving = move_vel > 0.25
 	var is_hunting = (state in [State.HUNT, State.RAGE])
+	var is_hiding_focus := state in [State.INSPECT_HIDING, State.STAKEOUT_HIDING]
+	var working := state == State.ROUTINE and _job_started
 
-	# Плавная процедурная анимация походки и шагов
+	var gait := "idle"
 	if is_moving:
-		var anim_spd = clamp(move_vel * 0.95, 3.0, 8.5)
-		walk_cycle_t += delta * anim_spd
+		if is_hunting and move_vel > 2.6:
+			gait = "run"
+		elif is_hiding_focus:
+			gait = "stalk"
+		else:
+			gait = "walk"
+	elif is_hiding_focus:
+		gait = "twitch"
+	elif working or is_hunting:
+		gait = "stalk"
 
-		var step_frame = int(walk_cycle_t) % 2
-		if step_frame != last_step_phase:
-			last_step_phase = step_frame
+	var rage: float = hunt_rage_buildup * 0.5 if is_hunting else 0.0
+	model.update_motion(delta, gait, move_vel if is_moving else 0.0, rage)
+
+	# Вблизи монстр следит головой за камерой и шевелит пальцами
+	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
+	var near_cam := false
+	if cam:
+		near_cam = global_position.distance_squared_to(cam.global_position) < 196.0
+		model.set_look_target(cam.global_position if near_cam else null)
+	model.set_hands_animated(near_cam)
+
+	# Шаг на каждый полуоборот цикла походки
+	if is_moving:
+		var step_phase := int(model.phase / PI)
+		if step_phase != last_step_phase:
+			last_step_phase = step_phase
 			_play_footstep()
 
-		_apply_active_texture(true, step_frame)
-
-		# Вертикальное покачивание (опускание на шаге)
-		var step_bob = abs(sin(walk_cycle_t * PI)) * (0.050 if is_hunting else 0.035)
-		monster_sprite.position.y = BASE_SPRITE_Y - step_bob
-
-		# Боковой наклон в такт шагам (перенос веса с ноги на ногу)
-		var step_sway = sin(walk_cycle_t * PI) * (0.038 if is_hunting else 0.024)
-		monster_sprite.rotation.z = step_sway
-
-		if is_hunting:
-			var pulse = sin(anim_t * 14.0) * 0.03
-			monster_sprite.scale = Vector3(1.0 + pulse, 1.0 - pulse * 0.5, 1.0)
-		else:
-			monster_sprite.scale = Vector3.ONE
-	else:
-		# Ожидание / наблюдение / дыхание (плавно гасим наклон без рывков)
-		_apply_active_texture(false, 0)
-		var is_hiding_focus := state in [State.INSPECT_HIDING, State.STAKEOUT_HIDING]
-		var breathe = sin(anim_t * (5.5 if is_hiding_focus else 2.2)) * (0.04 if is_hiding_focus else 0.015)
-		var working := state == State.ROUTINE and _job_started
-		var lean := 0.09 if working else (0.07 if is_hiding_focus else 0.0)
-		var target_y = BASE_SPRITE_Y - lean + breathe
-		monster_sprite.position.y = lerp(monster_sprite.position.y, target_y, delta * 6.0)
-		var idle_tilt := sin(anim_t * 2.0) * 0.035 if working else 0.0
-		monster_sprite.rotation.z = lerp_angle(monster_sprite.rotation.z, idle_tilt, delta * 7.0)
-		if is_hiding_focus:
-			var hunch = sin(anim_t * 5.5) * 0.025
-			monster_sprite.scale = Vector3(1.0 + hunch, 1.0 - hunch, 1.0)
-		else:
-			monster_sprite.scale = Vector3.ONE
+	# Красный взгляд и свечение глаз следуют за головой
+	var head_pos := to_local(model.get_head_position())
+	if eye_spot and is_instance_valid(eye_spot):
+		eye_spot.position = head_pos
+	if eye_glow and is_instance_valid(eye_glow):
+		eye_glow.position = head_pos
 
 	# Пульсация и яркость красного света глаз и луча взгляда
 	if eye_glow and is_instance_valid(eye_glow):
