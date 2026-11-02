@@ -101,6 +101,8 @@ var item_labels:              Array[Label] = []
 var modal_settings:           Control
 var is_modal_open:            bool = false
 var settings_btn_gfx:         Button = null
+var settings_btn_vhs: Button = null
+var settings_btn_dyn: Button = null
 var settings_btn_legacy:      Button = null
 
 var elapsed_time:             float = 0.0
@@ -1245,10 +1247,17 @@ func _build_settings_modal() -> void:
 	# Пресет графики
 	var q_lbl = "УЛЬТРА (UE5)"
 	if GameManager:
-		if GameManager.graphics_quality == "medium": q_lbl = "СРЕДНЯЯ"
+		if GameManager.graphics_quality == "high": q_lbl = "ВЫСОКАЯ"
+		elif GameManager.graphics_quality == "medium": q_lbl = "СРЕДНЯЯ"
 		elif GameManager.graphics_quality == "low": q_lbl = "НИЗКАЯ"
 	settings_btn_gfx = _create_dialog_btn("ГРАФИКА: " + q_lbl, _on_toggle_graphics_quality)
 	vb.add_child(settings_btn_gfx)
+
+	# Эффект VHS-записи и динамическое разрешение
+	settings_btn_vhs = _create_dialog_btn(_vhs_btn_text(), _on_toggle_vhs)
+	vb.add_child(settings_btn_vhs)
+	settings_btn_dyn = _create_dialog_btn(_dyn_btn_text(), _on_toggle_dynamic_res)
+	vb.add_child(settings_btn_dyn)
 
 	# Режим графики: Реализм vs Legacy
 	var leg_lbl = "РЕАЛИЗМ (ALPHA 1)"
@@ -1264,12 +1273,29 @@ func _build_settings_modal() -> void:
 	var btn_back = _create_dialog_btn("◀  НАЗАД В МЕНЮ", _close_modals)
 	vb.add_child(btn_back)
 
+func _vhs_btn_text() -> String:
+	return "ЭФФЕКТ VHS: " + ("ВКЛ" if GameManager.vhs_enabled else "ВЫКЛ")
+
+func _dyn_btn_text() -> String:
+	return "АВТО-РАЗРЕШЕНИЕ: " + ("ВКЛ" if GameManager.dynamic_resolution else "ВЫКЛ")
+
+func _on_toggle_vhs() -> void:
+	GameManager.set_vhs_enabled(not GameManager.vhs_enabled)
+	if is_instance_valid(settings_btn_vhs):
+		settings_btn_vhs.text = _vhs_btn_text()
+
+func _on_toggle_dynamic_res() -> void:
+	GameManager.set_dynamic_resolution(not GameManager.dynamic_resolution)
+	if is_instance_valid(settings_btn_dyn):
+		settings_btn_dyn.text = _dyn_btn_text()
+
 func _on_toggle_graphics_quality() -> void:
 	if GameManager:
 		var nq = GameManager.cycle_graphics_quality()
 		_apply_menu_graphics(nq)
 		var n_lbl = "УЛЬТРА (UE5)"
-		if nq == "medium": n_lbl = "СРЕДНЯЯ"
+		if nq == "high": n_lbl = "ВЫСОКАЯ"
+		elif nq == "medium": n_lbl = "СРЕДНЯЯ"
 		elif nq == "low": n_lbl = "НИЗКАЯ"
 		if is_instance_valid(settings_btn_gfx):
 			settings_btn_gfx.text = "ГРАФИКА: " + n_lbl

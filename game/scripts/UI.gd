@@ -254,7 +254,7 @@ func _build_ui() -> void:
 	# ── Маленькое объяснение кнопок как надпись alpha 0.1 ──
 	var guide_lbl = Label.new()
 	guide_lbl.name = "ControlsGuideLabel"
-	guide_lbl.text = "WASD — Ходить  •  Shift — Бег  •  C — Присесть  •  E — Действие  •  F — Фонарик  •  Tab — Рюкзак  •  ПКМ — Сброс"
+	guide_lbl.text = "WASD — Ходить  •  Shift — Бег  •  C — Присесть  •  E — Действие  •  F — Фонарик  •  Tab — Рюкзак  •  ПКМ — Сброс  •  F3 — Графика  •  F4 — VHS"
 	guide_lbl.add_theme_font_size_override("font_size", 10)
 	guide_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70, 0.40))
 	guide_lbl.set_anchor_and_offset(SIDE_RIGHT, 1.0, -18)
@@ -281,6 +281,9 @@ func _build_cinematic_lens_postprocess() -> void:
 	root_ctrl.add_child(cinematic_lens_rect)
 	_on_gfx_quality_changed(GameManager.graphics_quality if GameManager else "ultra")
 	_build_vhs_hud()
+	_on_vhs_changed(GameManager.vhs_enabled)
+	if not GameManager.vhs_changed.is_connected(_on_vhs_changed):
+		GameManager.vhs_changed.connect(_on_vhs_changed)
 
 # Надписи видеокамеры: мигающий REC, счётчик плёнки, дата и время записи
 func _build_vhs_hud() -> void:
@@ -319,10 +322,25 @@ func _build_vhs_hud() -> void:
 	vhs_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_update_vhs_hud(0.0)
 
+func _on_vhs_changed(enabled: bool) -> void:
+	if cinematic_shader_mat:
+		cinematic_shader_mat.set_shader_parameter("vhs_amount", 1.0 if enabled else 0.0)
+	for l in [vhs_rec_label, vhs_counter_label, vhs_date_label]:
+		if l:
+			l.visible = enabled
+
 func _update_vhs_hud(delta: float) -> void:
 	if not vhs_rec_label:
 		return
 	vhs_time += delta
+	# Плёнка чувствует монстра: чем он ближе, тем сильнее срывы картинки
+	var stress := 0.0
+	var e = GameManager.enemy_ref
+	var cam := get_viewport().get_camera_3d()
+	if is_instance_valid(e) and cam and e is Node3D:
+		stress = clampf(1.0 - cam.global_position.distance_to(e.global_position) / 14.0, 0.0, 1.0)
+	if cinematic_shader_mat:
+		cinematic_shader_mat.set_shader_parameter("vhs_stress", stress * stress)
 	vhs_rec_label.modulate.a = 1.0 if fmod(vhs_time, 1.0) < 0.6 else 0.0
 	var sec := int(vhs_time)
 	vhs_counter_label.text = "SP  %d:%02d:%02d" % [sec / 3600, (sec / 60) % 60, sec % 60]
@@ -2342,7 +2360,9 @@ func _on_gfx_quality_changed(quality: String) -> void:
 		cinematic_shader_mat.set_shader_parameter("lens_distortion", 0.005 if high else 0.008)
 	if gfx_btn:
 		var q_title = "УЛЬТРА (MAX)"
-		if quality == "medium":
+		if quality == "high":
+			q_title = "ВЫСОКАЯ"
+		elif quality == "medium":
 			q_title = "СРЕДНЯЯ"
 		elif quality == "low":
 			q_title = "НИЗКАЯ (60+ FPS)"
@@ -2689,6 +2709,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _show_death_screen() -> void:
 	clear_end_screens()
+	# clear_end_screens сбрасывает флаг, а на экране смерти игра должна оставаться законченной:
+	# иначе монстр продолжает ходить за экраном, а клавиши R и ESC не срабатывают
+	if GameManager:
+		GameManager.game_ended = true
 
 	var bg = ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.94)

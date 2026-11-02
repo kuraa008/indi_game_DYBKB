@@ -79,6 +79,7 @@ var is_in_cutscene: bool = false
 # ── Процедурная 3D-модель ──
 var model: LumberjackModel = null
 var headlamp_glow: OmniLight3D = null
+var _anim_accum: float = 0.0
 
 var walk_cycle_t: float = 0.0
 var last_step_phase: int = 0
@@ -174,6 +175,9 @@ func _build_visual_sprite() -> void:
 	headlamp.shadow_enabled = true
 	headlamp.light_cull_mask = 0xFFFFFFFF & ~2
 	add_child(headlamp)
+	_on_quality_for_lights(GameManager.graphics_quality)
+	if not GameManager.graphics_quality_changed.is_connected(_on_quality_for_lights):
+		GameManager.graphics_quality_changed.connect(_on_quality_for_lights)
 
 	headlamp_glow = OmniLight3D.new()
 	headlamp_glow.name = "HeadlampGlow"
@@ -191,8 +195,12 @@ func _build_visual_sprite() -> void:
 	muzzle_flash_light.light_color = Color(1.0, 0.72, 0.28)
 	muzzle_flash_light.light_energy = 0.0
 	muzzle_flash_light.omni_range = 8.0
-	muzzle_flash_light.shadow_enabled = true
+	muzzle_flash_light.shadow_enabled = false
 	add_child(muzzle_flash_light)
+
+func _on_quality_for_lights(quality: String) -> void:
+	if headlamp and is_instance_valid(headlamp):
+		headlamp.shadow_enabled = quality in ["ultra", "high"]
 
 func _setup_navigation() -> void:
 	nav_agent = NavigationAgent3D.new()
@@ -1168,8 +1176,14 @@ func _animate(delta: float) -> void:
 		_:
 			if is_moving:
 				mode = "run" if (current_state == State.CHASE and move_vel > 2.6) else "walk"
-	model.update_motion(delta, mode, move_vel if is_moving else 0.0)
-
+	# Далёкий лесоруб анимируется реже
+	var cam_far := get_viewport().get_camera_3d() if is_inside_tree() else null
+	var dist_sq: float = global_position.distance_squared_to(cam_far.global_position) if cam_far else 0.0
+	_anim_accum += delta
+	if dist_sq > 1225.0 and _anim_accum < 0.066:
+		return
+	model.update_motion(_anim_accum, mode, move_vel if is_moving else 0.0)
+	_anim_accum = 0.0
 	# Вблизи лесоруб поворачивает голову к камере
 	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
 	if cam:

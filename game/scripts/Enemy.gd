@@ -7,6 +7,7 @@ var model:          SkinwalkerModel
 var walk_cycle_t:    float = 0.0
 var last_step_phase: int = 0
 var _clearance_timer: float = 0.0
+var _anim_accum: float = 0.0
 var step_audio:      AudioStreamPlayer3D
 var voice_audio:     AudioStreamPlayer3D = null
 var creepy_sounds:   Array[AudioStream] = []
@@ -52,6 +53,9 @@ func _build_visual() -> void:
 	eye_spot.spot_angle_attenuation = 0.85
 	eye_spot.shadow_enabled = true
 	add_child(eye_spot)
+	_on_quality_for_lights(GameManager.graphics_quality)
+	if not GameManager.graphics_quality_changed.is_connected(_on_quality_for_lights):
+		GameManager.graphics_quality_changed.connect(_on_quality_for_lights)
 
 	# Красный ореол зловещих светящихся глаз
 	eye_glow = OmniLight3D.new()
@@ -68,6 +72,11 @@ func _build_visual() -> void:
 	voice_audio.max_distance = 35.0
 	add_child(voice_audio)
 	_load_creepy_sounds()
+
+# Тень от взгляда монстра самая дорогая: движущийся прожектор перерисовывает её каждый кадр
+func _on_quality_for_lights(quality: String) -> void:
+	if eye_spot and is_instance_valid(eye_spot):
+		eye_spot.shadow_enabled = quality == "ultra"
 
 func _load_creepy_sounds() -> void:
 	creepy_sounds.clear()
@@ -180,8 +189,15 @@ func _animate(delta: float) -> void:
 		model.set_clearance(_measure_clearance())
 
 	var rage: float = hunt_rage_buildup * 0.5 if is_hunting else 0.0
-	model.update_motion(delta, gait, move_vel if is_moving else 0.0, rage)
-
+	# Далёкий монстр анимируется реже и не отбрасывает тень
+	var cam_far := get_viewport().get_camera_3d() if is_inside_tree() else null
+	var dist_sq: float = global_position.distance_squared_to(cam_far.global_position) if cam_far else 0.0
+	model.mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if dist_sq > 625.0 else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_anim_accum += delta
+	if dist_sq > 1225.0 and _anim_accum < 0.066:
+		return
+	model.update_motion(_anim_accum, gait, move_vel if is_moving else 0.0, rage)
+	_anim_accum = 0.0
 	# Вблизи монстр следит головой за камерой и шевелит пальцами
 	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
 	var near_cam := false

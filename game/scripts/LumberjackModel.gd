@@ -13,6 +13,8 @@ const BARREL: float = 0.72
 const GRIP := Vector3(0, -0.03, -0.05)
 const FORE := Vector3(0, -0.022, 0.2)
 const POUCH := Vector3(0.2, -0.3, 0.14)
+const SHOULDER_X: float = 0.185
+const SHOULDER_Y: float = 0.085
 
 const GUN_POSES := {
 	"idle":   {"p": Vector3(0.13, -0.26, 0.2),   "r": Vector3(0.42, -0.62, 0.25)},
@@ -52,7 +54,6 @@ var _rec_v := 0.0
 var _flash_a := 0.0
 var _reload_t := 0.0
 var _look_yaw := 0.0
-var _hand_rest_set := false
 
 
 func _init() -> void:
@@ -173,8 +174,9 @@ func _rot(bone: String, x: float, y: float = 0.0, z: float = 0.0) -> void:
 	skeleton.set_bone_pose_rotation(_b[bone], Quaternion(Basis.from_euler(Vector3(x, y, z), EULER_ORDER_XYZ)))
 
 
-func _ik(sfx: String, side: float, target: Vector3) -> void:
-	var s_pos := Vector3(0.2 * side, 0.13, 0.0)
+# Двухзвенный IK. Возвращает суммарный поворот предплечья в осях груди.
+func _ik(sfx: String, side: float, target: Vector3) -> Quaternion:
+	var s_pos := Vector3(SHOULDER_X * side, SHOULDER_Y, 0.0)
 	var v := target - s_pos
 	var d := clampf(v.length(), 0.14, UPPER_ARM + FOREARM - 0.004)
 	var dir := v.normalized()
@@ -187,9 +189,17 @@ func _ik(sfx: String, side: float, target: Vector3) -> void:
 	var u1 := (elbow - s_pos).normalized()
 	var u2 := (wrist - elbow).normalized()
 	var q1 := Quaternion(Vector3.DOWN, u1)
+	var q2 := Quaternion(Vector3.DOWN, q1.inverse() * u2)
 	skeleton.set_bone_pose_rotation(_b["sh" + sfx], q1)
-	skeleton.set_bone_pose_rotation(_b["el" + sfx], Quaternion(Vector3.DOWN, q1.inverse() * u2))
+	skeleton.set_bone_pose_rotation(_b["el" + sfx], q2)
+	return q1 * q2
 
+
+# Ставит запястье так, чтобы ладонь лежала на точке хвата, и поворачивает кисть
+func _grip(sfx: String, side: float, point: Vector3, hand: Basis) -> void:
+	var wrist := point + hand.y * 0.055 - hand.z * 0.026
+	var fore_q := _ik(sfx, side, wrist)
+	skeleton.set_bone_pose_rotation(_b["hand" + sfx], fore_q.inverse() * Quaternion(hand.orthonormalized()))
 
 func _apply(_delta: float) -> void:
 	var amp: float = _p["amp"]
@@ -249,13 +259,13 @@ func _apply(_delta: float) -> void:
 	if _mode == "reload":
 		var u := fmod(_reload_t, 3.0) / 3.0
 		fore = fore.lerp(POUCH, smoothstep(0.1, 0.32, u) * (1.0 - smoothstep(0.62, 0.84, u)))
-	_ik("R", 1.0, grip)
-	_ik("L", -1.0, fore)
-	if not _hand_rest_set:
-		_hand_rest_set = true
-		_rot("handR", -0.5)
-		_rot("handL", -0.2)
-
+	var gx := gun_basis.x
+	var gy := gun_basis.y
+	# Правая ладонь справа на шейке приклада, пальцы вниз; левая снизу под цевьём
+	var right_hand := Basis(gy.cross(-gx), gy, -gx)
+	var left_hand := Basis((-gx).cross(gy), -gx, gy)
+	_grip("R", 1.0, grip, right_hand)
+	_grip("L", -1.0, fore, left_hand)
 
 # ══════════════════════════════════════════════
 #  Постройка геометрии (использует лофт из SkinwalkerModel)
@@ -306,7 +316,7 @@ static func _plaid_tex(size: int, henley: bool) -> ImageTexture:
 	var red := Color(0.33, 0.07, 0.06)
 	var black := Color(0.035, 0.028, 0.03)
 	var mid := Color(0.15, 0.035, 0.03)
-	var st := size / 8
+	var st := size / 12
 	for y in size:
 		var row := (y / st) % 2 == 0
 		for x in size:
@@ -319,7 +329,7 @@ static func _plaid_tex(size: int, henley: bool) -> ImageTexture:
 			img.set_pixel(x, y, Color(c.r + n, c.g + n, c.b + n))
 	if henley:
 		# Тёмная кофта в распахнутом вороте рубашки (спереди, u = 0.25)
-		var w := int(size * 0.052)
+		var w := int(size * 0.034)
 		for y in size:
 			for x in range(size / 4 - w, size / 4 + w):
 				var edge := absi(x - size / 4) >= w - 2
@@ -384,7 +394,7 @@ static func _build_mesh() -> void:
 
 	# ── Таз и рубашка ──
 	_put(jeans, _loft([[-.17, .01, .01], [-.15, .09, .08], [-.08, .165, .115], [.02, .18, .125], [.08, .178, .123], [.12, .16, .11]], 20, 3, Callable(), 1.4), "hips")
-	var sh := _loft([[-.13, .2, .145], [-.08, .195, .14], [.0, .19, .135], [.1, .183, .128], [.2, .188, .13], [.3, .2, .134], [.4, .212, .133], [.48, .208, .122], [.53, .165, .105], [.57, .08, .075], [.6, .058, .058]], 32, 4, _shirt_disp)
+	var sh := _loft([[-.13, .2, .145], [-.08, .195, .14], [.0, .19, .135], [.1, .183, .128], [.2, .188, .13], [.3, .2, .134], [.4, .214, .133], [.47, .214, .122], [.52, .185, .106], [.56, .105, .08], [.6, .058, .058]], 32, 4, _shirt_disp)
 	SkinwalkerModel._chain_weights(sh, [0.0, 0.2, 0.2], [_ids.hips, _ids.spineA, _ids.chest], 0.09, 1.0)
 	SkinwalkerModel._xf(sh, _G("hips"))
 	SkinwalkerModel._add(shirt, sh)
@@ -401,10 +411,6 @@ static func _build_mesh() -> void:
 	_put(wood, _box(.022, .055, .03), "hips", Transform3D(Basis(), Vector3(-.195, .04, .03)))
 	var blade := _loft([[0.0, .016, .0025], [-.15, .017, .0025], [-.21, .01, .002], [-.235, .001, .001]], 8, 2)
 	_put(metal, blade, "hips", Transform3D(Basis(Vector3.BACK, -0.1), Vector3(-.195, .012, .03)))
-	var rope_c := Color(0.02, 0.015, 0.008)
-	for r in 2:
-		var loop := _loft([[-.07, .0, .0], [-.06, .03, .012], [.0, .05, .014], [.06, .03, .012], [.07, .0, .0]], 10, 3)
-		_put(misc, loop, "hips", Transform3D(Basis(Vector3.UP, 0.5), Vector3(.17, -.14, .06 + r * 0.014)), rope_c)
 	for s in [-1.0, 1.0]:
 		var yaw_c := Basis(Vector3.UP, 0.34 * s)
 		_put(sleeve, _box(.092, .098, .012), "chest", Transform3D(yaw_c, Vector3(.1 * s, .06, .127)))
@@ -497,36 +503,38 @@ static func _build_head(skin, beanie, misc, hair) -> void:
 		p += (p - center).normalized() * d
 		pts[i] = p
 		var v := 1.0 - minf(1.0, dark)
+		v *= lerpf(0.2, 1.0, smoothstep(-.03, .03, p.z))
 		cols.append(Color(v, v, v))
 	face.pts = pts
 	face.col = cols
 
+	# Передняя поверхность лица в сетке 2 см: поиск прядей не перебирает все вершины
+	var z_grid := {}
+	for q in pts:
+		if q.z < 0.0:
+			continue
+		var cell := Vector2i(roundi(q.x / 0.02), roundi(q.y / 0.02))
+		if q.z > float(z_grid.get(cell, -1.0)):
+			z_grid[cell] = q.z
 	var surf_z := func(x: float, y: float) -> float:
-		var best := 1e9
-		var z := 0.09
-		for q in pts:
-			if q.z < 0.0:
-				continue
-			var e := (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y)
-			if e < best:
-				best = e
-				z = q.z
-		return z
+		return float(z_grid.get(Vector2i(roundi(x / 0.02), roundi(y / 0.02)), 0.09))
 
-	var eye_w := Color(0.46, 0.42, 0.37)
+	var eye_w := Color(0.2, 0.17, 0.14)
 	var iris := Color(0.012, 0.008, 0.006)
 	for s in [-1.0, 1.0]:
 		var ez: float = surf_z.call(.035 * s, .085)
-		_put(misc, _ball(Vector3(.0135, .0097, .0095)), "head", Transform3D(Basis(), Vector3(.035 * s, .084, ez - .004)), eye_w)
-		_put(misc, _ball(Vector3(.006, .006, .0028)), "head", Transform3D(Basis(), Vector3(.033 * s, .0835, ez + .0048)), iris)
+		_put(misc, _ball(Vector3(.0118, .0068, .0072)), "head", Transform3D(Basis(), Vector3(.035 * s, .083, ez - .0042)), eye_w)
+		var lid_t := Transform3D(Basis(Vector3.BACK, .22 * s), Vector3(.035 * s, .0925, ez - .004))
+		_put(skin, _ball(Vector3(.0145, .0062, .0092)), "head", lid_t)
+		_put(misc, _ball(Vector3(.0052, .0052, .0022)), "head", Transform3D(Basis(), Vector3(.033 * s, .0825, ez + .0026)), iris)
 
 	# Борода, усы, брови и волосы: пряди из маленьких трубок, одной поверхностью
 	var positions := face.pts as PackedVector3Array
 	var add := func(p0: Vector3, dv: Vector3, bv: Vector3, l: float, w: float) -> void:
 		var r := _rng.randf()
-		var g := (_rng.randf_range(.04, .09) if r < .25 else (_rng.randf_range(.18, .32) if r < .75 else _rng.randf_range(.38, .55)))
-		_strand(hair, p0, dv, bv, l, w, Color(g, g * .95, g * .88))
-	for n in 1300:
+		var g := (_rng.randf_range(.03, .07) if r < .25 else (_rng.randf_range(.12, .22) if r < .75 else _rng.randf_range(.26, .38)))
+		_strand(hair, p0, dv, bv, l, w, Color(g, g * .92, g * .82))
+	for n in 700:
 		var q := positions[_rng.randi_range(0, positions.size() - 1)]
 		if q.z < -.015:
 			continue
@@ -547,13 +555,23 @@ static func _build_head(skin, beanie, misc, hair) -> void:
 		var yb := .092 + .32 * absf(x) + _rng.randf_range(-.004, .006)
 		var z: float = surf_z.call(x, yb)
 		add.call(Vector3(x, yb, z + .0015), Vector3(s * .75, .28, .4), Vector3(0, -.25, -.1), _rng.randf_range(.013, .024), _rng.randf_range(.0012, .002))
-	for n in 170:
-		var a := _rng.randf_range(.95, 2.2) * (1.0 if _rng.randf() < .5 else -1.0) + PI / 2.0
+	for n in 300:
+		var a := _rng.randf_range(.95, PI) * (1.0 if _rng.randf() < .5 else -1.0) + PI / 2.0
 		var x := cos(a) * .09
 		var z := sin(a) * .1 - .008
 		add.call(Vector3(x, _rng.randf_range(.09, .15), z), Vector3(x * 2.2, -.8, z * .8), Vector3(0, -.3, -.05), _rng.randf_range(.05, .11), _rng.randf_range(.0028, .0046))
 
 	_put(skin, face, "head")
+	var fuzz := func(th: float, y: float, _c: float, _s: float) -> float:
+		return .004 * sin(th * 9.0 + y * 40.0) + .003 * sin(th * 23.0 - y * 70.0)
+	var beard_vol := _loft([[.025, .06, .044, 0, .044], [.0, .066, .052, 0, .048], [-.05, .066, .056, 0, .052], [-.11, .05, .046, 0, .056], [-.155, .03, .03, 0, .058], [-.185, .01, .012, 0, .06]], 20, 3, fuzz, .6)
+	var vol_pts: PackedVector3Array = beard_vol.pts
+	for n in 900:
+		var q := vol_pts[_rng.randi_range(0, vol_pts.size() - 1)]
+		if q.z < .005:
+			continue
+		add.call(q, Vector3((q.x * 1.2) + _rng.randf_range(-.08, .08), -.85, (q.z - .05) * .6), Vector3(_rng.randf_range(-.05, .05), -.2, -.05), _rng.randf_range(.035, .085), _rng.randf_range(.0028, .0048))
+	_put(misc, beard_vol, "head", Transform3D(), Color(0.022, 0.02, 0.017))
 
 	# Шапка
 	var rib := func(th: float, _y: float, _c: float, _s: float) -> float:
@@ -594,13 +612,13 @@ static func _strand(sf, p0: Vector3, dv: Vector3, bv: Vector3, l: float, w: floa
 
 static func _build_arm(side: float, sleeve, skin) -> void:
 	var sfx := "L" if side < 0.0 else "R"
-	_bone("sh" + sfx, "chest", Vector3(0.2 * side, 0.13, 0))
+	_bone("sh" + sfx, "chest", Vector3(SHOULDER_X * side, SHOULDER_Y, 0))
 	_bone("el" + sfx, "sh" + sfx, Vector3(0, -UPPER_ARM, 0))
 	_bone("wr" + sfx, "el" + sfx, Vector3(0, -FOREARM, 0))
 	_bone("hand" + sfx, "wr" + sfx, Vector3(0, -0.01, 0))
 	var disp := func(th: float, y: float, _c: float, _s: float) -> float:
 		return .002 * sin(th * 5.0 + y * 30.0)
-	var g := _loft([[.06, .012, .012], [.045, .04, .046], [.0, .06, .064], [-.1, .062, .064], [-.2, .061, .058], [-.3, .054, .052], [-.33, .056, .052], [-.42, .052, .046], [-.52, .043, .036], [-.58, .047, .041], [-.6, .05, .044], [-.61, .012, .01]], 16, 3, disp, 1.3)
+	var g := _loft([[.05, .012, .012], [.035, .036, .042], [.0, .056, .06], [-.1, .06, .062], [-.2, .061, .058], [-.3, .054, .052], [-.33, .056, .052], [-.42, .052, .046], [-.52, .043, .036], [-.58, .047, .041], [-.6, .05, .044], [-.61, .012, .01]], 16, 3, disp, 1.3)
 	SkinwalkerModel._chain_weights(g, [0.0, -UPPER_ARM, -FOREARM], [_ids["sh" + sfx], _ids["el" + sfx], _ids["wr" + sfx]], .05, -1.0)
 	SkinwalkerModel._xf(g, _G("sh" + sfx))
 	SkinwalkerModel._add(sleeve, g)
@@ -614,7 +632,7 @@ static func _build_arm(side: float, sleeve, skin) -> void:
 		_put(skin, _finger(.028, .0086), hb, t1)
 		var t2 := t1 * Transform3D(Basis(Vector3.RIGHT, -.75), Vector3(0, -.028, 0))
 		_put(skin, _finger(.022, .0078), hb, t2)
-	var th_t := Transform3D(Basis.from_euler(Vector3(-.9, 0, .8 * side)), Vector3(-.03 * side, -.035, .012))
+	var th_t := Transform3D(Basis.from_euler(Vector3(-.9, 0, .8 * side)), Vector3(.03 * side, -.035, .012))
 	_put(skin, _loft([[.004, .011, .011], [-.025, .01, .01], [-.05, .0085, .0085]], 7, 2, Callable(), .3), hb, th_t)
 
 
@@ -635,9 +653,10 @@ static func _build_leg(side: float, jeans, boot, misc) -> void:
 	SkinwalkerModel._add(jeans, g)
 	var ab := "an" + sfx
 	_put(boot, _loft([[.16, .06, .064], [.1, .056, .062], [.03, .054, .066], [-.03, .056, .076, 0, .006], [-.06, .058, .08, 0, .012]], 14, 2, Callable(), .7), ab)
-	var f := _loft([[-.075, .012, .012], [-.06, .05, .045], [.0, .056, .05], [.08, .058, .04], [.145, .058, .037], [.195, .05, .03], [.215, .01, .01]], 14, 3, Callable(), .8)
+	var f := _loft([[-.085, .012, .012], [-.07, .052, .046], [.0, .058, .052], [.08, .062, .044], [.145, .064, .04], [.195, .054, .033], [.222, .01, .01]], 14, 3, Callable(), .8)
 	_put(boot, f, ab, Transform3D(Basis(Vector3.RIGHT, PI / 2.0), Vector3(0, -.04, 0)))
-	_put(misc, _box(.105, .022, .3), ab, Transform3D(Basis(), Vector3(0, -.074, .07)), Color(0.008, 0.006, 0.005))
+	var sole := _loft([[-.09, .02, .01], [-.075, .05, .012], [.0, .058, .012], [.09, .064, .012], [.165, .066, .012], [.205, .054, .012], [.225, .02, .01]], 14, 2)
+	_put(misc, sole, ab, Transform3D(Basis(Vector3.RIGHT, PI / 2.0), Vector3(0, -.076, 0)), Color(0.008, 0.006, 0.005))
 	for i in 5:
 		_put(misc, _box(.083, .004, .005), ab, Transform3D(Basis(), Vector3(0, .11 - i * .034, .066 + .004 * i)), Color(0.02, 0.015, 0.008))
 
@@ -651,9 +670,9 @@ static func _build_gun(wood, metal, misc) -> void:
 	_put(metal, _box(.046, .052, .13), "gun", Transform3D(Basis(), Vector3(0, .002, .02)))
 	var to_z := Basis(Vector3.RIGHT, PI / 2.0)
 	_put(wood, _loft([[-.01, .021, .019], [.05, .024, .022], [.14, .023, .02], [.215, .02, .016], [.225, .006, .006]], 10, 2, Callable(), .8), "gun", Transform3D(to_z, Vector3(0, -.009, .1)))
-	var stock := _loft([[.0, .025, .021], [.08, .025, .02], [.15, .032, .02], [.25, .042, .022], [.335, .052, .025], [.36, .05, .024], [.362, .006, .006]], 12, 2)
+	var stock := _loft([[.0, .019, .024], [.08, .018, .025], [.15, .019, .032], [.25, .021, .043], [.335, .024, .053], [.36, .024, .051], [.362, .006, .006]], 12, 2)
 	var back := Basis(Vector3.RIGHT, -.27) * Basis(Vector3.RIGHT, -PI / 2.0)
 	_put(wood, stock, "gun", Transform3D(back, Vector3(0, -.012, -.04)))
-	_put(misc, _box(.05, .108, .008), "gun", Transform3D(Basis(Vector3.RIGHT, -.27), Vector3(0, -.111, -.389)), Color(0.008, 0.006, 0.005))
+	_put(misc, _box(.05, .108, .008), "gun", Transform3D(Basis(Vector3.RIGHT, -.27), Vector3(0, -.108, -.391)), Color(0.008, 0.006, 0.005))
 	_put(metal, _box(.003, .024, .004), "gun", Transform3D(Basis(), Vector3(0, -.033, -.012)))
 	_put(metal, _box(.004, .004, .04), "gun", Transform3D(Basis(), Vector3(0, -.046, -.012)))

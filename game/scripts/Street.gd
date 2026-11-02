@@ -134,7 +134,7 @@ func _apply_graphics_quality(quality: String) -> void:
 			env.ssil_radius = 2.5
 			env.ssil_intensity = 1.0
 			env.ssr_enabled = true
-			env.ssr_max_steps = 48
+			env.ssr_max_steps = 32
 			env.glow_enabled = true
 			env.glow_bloom = 0.06
 			env.glow_intensity = 0.55
@@ -157,6 +157,10 @@ func _apply_graphics_quality(quality: String) -> void:
 				moon_dir_light.shadow_enabled = true
 				moon_dir_light.shadow_blur = 1.5
 				moon_dir_light.light_energy = 0.55
+			if quality == "high":
+				env.ssil_enabled = false
+				env.volumetric_fog_enabled = false
+				env.ssr_enabled = false
 		"medium":
 			env.ssao_enabled = true
 			env.ssao_radius = 1.2

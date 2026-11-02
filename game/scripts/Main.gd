@@ -333,7 +333,7 @@ func _apply_graphics_quality(quality: String) -> void:
 			env.ssil_sharpness = 0.75
 			# SSR — зеркала, мокрые полы
 			env.ssr_enabled = true
-			env.ssr_max_steps = 64
+			env.ssr_max_steps = 32
 			env.ssr_fade_in = 0.10
 			env.ssr_fade_out = 3.5
 			env.ssr_depth_tolerance = 0.2
@@ -372,6 +372,11 @@ func _apply_graphics_quality(quality: String) -> void:
 				moon_light.shadow_enabled = true
 				moon_light.shadow_blur = 1.8
 				moon_light.light_energy = 0.55
+			# Высокое отличается от ультра самыми дорогими эффектами
+			if quality == "high":
+				env.ssil_enabled = false
+				env.volumetric_fog_enabled = false
+				env.ssr_enabled = false
 		"medium":
 			env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 			env.tonemap_exposure = 1.0
