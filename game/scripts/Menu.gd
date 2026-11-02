@@ -42,7 +42,7 @@ var dropped_flashlight:       SpotLight3D = null
 
 # ── Перемещающийся Скинвокер в лесу ──
 var monster_root:             Node3D = null
-var monster_sprite:           Sprite3D = null
+var monster_model:            SkinwalkerModel = null
 var monster_eye_light:        OmniLight3D = null
 var monster_step_audio:       AudioStreamPlayer3D = null
 var monster_growl_audio:      AudioStreamPlayer3D = null
@@ -52,7 +52,6 @@ var monster_state:            MonsterStalkState = MonsterStalkState.LURK_PEEK
 var monster_state_timer:      float = 0.0
 var monster_pos:              Vector3 = Vector3(-6.5, 0.0, -14.0)
 var monster_target_pos:       Vector3 = Vector3(5.5, 0.0, -13.0)
-var monster_walk_cycle_t:     float = 0.0
 var monster_last_step:        int = 0
 var monster_look_target:      Vector3 = Vector3.ZERO
 var monster_peek_tilt:        float = 0.0
@@ -72,7 +71,7 @@ var stalk_idx: int = 0
 
 # Скример при взгляде назад
 var jumpscare_monster:        Node3D = null
-var jumpscare_sprite:         Sprite3D = null
+var jumpscare_model:          SkinwalkerModel = null
 var jumpscare_eye_light:      OmniLight3D = null
 var jumpscare_flash:          ColorRect = null
 var is_jumpscare_active:      bool = false
@@ -81,14 +80,6 @@ var can_trigger_jumpscare:    bool = true
 var jumpscare_cooldown:       float = 0.0
 
 # Текстуры монстра
-var tex_m_front_idle:         Texture2D
-var tex_m_front_walk_0:       Texture2D
-var tex_m_front_walk_1:       Texture2D
-var tex_m_back:               Texture2D
-var tex_m_left_walk_0:        Texture2D
-var tex_m_left_walk_1:        Texture2D
-var tex_m_right_walk_0:       Texture2D
-var tex_m_right_walk_1:       Texture2D
 
 # UI элементы
 var selected_index:           int = 0
@@ -564,38 +555,15 @@ func _build_menu_road(parent: Node3D) -> void:
 			lamp_root.add_child(pool)
 
 func _setup_forest_monster() -> void:
-	_load_monster_textures()
-
 	monster_root = Node3D.new()
 	monster_root.name = "ForestMonster"
 	monster_pos = stalk_spots[0]
 	monster_root.position = monster_pos
 	add_child(monster_root)
 
-	monster_sprite = Sprite3D.new()
-	monster_sprite.name = "MonsterSprite"
-	monster_sprite.texture = tex_m_front_idle
-	monster_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	monster_sprite.pixel_size = 0.0028
-	monster_sprite.position = Vector3(0, 1.25, 0)
-	monster_sprite.shaded = true
-	monster_sprite.double_sided = true
-	monster_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	monster_root.add_child(monster_sprite)
-
-	# Светящиеся зловещие глаза во тьме
-	for eye_x in [-0.07, 0.07]:
-		var eye = MeshInstance3D.new()
-		var em = SphereMesh.new()
-		em.radius = 0.024
-		em.height = 0.048
-		var emat = StandardMaterial3D.new()
-		emat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		emat.albedo_color = Color(1.0, 0.22, 0.12)
-		em.material = emat
-		eye.mesh = em
-		eye.position = Vector3(eye_x, 1.92, -0.15)
-		monster_root.add_child(eye)
+	monster_model = SkinwalkerModel.new()
+	monster_model.name = "MonsterModel"
+	monster_root.add_child(monster_model)
 
 	# Ореол глаз в тумане
 	monster_eye_light = OmniLight3D.new()
@@ -624,17 +592,6 @@ func _setup_forest_monster() -> void:
 	monster_growl_audio.volume_db = -9.0
 	monster_root.add_child(monster_growl_audio)
 
-func _load_monster_textures() -> void:
-	const D = "res://assets/textures/enemy_character/"
-	tex_m_front_idle   = _try_load_tex(D + "monster_front.png")
-	tex_m_front_walk_0 = _try_load_tex(D + "monster_front_walk_0.png")
-	tex_m_front_walk_1 = _try_load_tex(D + "monster_front_walk_1.png")
-	tex_m_back         = _try_load_tex(D + "monster_back.png")
-	tex_m_left_walk_0  = _try_load_tex(D + "monster_left_walk_0.png")
-	tex_m_left_walk_1  = _try_load_tex(D + "monster_left_walk_1.png")
-	tex_m_right_walk_0 = _try_load_tex(D + "monster_right_walk_0.png")
-	tex_m_right_walk_1 = _try_load_tex(D + "monster_right_walk_1.png")
-
 func _try_load_tex(p: String) -> Texture2D:
 	if ResourceLoader.exists(p):
 		return load(p) as Texture2D
@@ -644,7 +601,7 @@ func _try_load_tex(p: String) -> Texture2D:
 #  5. Логика перемещения монстра по лесу
 # ──────────────────────────────────────────────────────────────────────────────
 func _update_forest_monster(delta: float) -> void:
-	if not monster_root or not monster_sprite:
+	if not monster_root or not monster_model:
 		return
 
 	monster_state_timer += delta
@@ -653,6 +610,7 @@ func _update_forest_monster(delta: float) -> void:
 	var eye_pulse = 1.3 + sin(elapsed_time * 4.0) * 0.7
 	if monster_eye_light:
 		monster_eye_light.light_energy = eye_pulse
+		monster_eye_light.position = monster_root.to_local(monster_model.get_head_position())
 
 	match monster_state:
 		MonsterStalkState.LURK_PEEK:
@@ -662,12 +620,9 @@ func _update_forest_monster(delta: float) -> void:
 			if to_cam.length_squared() > 0.1:
 				monster_look_target = to_cam.normalized()
 
-			# Дыхание монстра и покачивание головы
-			var breathe = sin(elapsed_time * 2.2) * 0.025
-			monster_sprite.position.y = 1.25 + breathe
-			monster_peek_tilt = sin(elapsed_time * 1.5) * deg_to_rad(6.0)
-			monster_sprite.rotation.z = monster_peek_tilt
-			monster_sprite.texture = tex_m_front_idle if tex_m_front_idle else tex_m_front_walk_0
+			# Смотрит на игрока, стоит и дёргается за деревом
+			monster_model.rotation.y = lerp_angle(monster_model.rotation.y, atan2(monster_look_target.x, monster_look_target.z), minf(1.0, delta * 5.0))
+			monster_model.update_motion(delta, "twitch" if fmod(elapsed_time, 7.0) < 2.5 else "idle", 0.0)
 
 			# Через 3.5 - 6.0 секунд крадётся к следующей точке леса
 			if monster_state_timer > randf_range(3.8, 5.8):
@@ -688,39 +643,21 @@ func _update_forest_monster(delta: float) -> void:
 				# Достиг дерева — останавливается выглядывать
 				monster_state = MonsterStalkState.LURK_PEEK
 				monster_state_timer = 0.0
-				monster_sprite.rotation.z = 0.0
 				return
 
 			var move_dir = to_target.normalized()
 			var move_speed = 3.2 # Плавная жуткая скорость
 			monster_root.position += move_dir * move_speed * delta
 
-			# Шаги и процедурная анимация ходьбы
-			monster_walk_cycle_t += delta * 7.5
-			var step_phase = int(monster_walk_cycle_t) % 2
+			# Шаги и 3D-анимация: монстр идёт крадучись, лицом по ходу движения
+			monster_model.rotation.y = lerp_angle(monster_model.rotation.y, atan2(move_dir.x, move_dir.z), minf(1.0, delta * 6.0))
+			monster_model.update_motion(delta, "stalk", move_speed)
+			var step_phase = int(monster_model.phase / PI)
 			if step_phase != monster_last_step:
 				monster_last_step = step_phase
 				if monster_step_audio and randf() < 0.65:
 					monster_step_audio.pitch_scale = randf_range(0.85, 1.15)
 					monster_step_audio.play()
-
-			var step_bob = abs(sin(monster_walk_cycle_t * PI)) * 0.045
-			monster_sprite.position.y = 1.25 - step_bob
-			monster_sprite.rotation.z = sin(monster_walk_cycle_t * PI) * 0.035
-
-			# Выбор направленной текстуры в зависимости от вектора движения относительно камеры
-			var to_cam = (cam_base_pos - monster_root.position).normalized()
-			var dot = move_dir.dot(to_cam)
-			var cross_y = move_dir.cross(to_cam).y
-
-			if dot > 0.55:
-				monster_sprite.texture = tex_m_front_walk_0 if step_phase == 0 else tex_m_front_walk_1
-			elif dot < -0.55:
-				monster_sprite.texture = tex_m_back if tex_m_back else tex_m_front_idle
-			elif cross_y > 0.0:
-				monster_sprite.texture = tex_m_left_walk_0 if step_phase == 0 else tex_m_left_walk_1
-			else:
-				monster_sprite.texture = tex_m_right_walk_0 if step_phase == 0 else tex_m_right_walk_1
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  6. Скример при повороте камеры назад в чащу
@@ -732,13 +669,9 @@ func _setup_jumpscare_system() -> void:
 	jumpscare_monster.visible = false
 	add_child(jumpscare_monster)
 
-	jumpscare_sprite = Sprite3D.new()
-	jumpscare_sprite.texture = tex_m_front_walk_0 if tex_m_front_walk_0 else tex_m_front_idle
-	jumpscare_sprite.pixel_size = 0.0035 # Огромный монстр прямо перед глазами
-	jumpscare_sprite.position = Vector3(0, 1.25, 0)
-	jumpscare_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	jumpscare_sprite.shaded = false
-	jumpscare_monster.add_child(jumpscare_sprite)
+	jumpscare_model = SkinwalkerModel.new()
+	jumpscare_model.rotation.y = PI
+	jumpscare_monster.add_child(jumpscare_model)
 
 	jumpscare_eye_light = OmniLight3D.new()
 	jumpscare_eye_light.light_color = Color(1.0, 0.1, 0.05)
@@ -776,6 +709,8 @@ func _trigger_jumpscare() -> void:
 func _update_jumpscare(delta: float) -> void:
 	if is_jumpscare_active:
 		jumpscare_timer += delta
+		if jumpscare_model:
+			jumpscare_model.apply_scare_pose(jumpscare_timer)
 		if jumpscare_timer > 1.2:
 			is_jumpscare_active = false
 			if jumpscare_monster:

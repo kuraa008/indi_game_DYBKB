@@ -2615,6 +2615,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R) or \
 		   (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A):
 			var cur_scene = get_tree().current_scene
+			# Отмечаем до перезапуска: после него у узла уже нет вьюпорта
+			get_viewport().set_input_as_handled()
 			clear_end_screens()
 			if cur_scene and cur_scene.name == "DebugEditor" and cur_scene.has_method("restart_playtest"):
 				cur_scene.restart_playtest()
@@ -2622,7 +2624,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				if GameManager:
 					GameManager.reset_state()
 				get_tree().reload_current_scene()
-			get_viewport().set_input_as_handled()
 			return
 		elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_7:
 			var cur_scene = get_tree().current_scene
