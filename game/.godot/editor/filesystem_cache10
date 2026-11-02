@@ -1,5 +1,5 @@
 9cad1ddce9e5a63143ba340c9520626b
-::res://::1793451056
+::res://::1793609668
 ai.json::JSON::-1::1793451042::0::1::::<><><>0<>0<><>::
 AI_REWORK.md::TextFile::-1::1793451042::0::1::::<><><>0<>0<><>::
 export_presets.cfg::TextFile::-1::1793451042::0::1::::<><><>0<>0<><>::
@@ -152,7 +152,7 @@ real_backpack_bag.png::CompressedTexture2D::6086057435866366062::1793451053::179
 skinwalker_bed_stare.jpg::CompressedTexture2D::4468942162560772609::1793451053::1793451053::1::::<><><>0<>0<>3f3c1b12df4c587c7e06e1099d7854d1<>res://.godot/imported/skinwalker_bed_stare.jpg-e4022683c23a876d24edfbc8e21d6b58.ctex::
 skinwalker_closet_stare.jpg::CompressedTexture2D::1087954721154640294::1793451053::1793451053::1::::<><><>0<>0<>b128a087e4d332d9f62715f29cb20247<>res://.godot/imported/skinwalker_closet_stare.jpg-51b1703810ebebf86fb1824e89fd4b8b.ctex::
 skinwalker_jumpscare_sheet.png::CompressedTexture2D::7337332670167494044::1793451053::1793451053::1::::<><><>0<>0<>f4a9cf02902387fabc963c64cf2c9377<>res://.godot/imported/skinwalker_jumpscare_sheet.png-b9879cc48a25dadd074abe98b97f273b.ctex::
-::res://release/::1793451055
+::res://release/::1793613507
 photo_2026-09-23_18-51-32.jpg::CompressedTexture2D::3816221704335317689::1793451055::1793451055::1::::<><><>0<>0<>ef1ee10e02a8bd7493158f09d924989a<>res://.godot/imported/photo_2026-09-23_18-51-32.jpg-c44eaab593dabfdaaddd44f2e3246176.ctex::
 ::res://scenes/::1793451055
 1level.json::JSON::-1::1793451055::0::1::::<><><>0<>0<><>::
@@ -170,7 +170,7 @@ UI.tscn::PackedScene::4635261537894::1793451055::0::1::::<><><>0<>0<><>::res://s
 Карта_4.json::JSON::-1::1793451055::0::1::::<><><>0<>0<><>::
 Карта_6.json::JSON::-1::1793451055::0::1::::<><><>0<>0<><>::
 Карта_6_fix.json::JSON::-1::1793451055::0::1::::<><><>0<>0<><>::
-::res://scratch/::1793608442
+::res://scratch/::1793614026
 ai_check.log::TextFile::-1::1793451055::0::1::::<><><>0<>0<><>::
 ai_compile.log::TextFile::-1::1793451055::0::1::::<><><>0<>0<><>::
 ai_compile_final.log::TextFile::-1::1793451055::0::1::::<><><>0<>0<><>::
@@ -206,7 +206,7 @@ test_hiding_ai.gd::GDScript::9113484663537085362::1793451055::0::1::::<>Node3D<>
 test_hiding_ai.tscn::PackedScene::-1::1793451055::0::1::::<><><>0<>0<><>::res://scratch/test_hiding_ai.gd
 test_nav.gd::GDScript::4561450327546315244::1793451055::0::1::::<>SceneTree<><>0<>0<><>::
 verify_gameplay.gd::GDScript::231992890874697109::1793451055::0::1::::<>SceneTree<><>0<>0<><>::
-::res://scripts/::1793607956
+::res://scripts/::1793613999
 AcousticWave.gd::GDScript::7266530014951331579::1793451055::0::1::::AcousticWave<>Node3D<><>0<>0<><>::
 AIReport.gd::GDScript::5568813671642128862::1793451055::0::1::::<>Node<><>0<>0<><>::
 BreathSystem.gd::GDScript::1325556813672660613::1793451056::0::1::::<>Node<><>0<>0<><>::
@@ -215,7 +215,7 @@ DebugOverlay.gd::GDScript::9171958303946780282::1793451056::0::1::::DebugOverlay
 DevConsole.gd::GDScript::7067894607587320147::1793451056::0::1::::DevConsole<>CanvasLayer<><>0<>0<><>::
 Door.gd::GDScript::8281542739911498079::1793451056::0::1::::<>Node3D<><>0<>0<><>::
 ElectricMaglock.gd::GDScript::376417830799885506::1793451056::0::1::::ElectricMaglock<>Node3D<><>0<>0<><>::
-Enemy.gd::GDScript::5109835462752107195::1793607752::0::1::::<>EnemyBehavior<><>0<>0<><>::
+Enemy.gd::GDScript::5109835462752107195::1793613447::0::1::::<>EnemyBehavior<><>0<>0<><>::
 EnemyBehavior.gd::GDScript::1672210396301440615::1793451056::0::1::::EnemyBehavior<>CharacterBody3D<><>0<>0<><>::
 EnemyBrain.gd::GDScript::54221768219436543::1793451056::0::1::::<>RefCounted<><>0<>0<><>::
 EnemyNavigator.gd::GDScript::7038467430972823072::1793451056::0::1::::<>RefCounted<><>0<>0<><>::
@@ -243,12 +243,12 @@ PlayerHands.gd::GDScript::2005644641869559890::1793451056::0::1::::PlayerHands<>
 Polygon.gd::GDScript::6699638063642807243::1793451056::0::1::::<>Node3D<><>0<>0<><>::
 PrefabBuilder.gd::GDScript::1075040918250479245::1793451056::0::1::::PrefabBuilder<>RefCounted<><>0<>0<><>::
 Safe.gd::GDScript::6085731059991066714::1793451056::0::1::::Safe<>StaticBody3D<><>0<>0<><>::
-SkinwalkerModel.gd::GDScript::3096818118725554578::1793608409::0::1::::SkinwalkerModel<>Node3D<><>0<>0<><>::
+SkinwalkerModel.gd::GDScript::3096818118725554578::1793613470::0::1::::SkinwalkerModel<>Node3D<><>0<>0<><>::
 SkinwalkerScare.gd::GDScript::4140892585354575753::1793608225::0::1::::SkinwalkerScare<>CanvasLayer<><>0<>0<><>::
 Street.gd::GDScript::7420988752561744488::1793451056::0::1::::<>Node3D<><>0<>0<><>::
 SurvivorBot.gd::GDScript::4926748528076771619::1793451056::0::1::::<>CharacterBody3D<><>0<>0<><>::
 TextureHelper.gd::GDScript::6522454199829133322::1793451056::0::1::::TextureHelper<>RefCounted<><>0<>0<><>::
-UI.gd::GDScript::606941073428301889::1793607956::0::1::::<>CanvasLayer<><>0<>0<><>::
+UI.gd::GDScript::606941073428301889::1793613999::0::1::::<>CanvasLayer<><>0<>0<><>::
 WirePuzzleUI.gd::GDScript::5305968535705123180::1793451056::0::1::::<>Control<><>0<>0<><>::
-::res://shaders/::1793451056
-horror_cinematic.gdshader::Shader::2891616367492711484::1793451056::0::1::::<><><>0<>0<><>::
+::res://shaders/::1793613906
+horror_cinematic.gdshader::Shader::2891616367492711484::1793613906::0::1::::<><><>0<>0<><>::

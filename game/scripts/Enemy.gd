@@ -6,6 +6,7 @@ var model:          SkinwalkerModel
 
 var walk_cycle_t:    float = 0.0
 var last_step_phase: int = 0
+var _clearance_timer: float = 0.0
 var step_audio:      AudioStreamPlayer3D
 var voice_audio:     AudioStreamPlayer3D = null
 var creepy_sounds:   Array[AudioStream] = []
@@ -173,6 +174,11 @@ func _animate(delta: float) -> void:
 	elif working or is_hunting:
 		gait = "stalk"
 
+	_clearance_timer -= delta
+	if _clearance_timer <= 0.0:
+		_clearance_timer = 0.12
+		model.set_clearance(_measure_clearance())
+
 	var rage: float = hunt_rage_buildup * 0.5 if is_hunting else 0.0
 	model.update_motion(delta, gait, move_vel if is_moving else 0.0, rage)
 
@@ -214,6 +220,27 @@ func _animate(delta: float) -> void:
 	if creepy_timer <= 0.0:
 		creepy_timer = randf_range(8.0, 16.0)
 		play_creepy_voice()
+
+# Сколько места над головой здесь и чуть впереди: потолки по лучу, двери по расстоянию
+func _measure_clearance() -> float:
+	var best := 4.0
+	var space := get_world_3d().direct_space_state
+	var fwd := -global_transform.basis.z
+	for off in [0.0, 0.7]:
+		var base: Vector3 = global_position + fwd * float(off)
+		var q := PhysicsRayQueryParameters3D.create(base + Vector3.UP * 1.0, base + Vector3.UP * 3.2, 1, [get_rid()])
+		var hit := space.intersect_ray(q)
+		if hit:
+			best = minf(best, float(hit.position.y) - global_position.y)
+	for d in get_tree().get_nodes_in_group("doors"):
+		if d is Node3D:
+			var dp: Vector3 = (d as Node3D).global_position - global_position
+			dp.y = 0.0
+			if dp.length_squared() < 1.7:
+				best = minf(best, 2.12)
+				break
+	return best
+
 
 func reset_to_patrol() -> void:
 	reset_ai()

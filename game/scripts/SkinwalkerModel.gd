@@ -5,7 +5,8 @@ class_name SkinwalkerModel
 # Геометрия строится один раз и кэшируется, все экземпляры используют один ArrayMesh.
 # Лицо модели смотрит вдоль локальной +Z.
 
-const MODEL_SCALE: float = 0.82  # Высота ~2.15 м — проходит в двери 2.2 м
+const MODEL_SCALE: float = 1.0   # Высота ~2.6 м: в двери и под низкие потолки пригибается
+const FULL_HEIGHT: float = 2.63 * MODEL_SCALE
 const THIGH: float = 0.56
 const SHIN: float = 0.56
 
@@ -44,6 +45,8 @@ var _gseed := [0.0, 0.0, 0.0, 0.0, 0.0]
 var _look_yaw := 0.0
 var _gait := "idle"
 var _hands_on := true
+var _stoop := 0.0
+var _stoop_target := 0.0
 
 
 func _init() -> void:
@@ -114,6 +117,7 @@ func _init() -> void:
 func update_motion(delta: float, gait: String, move_speed: float, rage: float = 0.0) -> void:
 	_gait = gait if GAITS.has(gait) else "idle"
 	_t += delta
+	_stoop = lerpf(_stoop, _stoop_target, minf(1.0, delta * 7.0))
 	var tg: Dictionary = GAITS[_gait]
 	var k := minf(1.0, delta * 3.2)
 	for key in tg:
@@ -136,6 +140,16 @@ func set_look_target(world_point: Variant) -> void:
 		if local.z > 0.0:
 			yaw = clampf(atan2(local.x, local.z), -1.05, 1.05)
 	_look_yaw = lerp_angle(_look_yaw, yaw, 0.12)
+
+
+# Высота свободного места над полом: если монстр не помещается, он пригибается
+func set_clearance(height: float) -> void:
+	_stoop_target = clampf((FULL_HEIGHT + 0.08 - height) / 0.55, 0.0, 1.0)
+
+
+func get_top_height() -> float:
+	var pose := skeleton.get_bone_global_pose(_b["head"])
+	return (skeleton.global_transform * (pose * Vector3(0, 0.346, -0.024))).y - global_position.y
 
 
 func set_hands_animated(on: bool) -> void:
@@ -232,9 +246,9 @@ func _loco_pose(delta: float) -> Dictionary:
 	var pz := _idle_pose()
 	var amp: float = _p["amp"]
 	var limp: float = _p["limp"]
-	var knee: float = _p["knee"]
+	var knee: float = float(_p["knee"]) + _stoop * 1.3
 	var lean: float = _p["lean"]
-	var hunch: float = _p["hunch"]
+	var hunch: float = float(_p["hunch"]) + _stoop * 1.25
 	var k := minf(1.0, _rate / 2.6)
 	var s := sin(phase)
 	var c := cos(phase)

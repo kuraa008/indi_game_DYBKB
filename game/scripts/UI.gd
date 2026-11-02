@@ -38,6 +38,10 @@ var end_screens:       Array[Node] = []
 var fear_vignette: ColorRect
 var cinematic_lens_rect: ColorRect = null
 var cinematic_shader_mat: ShaderMaterial = null
+var vhs_rec_label: Label = null
+var vhs_counter_label: Label = null
+var vhs_date_label: Label = null
+var vhs_time := 0.0
 
 
 # Укрытия (шкаф и кровать)
@@ -274,11 +278,57 @@ func _build_cinematic_lens_postprocess() -> void:
 		cinematic_shader_mat.shader = load("res://shaders/horror_cinematic.gdshader")
 		cinematic_lens_rect.material = cinematic_shader_mat
 
-	if GameManager:
-		cinematic_lens_rect.visible = (GameManager.graphics_quality != "low")
-
 	root_ctrl.add_child(cinematic_lens_rect)
 	_on_gfx_quality_changed(GameManager.graphics_quality if GameManager else "ultra")
+	_build_vhs_hud()
+
+# Надписи видеокамеры: мигающий REC, счётчик плёнки, дата и время записи
+func _build_vhs_hud() -> void:
+	var font := SystemFont.new()
+	font.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
+	font.font_weight = 700
+	var make := func(lbl_name: String, size: int, col: Color) -> Label:
+		var l := Label.new()
+		l.name = lbl_name
+		l.add_theme_font_override("font", font)
+		l.add_theme_font_size_override("font_size", size)
+		l.add_theme_color_override("font_color", col)
+		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+		l.add_theme_constant_override("shadow_offset_x", 2)
+		l.add_theme_constant_override("shadow_offset_y", 2)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root_ctrl.add_child(l)
+		return l
+
+	vhs_rec_label = make.call("VhsRec", 28, Color(0.95, 0.12, 0.08, 0.92))
+	vhs_rec_label.text = "● REC"
+	vhs_rec_label.set_anchor_and_offset(SIDE_LEFT, 0.0, 28)
+	vhs_rec_label.set_anchor_and_offset(SIDE_TOP, 0.0, 56)
+
+	vhs_counter_label = make.call("VhsCounter", 20, Color(0.92, 0.92, 0.86, 0.82))
+	vhs_counter_label.set_anchor_and_offset(SIDE_LEFT, 0.0, 28)
+	vhs_counter_label.set_anchor_and_offset(SIDE_TOP, 0.0, 94)
+
+	vhs_date_label = make.call("VhsDate", 22, Color(0.92, 0.92, 0.86, 0.82))
+	vhs_date_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	vhs_date_label.offset_left = -28
+	vhs_date_label.offset_right = -28
+	vhs_date_label.offset_top = -96
+	vhs_date_label.offset_bottom = -40
+	vhs_date_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	vhs_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_update_vhs_hud(0.0)
+
+func _update_vhs_hud(delta: float) -> void:
+	if not vhs_rec_label:
+		return
+	vhs_time += delta
+	vhs_rec_label.modulate.a = 1.0 if fmod(vhs_time, 1.0) < 0.6 else 0.0
+	var sec := int(vhs_time)
+	vhs_counter_label.text = "SP  %d:%02d:%02d" % [sec / 3600, (sec / 60) % 60, sec % 60]
+	# Запись начинается ночью 31 октября и идёт в реальном времени
+	var clock := 23 * 3600 + 47 * 60 + sec
+	vhs_date_label.text = "%02d:%02d:%02d\nОКТ. 31 1994" % [(clock / 3600) % 24, (clock / 60) % 60, clock % 60]
 
 func _build_stamina_ui() -> void:
 	stamina_container = PanelContainer.new()
@@ -2108,6 +2158,7 @@ func _icon(t: String, sz: int) -> Label:
 func _process(delta: float) -> void:
 	if GameManager.game_ended:
 		return
+	_update_vhs_hud(delta)
 	if hint_label.visible:
 		hint_timer -= delta
 		if hint_timer <= 0.6:
@@ -2283,8 +2334,6 @@ func _refresh_inventory() -> void:
 	_flash_hotbar()
 
 func _on_gfx_quality_changed(quality: String) -> void:
-	if cinematic_lens_rect:
-		cinematic_lens_rect.visible = (quality != "low")
 	if cinematic_shader_mat:
 		var high := quality in ["ultra", "high"]
 		cinematic_shader_mat.set_shader_parameter("vignette_opacity", 0.35 if high else 0.50)
