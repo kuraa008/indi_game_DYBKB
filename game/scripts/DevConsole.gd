@@ -626,7 +626,7 @@ func _cmd_map(args: Array[String]) -> void:
 		for i in range(json_maps.size()):
 			var m = json_maps[i]
 			print_log("[b][color=#55ffdd][%d][/color][/b] [color=#ffffff]%s[/color] [color=#778899](%s)[/color]" % [i + 1, m["name"], m["path"]])
-		print_log("[color=#ffdd88]Также доступны сцены:[/color] main, polygon, skinwalkerfun, editor, menu, street")
+		print_log("[color=#ffdd88]Также доступны сцены:[/color] main, polygon, skinwalkerfun, editor, menu, street, intro")
 		print_log("[color=#88ffaa]Для загрузки введите:[/color] map 1  [color=#88aacc]или[/color]  map prototype map")
 		return
 
@@ -653,10 +653,15 @@ func _cmd_map(args: Array[String]) -> void:
 			close_console()
 			get_tree().change_scene_to_file("res://scenes/Menu.tscn")
 			return
-		"street", "cutscene":
-			print_log("[color=#55ffaa]Загрузка шоссе/пролога...[/color]")
+		"street":
+			print_log("[color=#55ffaa]Загрузка улицы (побег на машине)...[/color]")
 			close_console()
 			get_tree().change_scene_to_file("res://scenes/Street.tscn")
+			return
+		"intro", "cutscene":
+			print_log("[color=#55ffaa]Загрузка вступления (авария на шоссе)...[/color]")
+			close_console()
+			get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
 			return
 
 	# Проверка по порядковому номеру карты (например: map 1)

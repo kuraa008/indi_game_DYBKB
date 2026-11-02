@@ -1401,8 +1401,11 @@ func _process(delta: float) -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 func _start_game() -> void:
 	if GameManager:
-		GameManager.intro_cutscene_played = true
 		GameManager.active_map_path = "res://scenes/1level.json"
+		# Вступление (авария на шоссе) показывается один раз за запуск игры
+		if not GameManager.intro_cutscene_played:
+			get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
+			return
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 func _quit() -> void:
