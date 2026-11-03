@@ -81,10 +81,10 @@ func _on_quality_for_lights(quality: String) -> void:
 func _load_creepy_sounds() -> void:
 	creepy_sounds.clear()
 	var sound_paths = [
-		"res://assets/creepy_groan.mp3",
-		"res://assets/creepy_mutter.mp3",
-		"res://assets/creepy_laugh.mp3",
-		"res://assets/creepy_whisper.mp3"
+		"res://assets/audio/monster/monster_growl.wav",
+		"res://assets/audio/monster/monster_mimic.wav",
+		"res://assets/audio/monster/monster_clicks.wav",
+		"res://assets/audio/monster/monster_breath.wav"
 	]
 	for p in sound_paths:
 		if ResourceLoader.exists(p):
@@ -101,20 +101,15 @@ func play_creepy_voice(specific_type: String = "") -> void:
 	var pick_snd: AudioStream = null
 	match specific_type:
 		"laugh":
-			if ResourceLoader.exists("res://assets/creepy_laugh.mp3"):
-				pick_snd = load("res://assets/creepy_laugh.mp3")
+			pick_snd = _try_load_res("res://assets/audio/monster/monster_clicks.wav")
 		"mutter":
-			if ResourceLoader.exists("res://assets/creepy_mutter.mp3"):
-				pick_snd = load("res://assets/creepy_mutter.mp3")
+			pick_snd = _try_load_res("res://assets/audio/monster/monster_mimic.wav")
 		"groan":
-			if ResourceLoader.exists("res://assets/creepy_groan.mp3"):
-				pick_snd = load("res://assets/creepy_groan.mp3")
+			pick_snd = _try_load_res("res://assets/audio/monster/monster_growl.wav")
 		"whisper":
-			if ResourceLoader.exists("res://assets/creepy_whisper.mp3"):
-				pick_snd = load("res://assets/creepy_whisper.mp3")
+			pick_snd = _try_load_res("res://assets/audio/monster/monster_breath.wav")
 		_:
 			pick_snd = creepy_sounds.pick_random()
-
 	if not pick_snd:
 		pick_snd = creepy_sounds.pick_random()
 

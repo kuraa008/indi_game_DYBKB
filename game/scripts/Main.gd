@@ -75,6 +75,9 @@ func _ready() -> void:
 	# Выпекаем навмеш с открытыми дверными проёмами
 	await get_tree().physics_frame
 	_bake_nav_mesh()
+	# Сетка считается в фоне. Враги начинают ходить, когда она готова
+	await nav_region.bake_finished
+	nav_region.navigation_mesh = nav_region.navigation_mesh
 	# Wait for actual geometry, not just the initial empty map iteration.
 	var nav_map := nav_region.get_navigation_map()
 	for i in range(120):
@@ -472,9 +475,8 @@ func _bake_nav_mesh() -> void:
 					disabled_door_colliders.append(node)
 
 	# Bake only the playable bounds, not the entire kilometre-wide terrain.
-	nav_region.bake_navigation_mesh(false)
-	# Explicitly publish the finished resource, including its polygons.
-	nav_region.navigation_mesh = nav_region.navigation_mesh
+	# Коллизии читаются сразу в этом вызове, расчёт уходит в отдельный поток
+	nav_region.bake_navigation_mesh(true)
 
 	# Мгновенно возвращаем физическую коллизию дверей для игрока и монстра
 	for col in disabled_door_colliders:

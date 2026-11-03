@@ -506,6 +506,48 @@ func set_resolution_mode(mode: String) -> void:
 	var screen_rect = DisplayServer.screen_get_usable_rect()
 	DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - win_size) / 2)
 
+# Переход на другую карту. Живёт в автозагрузке, потому что дверь исчезает вместе со старой сценой.
+# Затемнение короткое, а светлеть экран начинает только когда новая карта уже загрузилась.
+func start_level_transition(map_path: String) -> void:
+	var tree := get_tree()
+	var door_sound: AudioStream = load("res://assets/audio/monster/basement_door_open.wav")
+	var audio := AudioStreamPlayer.new()
+	audio.name = "LevelTransitionAudio"
+	audio.stream = door_sound
+	audio.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(audio)
+	audio.play()
+	audio.finished.connect(audio.queue_free)
+
+	var layer := CanvasLayer.new()
+	layer.layer = 126
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0, 0, 0, 0)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(shade)
+	add_child(layer)
+
+	var dark := layer.create_tween()
+	dark.tween_property(shade, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await dark.finished
+
+	reset_state(true)
+	active_map_path = map_path
+	intro_cutscene_played = true
+	var old_scene := tree.current_scene
+	tree.change_scene_to_file("res://scenes/Main.tscn")
+	while tree.current_scene == null or tree.current_scene == old_scene or not is_instance_valid(player_ref):
+		await tree.process_frame
+	# Первый кадр новой карты рисуется дольше обычного, его лучше оставить за шторкой
+	await tree.process_frame
+	await tree.process_frame
+
+	var light := layer.create_tween()
+	light.tween_property(shade, "color:a", 0.0, 0.45)
+	await light.finished
+	layer.queue_free()
+
 func toggle_legacy_graphics() -> bool:
 	is_legacy_graphics = not is_legacy_graphics
 	emit_signal("legacy_graphics_changed", is_legacy_graphics)
@@ -1013,9 +1055,9 @@ func trigger_pain(who: String, reason: String) -> void:
 		emit_signal("pain_triggered", "monster", 40, reason)
 		emit_signal("score_updated", player_score, monster_score, "Штраф Скинвокеру: " + reason)
 
-		if tree and tree.current_scene and ResourceLoader.exists("res://assets/audio/skinwalker_scream.wav"):
+		if tree and tree.current_scene and ResourceLoader.exists("res://assets/audio/monster/monster_growl.wav"):
 			var p = AudioStreamPlayer.new()
-			p.stream = load("res://assets/audio/skinwalker_scream.wav")
+			p.stream = load("res://assets/audio/monster/monster_growl.wav")
 			p.volume_db = -5.0
 			tree.current_scene.add_child(p)
 			p.play()

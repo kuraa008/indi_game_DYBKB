@@ -925,9 +925,9 @@ func alert_player_cough(pos: Vector3) -> void:
 		stakeout_timer = 99.0
 		return
 
-	if ResourceLoader.exists("res://assets/audio/skinwalker_scream.wav"):
+	if ResourceLoader.exists("res://assets/audio/monster/monster_growl.wav"):
 		var asp = AudioStreamPlayer3D.new()
-		asp.stream = load("res://assets/audio/skinwalker_scream.wav")
+		asp.stream = load("res://assets/audio/monster/monster_growl.wav")
 		asp.unit_size = 6.0
 		asp.max_distance = 45.0
 		asp.volume_db = 4.0

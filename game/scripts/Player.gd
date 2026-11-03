@@ -757,6 +757,7 @@ func _physics_process(delta: float) -> void:
 	var target_cap_h  := 1.0  if is_crouching else 1.75
 	var target_head_y := 0.88 if is_crouching else 1.62
 	col_shape.height    = lerp(col_shape.height,    target_cap_h,  delta * 8.0)
+	col_node.position.y = col_shape.height * 0.5 + 0.005
 	head.position.y     = lerp(head.position.y,     target_head_y, delta * 8.0)
 
 	# ── Движение с органичной инерцией (WASD + Левый стик) ───────
