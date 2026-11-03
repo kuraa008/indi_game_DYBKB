@@ -52,6 +52,16 @@ var is_legacy_graphics: bool = false
 var intro_cutscene_played: bool = false
 
 # ──────────────────────────────────────────────
+#  Настройки игрока (хранятся между запусками)
+# ──────────────────────────────────────────────
+const SETTINGS_PATH: String = "user://settings.cfg"
+const RESOLUTION_MODES: Array[String] = ["auto", "1280x720", "1600x900", "1920x1080"]
+var vhs_enabled: bool = true
+var sound_level: int = 80
+var mouse_sensitivity: float = 1.0
+var resolution_mode: String = "auto"
+
+# ──────────────────────────────────────────────
 #  Случайный шифр для сейфа и записок
 # ──────────────────────────────────────────────
 var safe_code: String = ""
@@ -242,6 +252,7 @@ func _process_director_ai(delta: float) -> void:
 
 func _ready() -> void:
 	_setup_gamepad_input_map()
+	load_settings()
 	generate_new_safe_code()
 	var ai_report = preload("res://scripts/AIReport.gd").new()
 	ai_report.name = "AIReport"
@@ -370,6 +381,47 @@ func toggle_graphics_quality() -> String:
 func set_graphics_quality(quality: String) -> void:
 	graphics_quality = quality
 	emit_signal("graphics_quality_changed", graphics_quality)
+
+func load_settings() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) == OK:
+		vhs_enabled = bool(cfg.get_value("video", "vhs", vhs_enabled))
+		graphics_quality = str(cfg.get_value("video", "quality", graphics_quality))
+		is_legacy_graphics = bool(cfg.get_value("video", "legacy_models", is_legacy_graphics))
+		resolution_mode = str(cfg.get_value("video", "resolution", resolution_mode))
+		sound_level = int(cfg.get_value("audio", "level", sound_level))
+		mouse_sensitivity = float(cfg.get_value("input", "sensitivity", mouse_sensitivity))
+	set_sound_level(sound_level)
+	set_resolution_mode(resolution_mode)
+
+func save_settings() -> void:
+	var cfg = ConfigFile.new()
+	cfg.set_value("video", "vhs", vhs_enabled)
+	cfg.set_value("video", "quality", graphics_quality)
+	cfg.set_value("video", "legacy_models", is_legacy_graphics)
+	cfg.set_value("video", "resolution", resolution_mode)
+	cfg.set_value("audio", "level", sound_level)
+	cfg.set_value("input", "sensitivity", mouse_sensitivity)
+	cfg.save(SETTINGS_PATH)
+
+func set_sound_level(level: int) -> void:
+	sound_level = clampi(level, 0, 100)
+	AudioServer.set_bus_volume_db(0, linear_to_db(sound_level / 100.0))
+	AudioServer.set_bus_mute(0, sound_level == 0)
+
+func set_resolution_mode(mode: String) -> void:
+	resolution_mode = mode if mode in RESOLUTION_MODES else "auto"
+	if DisplayServer.get_name() == "headless":
+		return
+	if resolution_mode == "auto":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	var parts = resolution_mode.split("x")
+	var win_size = Vector2i(int(parts[0]), int(parts[1]))
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(win_size)
+	var screen_rect = DisplayServer.screen_get_usable_rect()
+	DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - win_size) / 2)
 
 func toggle_legacy_graphics() -> bool:
 	is_legacy_graphics = not is_legacy_graphics

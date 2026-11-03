@@ -780,7 +780,7 @@ func _show_escape_screen() -> void:
 	add_child(canvas)
 
 	var bg = ColorRect.new()
-	bg.color = Color(0.01, 0.05, 0.02, 0.94)
+	bg.color = Color(0.0, 0.0, 0.0, 0.94)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(bg)
 
@@ -793,8 +793,9 @@ func _show_escape_screen() -> void:
 	var title = Label.new()
 	title.text = 'ТЫ ВЫБРАЛСЯ!'
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override('font_size', 56)
-	title.add_theme_color_override('font_color', Color(0.25, 0.95, 0.40))
+	title.add_theme_font_override('font', VHSOverlay.tracked_font(6))
+	title.add_theme_font_size_override('font_size', 34)
+	title.add_theme_color_override('font_color', Color(0.9, 0.91, 0.88))
 	vb.add_child(title)
 
 	var desc = Label.new()
@@ -802,7 +803,7 @@ func _show_escape_screen() -> void:
 и силуэт Скинвокера во тьме, вы скрылись в ночи.'
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.add_theme_font_size_override('font_size', 16)
-	desc.add_theme_color_override('font_color', Color(0.85, 0.90, 0.95))
+	desc.add_theme_color_override('font_color', Color(0.52, 0.53, 0.5))
 	vb.add_child(desc)
 
 	var spacer = Control.new()
@@ -822,7 +823,7 @@ func _show_escape_screen() -> void:
 	btn_hb.add_child(btn_again)
 
 	var btn_menu = Button.new()
-	btn_menu.text = 'В ГЛАВНОЕ МЕНЮ (ESC)'
+	btn_menu.text = 'В ГЛАВНОЕ МЕНЮ  ESC'
 	btn_menu.custom_minimum_size = Vector2(220, 46)
 	btn_menu.add_theme_font_size_override('font_size', 16)
 	btn_menu.pressed.connect(func(): get_tree().change_scene_to_file('res://scenes/Menu.tscn'))

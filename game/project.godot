@@ -28,6 +28,7 @@ driver/enable_input=true
 [autoload]
 
 GameManager="*res://scripts/GameManager.gd"
+VHSOverlay="*res://scripts/VHSOverlay.gd"
 
 [display]
 
@@ -38,6 +39,10 @@ window/stretch/mode="canvas_items"
 [dotnet]
 
 project/assembly_name="Escape in Skinwalker"
+
+[gui]
+
+theme/custom="res://assets/vhs_theme.tres"
 
 [input]
 

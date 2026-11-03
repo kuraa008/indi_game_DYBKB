@@ -79,7 +79,7 @@ func _play_locked_sound() -> void:
 
 func get_interaction_hint() -> String:
 	if _is_locked_on_map2():
-		return "[🔒] Земной люк заперт снаружи"
+		return "[] Земной люк заперт снаружи"
 	var action = "Закрыть подвал" if is_open else "Открыть двери подвала"
 	return "[ЛКМ / RT] " + action
 
@@ -88,7 +88,7 @@ func interact(opener: Node = null) -> void:
 		_play_locked_sound()
 		var gm = get_node_or_null("/root/GameManager")
 		if gm and gm.ui_ref and gm.ui_ref.has_method("show_hint"):
-			gm.ui_ref.call("show_hint", "🔒 Земной люк наглухо заперт снаружи и пока не открывается...", 3.0)
+			gm.ui_ref.call("show_hint", "Земной люк наглухо заперт снаружи и пока не открывается...", 3.0)
 		return
 
 	if is_animating:

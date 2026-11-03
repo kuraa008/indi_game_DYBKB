@@ -91,11 +91,11 @@ func _build_ui() -> void:
 
 	# Верхняя полоска состояния
 	status_lbl = Label.new()
-	status_lbl.text = "СОЕДИНИТЕ ЦВЕТНЫЕ ПРОВОДА ДЛЯ ПОДАЧИ ПИТАНИЯ"
+	status_lbl.text = "СОЕДИНИ ПРОВОДА ОДНОГО ЦВЕТА"
 	status_lbl.position = Vector2(px + 20, py + 18)
 	status_lbl.size = Vector2(pw - 80, 24)
 	status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status_lbl.add_theme_font_size_override("font_size", 13)
+	status_lbl.add_theme_font_size_override("font_size", 16)
 	status_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.95))
 	add_child(status_lbl)
 

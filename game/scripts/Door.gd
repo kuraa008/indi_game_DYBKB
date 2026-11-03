@@ -671,8 +671,8 @@ func get_interaction_hint() -> String:
 		if _is_exit_door():
 			return "[ЛКМ / RT]  Открыть выход"
 		if absf(current_open_angle) < 45.0:
-			return "[ЛКМ / RT] Закрыть  •  [Колесико] Щель: %d°" % int(abs(current_open_angle))
-		return "[ЛКМ / RT]  Закрыть дверь  •  [Колесико] Прикрыть"
+			return "[ЛКМ / RT] Закрыть    [Колесико] Щель: %d°" % int(abs(current_open_angle))
+		return "[ЛКМ / RT]  Закрыть дверь    [Колесико] Прикрыть"
 
 	var is_exit = _is_exit_door()
 	var d_type = _get_door_type()
@@ -736,10 +736,10 @@ func get_interaction_hint() -> String:
 
 	if is_hatch:
 		if _is_level_2():
-			return "[🔒] Земной люк заперт снаружи"
+			return "[] Земной люк заперт снаружи"
 		return "[ЛКМ / RT]  Открыть люк"
 
-	return "[ЛКМ / RT] Открыть  •  [Колесико] Приоткрыть"
+	return "[ЛКМ / RT] Открыть    [Колесико] Приоткрыть"
 
 func get_escape_checklist() -> Dictionary:
 	var boards_done = not requires_boards or door_boards_broken or GameManager.door_boards_broken
@@ -1232,7 +1232,7 @@ func _toggle_simple_door(opener: Node3D = null) -> void:
 			is_animating = false
 			_play_locked_sound()
 			if GameManager and GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
-				GameManager.ui_ref.call("show_hint", "🔒 Люк заперт снаружи и пока не открывается...", 3.0)
+				GameManager.ui_ref.call("show_hint", "Люк заперт снаружи и пока не открывается...", 3.0)
 			return
 		is_open = not is_open
 		var target_rot_node: Node3D = hinge_node if hinge_node else find_child("Panel", true, false)
@@ -1728,7 +1728,7 @@ func _teleport_to_level_2() -> void:
 
 	# 2. Подсказка на экране
 	if GameManager and GameManager.ui_ref and is_instance_valid(GameManager.ui_ref) and GameManager.ui_ref.has_method("show_hint"):
-		GameManager.ui_ref.call("show_hint", "🚪 Дверь открыта! Переход на следующий уровень...", 4.0)
+		GameManager.ui_ref.call("show_hint", "Дверь открыта! Переход на следующий уровень...", 4.0)
 
 	# 3. Экранное затемнение
 	var cv = CanvasLayer.new()
