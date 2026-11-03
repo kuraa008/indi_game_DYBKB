@@ -25,8 +25,8 @@ const GUN_POSES := {
 }
 const GAITS := {
 	"idle":   {"amp": 0.0,  "pitch": 0.04, "lean": 0.0,  "knee": 0.1,  "head": 0.0},
-	"walk":   {"amp": 0.42, "pitch": 0.1,  "lean": 0.04, "knee": 0.14, "head": 0.0},
-	"run":    {"amp": 0.6,  "pitch": 0.26, "lean": 0.2,  "knee": 0.34, "head": 0.0},
+	"walk":   {"amp": 0.36, "pitch": 0.1,  "lean": 0.04, "knee": 0.16, "head": 0.0},
+	"run":    {"amp": 0.56, "pitch": 0.24, "lean": 0.18, "knee": 0.36, "head": 0.0},
 	"aim":    {"amp": 0.0,  "pitch": 0.14, "lean": 0.0,  "knee": 0.24, "head": 0.28},
 	"reload": {"amp": 0.0,  "pitch": 0.22, "lean": 0.0,  "knee": 0.2,  "head": 0.32},
 }
@@ -121,12 +121,20 @@ func update_motion(delta: float, mode: String, move_speed: float) -> void:
 	_mode = mode if GAITS.has(mode) else "idle"
 	_t += delta
 	var tg: Dictionary = GAITS[_mode]
+	# Перезаряжая или целясь на ходу, он идёт ногами: руки заняты ружьём, ноги шагают
+	if move_speed > 0.2 and _mode in ["aim", "reload", "idle"]:
+		var legs: Dictionary = GAITS["run" if move_speed > 2.6 else "walk"]
+		tg = tg.duplicate()
+		tg["amp"] = legs["amp"]
+		tg["knee"] = legs["knee"]
 	var k := minf(1.0, delta * 4.0)
 	for key in tg:
 		_p[key] = lerpf(_p[key], tg[key], k)
 	var target_rate := 0.0
 	if move_speed > 0.2:
-		target_rate = minf(move_speed / (maxf(float(_p["amp"]), 0.25) * 0.9), 8.5)
+		# За половину цикла нога проходит 2 * длину ноги * sin(размаха): столько же проходит тело
+		var stride := 2.0 * (THIGH + SHIN) * sin(maxf(float(_p["amp"]), 0.18))
+		target_rate = minf(move_speed * PI / stride, 12.0)
 	_rate = lerpf(_rate, target_rate, minf(1.0, delta * 8.0))
 	phase += delta * _rate
 	var gt: Dictionary = GUN_POSES[_mode]

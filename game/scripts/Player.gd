@@ -20,7 +20,6 @@ var interact_ray: RayCast3D
 var breath_sys:   Node
 var flashlight:   SpotLight3D
 var heart_audio:  AudioStreamPlayer
-var ded_audio:    AudioStreamPlayer
 var player_body:  Node3D   # PlayerBody3D — 2D-спрайты персонажа
 var player_hands: PlayerHands = null  # 3D руки от первого лица
 
@@ -358,17 +357,6 @@ func _build_player() -> void:
 		heart_audio.volume_db = -80.0
 		heart_audio.autoplay = true
 	add_child(heart_audio)
-
-	# ── Звуковой индикатор приближения Деда (Лесоруба) ──
-	ded_audio = AudioStreamPlayer.new()
-	var d_stream = load("res://assets/ded.mp3")
-	if d_stream:
-		if d_stream is AudioStreamMP3:
-			(d_stream as AudioStreamMP3).loop = true
-		ded_audio.stream = d_stream
-		ded_audio.volume_db = -80.0
-		ded_audio.autoplay = true
-	add_child(ded_audio)
 
 	# ── Тело персонажа (2D-спрайты, видны в зеркале и при взгляде вниз) ──
 	player_body = Node3D.new()
@@ -1518,34 +1506,6 @@ func _update_heartbeat(delta: float) -> void:
 				heart_audio.volume_db = lerpf(heart_audio.volume_db, -80.0, delta * 2.5)
 		else:
 			heart_audio.volume_db = lerpf(heart_audio.volume_db, -80.0, delta * 2.5)
-
-	# ── 2. Тяжёлое дыхание: индикатор близости Деда (Лесоруба) ──
-	# Чем ближе дед — тем громче хриплое дыхание!
-	var lj = GameManager.lumberjack_ref if GameManager else null
-	if ded_audio:
-		if is_instance_valid(lj) and lj is Node3D and lj.is_inside_tree() and not is_dead:
-			var dist_ded: float = global_position.distance_to(lj.global_position)
-			var max_ded_dist: float = 26.0
-			var min_ded_dist: float = 2.0
-			if dist_ded <= max_ded_dist:
-				var ded_prox: float = clampf(1.0 - (dist_ded - min_ded_dist) / (max_ded_dist - min_ded_dist), 0.0, 1.0)
-				var target_ded_vol: float = lerpf(-44.0, 3.5, ded_prox)
-				var target_ded_pitch: float = lerpf(0.95, 1.30, ded_prox)
-
-				# Если дед в режиме погони или прицеливания — дыхание ещё более яростное
-				var lj_state = lj.get("current_state")
-				if lj_state in [2, 3, 4]: # CHASE, AIMING, SHOOT
-					target_ded_vol += 2.0
-					target_ded_pitch += 0.18
-
-				ded_audio.volume_db = lerpf(ded_audio.volume_db, target_ded_vol, delta * 4.0)
-				ded_audio.pitch_scale = lerpf(ded_audio.pitch_scale, target_ded_pitch, delta * 4.5)
-				if not ded_audio.playing:
-					ded_audio.play()
-			else:
-				ded_audio.volume_db = lerpf(ded_audio.volume_db, -80.0, delta * 2.5)
-		else:
-			ded_audio.volume_db = lerpf(ded_audio.volume_db, -80.0, delta * 2.5)
 
 func _update_flashlight(_delta: float) -> void:
 	# Батарейка фонарика бесконечная (по запросу пользователя)

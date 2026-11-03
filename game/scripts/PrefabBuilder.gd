@@ -2438,6 +2438,8 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			door_assembly.add_child(left_hinge)
 			door_assembly.add_child(right_hinge)
 			cellar_root.add_child(door_assembly)
+			if not is_ghost:
+				CellarLook.apply(cellar_root, true, true, true, true)
 
 			if not is_ghost:
 				cellar_root.set_script(load("res://scripts/InteractiveCellar.gd"))

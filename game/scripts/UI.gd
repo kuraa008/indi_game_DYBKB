@@ -1628,16 +1628,6 @@ func _on_gfx_quality_changed(quality: String) -> void:
 func _on_game_over() -> void:
 	_play_jumpscare()
 
-func _load_ui_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var res = load(path)
-		if res is Texture2D:
-			return res
-	var img = Image.new()
-	if img.load(path) == OK:
-		return ImageTexture.create_from_image(img)
-	return null
-
 func _play_jumpscare() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	VHSOverlay.set_fear(1.0)
@@ -1655,177 +1645,12 @@ func _play_jumpscare() -> void:
 		_play_skinwalker_jumpscare()
 		return
 
-	var jumpscare_container = Control.new()
-	jumpscare_container.name = "RealHorrorJumpscare"
-	jumpscare_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	jumpscare_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(jumpscare_container)
-
-	# ── 1. ЗВУКОВОЙ ТЕРРОР: мощнейший многослойный взрыв ─────────────
-	# Сокрушительный выстрел из ружья в упор
-	var snd_shot = AudioStreamPlayer.new()
-	var st_shot = load("res://assets/audio/shotgun_shot.mp3") if ResourceLoader.exists("res://assets/audio/shotgun_shot.mp3") else null
-	if st_shot:
-		snd_shot.stream = st_shot
-		snd_shot.volume_db = 6.0
-		jumpscare_container.add_child(snd_shot)
-		snd_shot.play()
-
-	# Зловещий тяжелый храп/хрип деда над поверженной жертвой
-	var snd_ded = AudioStreamPlayer.new()
-	var st_ded = load("res://assets/ded.mp3") if ResourceLoader.exists("res://assets/ded.mp3") else null
-	if st_ded:
-		snd_ded.stream = st_ded
-		snd_ded.volume_db = 4.0
-		jumpscare_container.add_child(snd_ded)
-		snd_ded.play()
-
-	# Глухой удар / сокрушительный саб-бас (костеломный импакт удара)
-	var snd_impact = AudioStreamPlayer.new()
-	var st_crash = load("res://assets/audio/car_crash.wav")
-	if st_crash:
-		snd_impact.stream = st_crash
-		snd_impact.volume_db = 6.0
-		snd_impact.pitch_scale = 0.74
-		jumpscare_container.add_child(snd_impact)
-		snd_impact.play()
-
-	# Шок / ультразвуковой писк / радио-помехи
-	var snd_static = AudioStreamPlayer.new()
-	var st_static = load("res://assets/audio/tv_static.wav")
-	if st_static:
-		snd_static.stream = st_static
-		snd_static.volume_db = -2.0
-		snd_static.pitch_scale = 1.35
-		jumpscare_container.add_child(snd_static)
-		snd_static.play()
-
-	# ── 2. ВСПОЛОХ КРОВИ НА ЭКРАНЕ (мгновенная зрительная вспышка) ──
-	var red_flash = ColorRect.new()
-	red_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	red_flash.color = Color(1.0, 0.04, 0.04, 0.92)
-	red_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	jumpscare_container.add_child(red_flash)
-
-	# ── 3. ТЕМНАЯ КРОВАВАЯ ВИНЬЕТКА ПО КРАЯМ ─────────────────────────
-	var vignette = ColorRect.new()
-	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vignette.color = Color(0.12, 0.01, 0.01, 0.75)
-	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	jumpscare_container.add_child(vignette)
-
-	# ── 4. КРОВАВЫЕ РАЗРЫВЫ КОГТЯМИ ПО ЭКРАНУ ──────────────────────
-	var tex_claw = _load_ui_texture("res://assets/textures/ui/jumpscare_claw_slash.png")
-	var claw_rect = TextureRect.new()
-	claw_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	claw_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	claw_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	claw_rect.texture = tex_claw
-	claw_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	claw_rect.modulate = Color(1.3, 0.2, 0.2, 0.0)
-	claw_rect.pivot_offset = Vector2(960, 540)
-	jumpscare_container.add_child(claw_rect)
-
-	# Второй встречный взмах когтей
-	var claw_rect2 = TextureRect.new()
-	claw_rect2.set_anchors_preset(Control.PRESET_FULL_RECT)
-	claw_rect2.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	claw_rect2.stretch_mode = TextureRect.STRETCH_SCALE
-	claw_rect2.texture = tex_claw
-	claw_rect2.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	claw_rect2.modulate = Color(1.3, 0.2, 0.2, 0.0)
-	claw_rect2.pivot_offset = Vector2(960, 540)
-	claw_rect2.flip_h = true
-	claw_rect2.flip_v = true
-	jumpscare_container.add_child(claw_rect2)
-
-	# ── 5. АРТЕРИАЛЬНЫЕ БРЫЗГИ КРОВИ НА ОБЪЕКТИВЕ ──────────────────
-	var tex_blood = _load_ui_texture("res://assets/textures/ui/jumpscare_blood_splatter.png")
-	var blood_rect = TextureRect.new()
-	blood_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blood_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	blood_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	blood_rect.texture = tex_blood
-	blood_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blood_rect.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	jumpscare_container.add_child(blood_rect)
-
-	# ── 6. ПОЛНОЦЕННАЯ 3D КИНЕМАТОГРАФИЧНАЯ ДИНАМИКА ХОРРОРА ──────
-	# (Никакого 2D слайдшоу! Вся сцена видна в честном 3D: морда монстра в упор,
-	# когти, разлетающаяся кровь, тряска камеры и падение тела на пол)
-	var total_steps = 22
-	for i in range(total_steps):
-		if not is_inside_tree() or not is_instance_valid(jumpscare_container):
-			return
-
-		var progress = float(i) / float(total_steps - 1)
-
-		# Быстрое затухание вспышки (за первые 0.15 сек)
-		if is_instance_valid(red_flash):
-			red_flash.color.a = maxf(0.0, 0.92 - progress * 5.0)
-
-		# Первый сокрушительный удар когтей (0.05 - 0.25 сек)
-		if i == 2:
-			claw_rect.modulate = Color(1.4, 0.3, 0.3, 0.98)
-			claw_rect.scale = Vector2(1.15, 1.15)
-			claw_rect.rotation_degrees = randf_range(-12.0, 12.0)
-		elif i > 2 and is_instance_valid(claw_rect):
-			claw_rect.modulate.a = maxf(0.0, claw_rect.modulate.a - 0.12)
-
-		# Второй добивающий удар когтей (0.28 - 0.45 сек)
-		if i == 7:
-			claw_rect2.modulate = Color(1.5, 0.2, 0.2, 0.98)
-			claw_rect2.scale = Vector2(1.2, 1.2)
-			claw_rect2.rotation_degrees = randf_range(-15.0, 15.0)
-		elif i > 7 and is_instance_valid(claw_rect2):
-			claw_rect2.modulate.a = maxf(0.0, claw_rect2.modulate.a - 0.14)
-
-		# Брызги крови заливают стекло объектива камеры и стекают вниз
-		if i == 4:
-			blood_rect.modulate = Color(1.1, 0.9, 0.9, 0.96)
-		elif i > 4 and is_instance_valid(blood_rect):
-			blood_rect.position.y += 2.2
-
-		# Травматическая тряска интерфейса в унисон с камерой 3D
-		var ui_shake = lerpf(35.0, 8.0, progress)
-		jumpscare_container.position = Vector2(randf_range(-ui_shake, ui_shake), randf_range(-ui_shake * 0.7, ui_shake * 0.7))
-
-		# Сужение туннельного зрения (агония)
-		if is_instance_valid(vignette):
-			vignette.color = Color(0.15 + progress * 0.25, 0.01, 0.01, minf(0.95, 0.4 + progress * 0.55))
-
-		var frame_dt = 0.040 if i < 14 else 0.052
-		await get_tree().create_timer(frame_dt).timeout
-
-	# ── 7. ЗАТЕМНЕНИЕ В КРОВЬ И ПУСТОТУ (Падение на пол и смерть) ──
+	var scare := LumberjackScare.new()
+	add_child(scare)
+	await scare.finished
 	if not is_inside_tree() or not is_instance_valid(root_ctrl):
 		return
-
-	var blood_wash = ColorRect.new()
-	blood_wash.name = "BloodWash"
-	blood_wash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blood_wash.color = Color(0.60, 0.02, 0.02, 0.90)
-	blood_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(blood_wash)
-
-	var blackout = ColorRect.new()
-	blackout.name = "Blackout"
-	blackout.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blackout.color = Color(0, 0, 0, 0)
-	blackout.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(blackout)
-
-	var fade_tw = create_tween()
-	fade_tw.tween_property(blackout, "color:a", 1.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	await fade_tw.finished
-
-	if is_instance_valid(jumpscare_container):
-		jumpscare_container.queue_free()
-	if is_instance_valid(blood_wash):
-		blood_wash.queue_free()
-
-	await get_tree().create_timer(0.25).timeout
-	_show_death_screen()
+	_finish_scare(scare)
 
 
 func _play_skinwalker_jumpscare() -> void:
@@ -1834,6 +1659,10 @@ func _play_skinwalker_jumpscare() -> void:
 	await scare.finished
 	if not is_inside_tree() or not is_instance_valid(root_ctrl):
 		return
+	_finish_scare(scare)
+
+
+func _finish_scare(scare: Node) -> void:
 	var blackout = ColorRect.new()
 	blackout.name = "Blackout"
 	blackout.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1852,10 +1681,10 @@ func clear_end_screens() -> void:
 	end_screens.clear()
 	if root_ctrl and is_instance_valid(root_ctrl):
 		for ch in root_ctrl.get_children():
-			if ch.name in ["RealHorrorJumpscare", "BloodWash", "Blackout"]:
+			if ch.name == "Blackout":
 				ch.queue_free()
 	for ch in get_children():
-		if ch is SkinwalkerScare:
+		if ch is SkinwalkerScare or ch is LumberjackScare:
 			ch.queue_free()
 	if GameManager:
 		GameManager.game_ended = false

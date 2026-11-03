@@ -3,7 +3,7 @@ extends Node3D
 const TextureHelper = preload("res://scripts/TextureHelper.gd")
 
 # При каждом выпуске новой сборки увеличить GAME_BUILD и число в файле VERSION
-const GAME_BUILD: int = 5
+const GAME_BUILD: int = 6
 const VERSION_URL: String = "https://raw.githubusercontent.com/kuraa008/indi_game_DYBKB/main/VERSION"
 const DOWNLOAD_URL: String = "https://github.com/kuraa008/indi_game_DYBKB/raw/main/game/release.zip"
 
@@ -18,7 +18,6 @@ const DOWNLOAD_URL: String = "https://github.com/kuraa008/indi_game_DYBKB/raw/ma
 var menu_music_player:        AudioStreamPlayer
 var sfx_hover:                AudioStreamPlayer
 var sfx_select:               AudioStreamPlayer
-var jumpscare_audio:          AudioStreamPlayer
 var heartbeat_audio:          AudioStreamPlayer
 var figure_audio:             AudioStreamPlayer
 
@@ -52,12 +51,8 @@ var figure_spots: Array[Vector3] = [
 ]
 
 # Скример при взгляде назад
-var jumpscare_monster:        Node3D = null
-var jumpscare_model:          SkinwalkerModel = null
-var jumpscare_eye_light:      OmniLight3D = null
 var jumpscare_flash:          ColorRect = null
 var is_jumpscare_active:      bool = false
-var jumpscare_timer:          float = 0.0
 var can_trigger_jumpscare:    bool = true
 var jumpscare_cooldown:       float = 0.0
 
@@ -480,61 +475,51 @@ func _try_load_tex(p: String) -> Texture2D:
 #  4. Скример при повороте камеры назад
 # ──────────────────────────────────────────────────────────────────────────────
 func _setup_jumpscare_system() -> void:
-	jumpscare_monster = Node3D.new()
-	jumpscare_monster.name = "JumpscareMonster"
-	jumpscare_monster.position = Vector3(0.0, 0.0, 2.2) # Прямо за спиной игрока!
-	jumpscare_monster.visible = false
-	add_child(jumpscare_monster)
-
-	jumpscare_model = SkinwalkerModel.new()
-	jumpscare_model.rotation.y = PI
-	jumpscare_monster.add_child(jumpscare_model)
-
-	jumpscare_eye_light = OmniLight3D.new()
-	jumpscare_eye_light.light_color = Color(1.0, 0.1, 0.05)
-	jumpscare_eye_light.light_energy = 4.5
-	jumpscare_eye_light.omni_range = 3.5
-	jumpscare_eye_light.position = Vector3(0, 1.8, -0.3)
-	jumpscare_monster.add_child(jumpscare_eye_light)
-
 	jumpscare_flash = ColorRect.new()
 	jumpscare_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	jumpscare_flash.color = Color(0.9, 0.05, 0.05, 0.0)
+	jumpscare_flash.color = Color(0.0, 0.0, 0.0, 0.0)
 	jumpscare_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(jumpscare_flash)
 
 func _trigger_jumpscare() -> void:
 	is_jumpscare_active = true
 	can_trigger_jumpscare = false
-	jumpscare_timer = 0.0
-	cam_trauma = 1.0
+	is_rmb_dragging = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+	# Обернулся, а там пустота: музыка обрывается, свет гаснет, полсекунды тишины
+	var music_db: float = menu_music_player.volume_db if menu_music_player else 0.0
+	if menu_music_player:
+		menu_music_player.volume_db = -80.0
+	jumpscare_flash.color.a = 1.0
+	VHSOverlay.glitch(0.7)
+	await get_tree().create_timer(0.55).timeout
+	if not is_inside_tree():
+		return
+
+	var scare := SkinwalkerScare.new()
+	scare.approach_from = 3.6
+	scare.approach_time = 0.24
+	add_child(scare)
 	VHSOverlay.glitch(1.0)
+	await scare.finished
+	if not is_inside_tree():
+		return
+	scare.queue_free()
 
-	if jumpscare_monster:
-		jumpscare_monster.visible = true
-
-	if jumpscare_audio and jumpscare_audio.stream:
-		jumpscare_audio.play()
-
-	if heartbeat_audio:
-		heartbeat_audio.volume_db = 0.0
-
-	if jumpscare_flash:
-		var tw = create_tween()
-		tw.tween_property(jumpscare_flash, "color:a", 0.55, 0.05)
-		tw.tween_property(jumpscare_flash, "color:a", 0.0, 0.45)
+	# Дорога снова перед глазами, будто ничего не было
+	cam_yaw = cam_base_yaw
+	if menu_camera:
+		menu_camera.rotation = Vector3(cam_pitch, cam_yaw + cam_pan, 0.0)
+	jumpscare_flash.color.a = 0.0
+	if menu_music_player:
+		menu_music_player.volume_db = music_db
+	VHSOverlay.glitch(0.8)
+	is_jumpscare_active = false
+	jumpscare_cooldown = 12.0
 
 func _update_jumpscare(delta: float) -> void:
-	if is_jumpscare_active:
-		jumpscare_timer += delta
-		if jumpscare_model:
-			jumpscare_model.apply_scare_pose(jumpscare_timer)
-		if jumpscare_timer > 1.2:
-			is_jumpscare_active = false
-			if jumpscare_monster:
-				jumpscare_monster.visible = false
-			jumpscare_cooldown = 12.0
-	elif not can_trigger_jumpscare:
+	if not is_jumpscare_active and not can_trigger_jumpscare:
 		jumpscare_cooldown -= delta
 		if jumpscare_cooldown <= 0.0:
 			can_trigger_jumpscare = true
@@ -569,15 +554,6 @@ func _setup_audio() -> void:
 		sfx_select.stream = s_snd
 		sfx_select.volume_db = -4.0
 	add_child(sfx_select)
-
-	jumpscare_audio = AudioStreamPlayer.new()
-	var sc_snd = _try_load_res("res://assets/scream.mp3")
-	if not sc_snd:
-		sc_snd = _try_load_res("res://assets/audio/skinwalker_scream.wav")
-	if sc_snd:
-		jumpscare_audio.stream = sc_snd
-		jumpscare_audio.volume_db = 4.0
-	add_child(jumpscare_audio)
 
 	heartbeat_audio = AudioStreamPlayer.new()
 	var hb_snd = _try_load_res("res://assets/heart.mp3")
@@ -798,6 +774,9 @@ func _input(event: InputEvent) -> void:
 				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			else:
 				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+	if is_jumpscare_active:
+		return
 
 	if is_rmb_dragging and event is InputEventMouseMotion:
 		var sens = 0.0032
