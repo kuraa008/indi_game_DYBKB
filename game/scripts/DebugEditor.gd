@@ -1168,6 +1168,8 @@ var PREFABS = {
 #  Инициализация
 # ══════════════════════════════════════════════════════════════════════════════
 func _ready() -> void:
+	# Инструмент разработчика: обычные кнопки Godot вместо оформления игры
+	get_window().theme = ThemeDB.get_default_theme()
 	name = "DebugEditor"
 	_scan_custom_models()
 	_scan_user_prefabs()
@@ -7610,3 +7612,6 @@ func show_notification(text: String, duration: float = 3.5) -> void:
 	notification_label.text = text
 	notification_label.visible = true
 	notif_timer = duration
+
+func _exit_tree() -> void:
+	get_window().theme = null

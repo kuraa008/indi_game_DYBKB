@@ -64,6 +64,14 @@ var is_legacy_graphics: bool = false
 var intro_cutscene_played: bool = false
 
 # ──────────────────────────────────────────────
+#  Настройки игрока (хранятся между запусками)
+# ──────────────────────────────────────────────
+const RESOLUTION_MODES: Array[String] = ["auto", "1280x720", "1600x900", "1920x1080"]
+var sound_level: int = 80
+var mouse_sensitivity: float = 1.0
+var resolution_mode: String = "auto"
+
+# ──────────────────────────────────────────────
 #  Случайный шифр для сейфа и записок
 # ──────────────────────────────────────────────
 var safe_code: String = ""
@@ -254,8 +262,8 @@ func _process_director_ai(delta: float) -> void:
 			enemy_ref.call("on_noise_heard", p_pos + offset, 50.0)
 
 func _ready() -> void:
-	_load_settings()
 	_setup_gamepad_input_map()
+	load_settings()
 	generate_new_safe_code()
 	var ai_report = preload("res://scripts/AIReport.gd").new()
 	ai_report.name = "AIReport"
@@ -388,44 +396,53 @@ func toggle_graphics_quality() -> String:
 func set_graphics_quality(quality: String) -> void:
 	graphics_quality = quality
 	_apply_viewport_quality()
-	_save_settings()
+	save_settings()
 	emit_signal("graphics_quality_changed", graphics_quality)
 
 func set_dynamic_resolution(enabled: bool) -> void:
 	dynamic_resolution = enabled
-	_save_settings()
+	save_settings()
 	if not enabled:
 		_apply_viewport_quality()
 
 func set_vhs_enabled(enabled: bool) -> void:
 	vhs_enabled = enabled
-	_save_settings()
+	save_settings()
 	vhs_changed.emit(enabled)
 
 # Первый запуск: встроенная графика получает среднее качество, дискретная — высокое.
 # Дальше выбор игрока запоминается в user://settings.cfg
-func _load_settings() -> void:
-	var cfg := ConfigFile.new()
+func load_settings() -> void:
+	var cfg = ConfigFile.new()
 	if cfg.load(SETTINGS_PATH) == OK:
+		vhs_enabled = bool(cfg.get_value("video", "vhs", vhs_enabled))
 		graphics_quality = str(cfg.get_value("video", "quality", graphics_quality))
-		vhs_enabled = bool(cfg.get_value("video", "vhs", true))
-		dynamic_resolution = bool(cfg.get_value("video", "dynamic_resolution", true))
+		dynamic_resolution = bool(cfg.get_value("video", "dynamic_resolution", dynamic_resolution))
+		is_legacy_graphics = bool(cfg.get_value("video", "legacy_models", is_legacy_graphics))
+		resolution_mode = str(cfg.get_value("video", "resolution", resolution_mode))
+		sound_level = int(cfg.get_value("audio", "level", sound_level))
+		mouse_sensitivity = float(cfg.get_value("input", "sensitivity", mouse_sensitivity))
 	else:
 		match RenderingServer.get_video_adapter_type():
 			RenderingDevice.DEVICE_TYPE_DISCRETE_GPU:
 				graphics_quality = "high"
 			_:
 				graphics_quality = "medium"
-		_save_settings()
+		save_settings()
+	set_sound_level(sound_level)
+	set_resolution_mode(resolution_mode)
 	_apply_viewport_quality()
 
-func _save_settings() -> void:
-	var cfg := ConfigFile.new()
-	cfg.set_value("video", "quality", graphics_quality)
+func save_settings() -> void:
+	var cfg = ConfigFile.new()
 	cfg.set_value("video", "vhs", vhs_enabled)
+	cfg.set_value("video", "quality", graphics_quality)
 	cfg.set_value("video", "dynamic_resolution", dynamic_resolution)
+	cfg.set_value("video", "legacy_models", is_legacy_graphics)
+	cfg.set_value("video", "resolution", resolution_mode)
+	cfg.set_value("audio", "level", sound_level)
+	cfg.set_value("input", "sensitivity", mouse_sensitivity)
 	cfg.save(SETTINGS_PATH)
-
 func _apply_viewport_quality() -> void:
 	var vp := get_tree().root if is_inside_tree() else null
 	if vp == null:
@@ -469,6 +486,26 @@ func _update_dynamic_resolution(delta: float) -> void:
 	if not is_equal_approx(next, _res_scale):
 		_res_scale = next
 		get_tree().root.scaling_3d_scale = _res_scale
+
+func set_sound_level(level: int) -> void:
+	sound_level = clampi(level, 0, 100)
+	AudioServer.set_bus_volume_db(0, linear_to_db(sound_level / 100.0))
+	AudioServer.set_bus_mute(0, sound_level == 0)
+
+func set_resolution_mode(mode: String) -> void:
+	resolution_mode = mode if mode in RESOLUTION_MODES else "auto"
+	if DisplayServer.get_name() == "headless":
+		return
+	if resolution_mode == "auto":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	var parts = resolution_mode.split("x")
+	var win_size = Vector2i(int(parts[0]), int(parts[1]))
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(win_size)
+	var screen_rect = DisplayServer.screen_get_usable_rect()
+	DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - win_size) / 2)
+
 func toggle_legacy_graphics() -> bool:
 	is_legacy_graphics = not is_legacy_graphics
 	emit_signal("legacy_graphics_changed", is_legacy_graphics)

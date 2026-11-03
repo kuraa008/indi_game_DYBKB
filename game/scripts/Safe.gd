@@ -67,16 +67,7 @@ func _open_code_dialog() -> void:
 	panel.custom_minimum_size = Vector2(360, 220)
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	var pstyle = StyleBoxFlat.new()
-	pstyle.bg_color = Color(0.12, 0.14, 0.18, 0.98)
-	pstyle.border_width_left = 1
-	pstyle.border_width_right = 1
-	pstyle.border_width_top = 1
-	pstyle.border_width_bottom = 1
-	pstyle.border_color = Color(0.3, 0.6, 0.9)
-	pstyle.corner_radius_top_left = 6
-	pstyle.corner_radius_top_right = 6
-	pstyle.corner_radius_bottom_left = 6
-	pstyle.corner_radius_bottom_right = 6
+	pstyle.bg_color = Color(0.016, 0.018, 0.016, 0.96)
 	pstyle.set_content_margin_all(14)
 	panel.add_theme_stylebox_override("panel", pstyle)
 	bg.add_child(panel)
@@ -86,17 +77,17 @@ func _open_code_dialog() -> void:
 	panel.add_child(vb)
 
 	var title = Label.new()
-	title.text = "СТАЛЬНОЙ СЕЙФ: ВВЕДИТЕ ШИФР"
+	title.text = "СЕЙФ. ВВЕДИ КОД"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(0.3, 0.85, 1.0))
+	title.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	title.add_theme_font_size_override("font_size", 16)
 	vb.add_child(title)
 
 	var display_lbl = Label.new()
 	display_lbl.text = "[ _ _ _ ]"
 	display_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	display_lbl.add_theme_font_size_override("font_size", 22)
-	display_lbl.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
+	display_lbl.add_theme_color_override("font_color", Color(0.9, 0.91, 0.88))
 	vb.add_child(display_lbl)
 
 	# Цифровая клавиатура 1-9, 0
@@ -123,7 +114,7 @@ func _open_code_dialog() -> void:
 	vb.add_child(grid)
 
 	var b_cancel = Button.new()
-	b_cancel.text = "Отойти от сейфа"
+	b_cancel.text = "ОТОЙТИ"
 	b_cancel.pressed.connect(func():
 		bg.queue_free()
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

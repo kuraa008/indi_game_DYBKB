@@ -543,25 +543,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		mouse_input_raw = event.relative
 		if is_peeking_keyhole:
 			# Ограниченный обзор сквозь замочную скважину
-			head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY * 0.5)
+			head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity * 0.5)
 			head.rotation.y = clamp(head.rotation.y, keyhole_base_yaw - deg_to_rad(32.0), keyhole_base_yaw + deg_to_rad(32.0))
-			head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY * 0.5)
+			head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity * 0.5)
 			head.rotation.x = clamp(head.rotation.x, deg_to_rad(-16.0), deg_to_rad(16.0))
 			return
 		elif is_hiding:
 			if hiding_type == "wardrobe":
 				# Свободный горизонтальный обзор сквозь щели шкафа: только влево-вправо, верх/низ убран!
-				head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
+				head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity)
 				head.rotation.y = clamp(head.rotation.y, deg_to_rad(-75), deg_to_rad(75))
 				head.rotation.x = 0.0
 			elif hiding_type == "bed":
 				# Обзор из-под кровати: строго влево-вправо, без верх/низ!
-				head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
+				head.rotate_y(-event.relative.x * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity)
 				head.rotation.y = clamp(head.rotation.y, deg_to_rad(-80), deg_to_rad(80))
 				head.rotation.x = 0.0
 		else:
-			rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-			head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+			rotate_y(-event.relative.x * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity)
+			head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY * GameManager.mouse_sensitivity)
 			head.rotation.x = clamp(head.rotation.x, deg_to_rad(-82), deg_to_rad(82))
 
 
@@ -1244,7 +1244,7 @@ func force_eject_from_hiding() -> void:
 	velocity = forward_dir * 4.2 + Vector3.UP * 1.8
 	apply_cough_camera_trauma(1.5, 0.08)
 	if GameManager.ui_ref:
-		GameManager.ui_ref.call("show_hint", "💥 КИСЛОРОД ЗАКОНЧИЛСЯ! Вы с громким кашлем вывалились из укрытия!", 4.0)
+		GameManager.ui_ref.call("show_hint", "КИСЛОРОД ЗАКОНЧИЛСЯ! Вы с громким кашлем вывалились из укрытия!", 4.0)
 		if GameManager.ui_ref.has_method("flash_fear"):
 			GameManager.ui_ref.call("flash_fear", 0.85)
 
@@ -1943,7 +1943,7 @@ func _update_hover_hint() -> void:
 	if not GameManager.ui_ref:
 		return
 	if is_hiding:
-		var exit_hint = "[ЛКМ / RT]  Выйти из шкафа   •   [Зажмите Q / Y]  Задержать дыхание" if hiding_type == "wardrobe" else "[ЛКМ / RT]  Вылезти из-под кровати   •   [Зажмите Q / Y]  Задержать дыхание"
+		var exit_hint = "[ЛКМ / RT]  Выйти из шкафа    [Зажмите Q / Y]  Задержать дыхание" if hiding_type == "wardrobe" else "[ЛКМ / RT]  Вылезти из-под кровати    [Зажмите Q / Y]  Задержать дыхание"
 		GameManager.ui_ref.call("show_interact_hint", exit_hint)
 		GameManager.ui_ref.call("update_escape_checklist", {})
 		GameManager.ui_ref.call("set_crosshair_hover", false)
@@ -1951,7 +1951,7 @@ func _update_hover_hint() -> void:
 		return
 
 	if is_peeking_keyhole:
-		GameManager.ui_ref.call("show_interact_hint", "Замочная скважина   •   [ЛКМ / RT / WASD] Отойти")
+		GameManager.ui_ref.call("show_interact_hint", "Замочная скважина    [ЛКМ / RT / WASD] Отойти")
 		GameManager.ui_ref.call("update_escape_checklist", {})
 		GameManager.ui_ref.call("set_crosshair_hover", false)
 		_remove_highlight()
@@ -1974,7 +1974,7 @@ func _update_hover_hint() -> void:
 			if ht == "":
 				ht = "bed" if ("bed" in hiding_target.name.to_lower() or "bed" in str(hiding_target.get_meta("item_type", "")).to_lower()) else "wardrobe"
 			var h_text = "[ЛКМ / RT]  Спрятаться в шкафу" if ht == "wardrobe" else "[ЛКМ / RT]  Залезть под кровать"
-			GameManager.ui_ref.call("show_interact_hint", "[ПКМ / LT] Выбросить   •   " + h_text)
+			GameManager.ui_ref.call("show_interact_hint", "[ПКМ / LT] Выбросить    " + h_text)
 			_apply_highlight(inter_obj)
 			GameManager.ui_ref.call("set_crosshair_hover", true)
 			return
@@ -1990,11 +1990,11 @@ func _update_hover_hint() -> void:
 					kid = int(held_object.get_meta("key_id"))
 				elif held_object.get("key_id") != null and int(held_object.get("key_id")) > 0:
 					kid = int(held_object.get("key_id"))
-				h_hint = "[ПКМ / LT] Выбросить   •   Ключ №%d   •   [ЛКМ / RT] Отпереть дверь" % kid
+				h_hint = "[ПКМ / LT] Выбросить    Ключ №%d    [ЛКМ / RT] Отпереть дверь" % kid
 			"crowbar":
-				h_hint = "[ПКМ / LT] Выбросить   •   Лом   •   [ЛКМ / RT] Сорвать доски"
+				h_hint = "[ПКМ / LT] Выбросить    Лом    [ЛКМ / RT] Сорвать доски"
 			_:
-				h_hint = "[ПКМ / LT] Выбросить   •   [ЛКМ / RT] Использовать"
+				h_hint = "[ПКМ / LT] Выбросить    [ЛКМ / RT] Использовать"
 
 		inter_obj = _get_interactable()
 		if inter_obj:
@@ -2053,7 +2053,7 @@ func _update_hover_hint() -> void:
 
 		var multi_hint = ""
 		if nearby_interactables.size() > 1:
-			multi_hint = "   •   [◄ %d/%d ►]" % [active_interactable_idx + 1, nearby_interactables.size()]
+			multi_hint = "    [◄ %d/%d ►]" % [active_interactable_idx + 1, nearby_interactables.size()]
 
 		# Индивидуальная динамическая подсказка
 		if target_obj.has_method("get_interaction_hint"):
@@ -2093,7 +2093,7 @@ func _update_hover_hint() -> void:
 		else:
 			match item_type:
 				"crowbar":           hint = "[E / Y]  Взять лом"
-				"door_hatch":        hint = ("[🔒] Земной люк заперт снаружи" if (GameManager and GameManager.has_method("is_level_2") and GameManager.is_level_2()) else "[ЛКМ / RT]  Открыть / Закрыть люк")
+				"door_hatch":        hint = ("[] Земной люк заперт снаружи" if (GameManager and GameManager.has_method("is_level_2") and GameManager.is_level_2()) else "[ЛКМ / RT]  Открыть / Закрыть люк")
 				"door_metal":        hint = "[ЛКМ / RT]  Осмотреть дверь"
 				"prop_chair":        hint = "[E / Y]  Поднять стул"
 				"alarm_clock", "prop_alarm_clock": hint = "[E / Y]  Взять будильник"
@@ -2120,7 +2120,7 @@ func _update_hover_hint() -> void:
 				"prop_nightstand", "nightstand": hint = "[ЛКМ / RT]  Открыть / Закрыть ящик"
 				"prop_dresser", "dresser":       hint = "[ЛКМ / RT]  Открыть / Закрыть комод"
 				"prop_cupboard", "cupboard":     hint = "[ЛКМ / RT]  Открыть / Закрыть шкафчик"
-				"prop_basement_entrance", "basement_entrance": hint = ("[🔒] Земной люк заперт снаружи" if (GameManager and GameManager.has_method("is_level_2") and GameManager.is_level_2()) else "[ЛКМ / RT]  Открыть / Закрыть подвал")
+				"prop_basement_entrance", "basement_entrance": hint = ("[] Земной люк заперт снаружи" if (GameManager and GameManager.has_method("is_level_2") and GameManager.is_level_2()) else "[ЛКМ / RT]  Открыть / Закрыть подвал")
 				_:
 					var is_p = inter.get_meta("is_pickable", false)
 					if not is_p and inter.get_parent():
@@ -2737,7 +2737,7 @@ func enter_keyhole_peek(door: Node3D) -> void:
 
 	if GameManager.ui_ref:
 		GameManager.ui_ref.call("show_keyhole_overlay", true)
-		GameManager.ui_ref.call("show_interact_hint", "Замочная скважина   •   [C / E / WASD] Отойти")
+		GameManager.ui_ref.call("show_interact_hint", "Замочная скважина    [C / E / WASD] Отойти")
 
 func exit_keyhole_peek() -> void:
 	if not is_peeking_keyhole:

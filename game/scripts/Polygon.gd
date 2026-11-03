@@ -81,6 +81,8 @@ var last_event_msg: String = ""
 var event_msg_timer: float = 0.0
 
 func _ready() -> void:
+	# Инструмент разработчика: обычные кнопки Godot вместо оформления игры
+	get_window().theme = ThemeDB.get_default_theme()
 	GameManager.reset_state()
 	GameManager.generate_new_safe_code()
 	if not GameManager.game_over.is_connected(_on_game_over):
@@ -1385,3 +1387,6 @@ func _respawn_bot() -> void:
 			bot_node.global_position = bot_waypoints[randi() % bot_waypoints.size()]
 		else:
 			bot_node.global_position = player_spawn
+
+func _exit_tree() -> void:
+	get_window().theme = null

@@ -123,7 +123,7 @@ func _involuntary_exhale() -> void:
 			else:
 				p.call("exit_hiding")
 			if GameManager.ui_ref:
-				GameManager.ui_ref.call("show_hint", "💥 КИСЛОРОД ЗАКОНЧИЛСЯ! Вы с громким кашлем вывалились из укрытия!", 4.0)
+				GameManager.ui_ref.call("show_hint", "КИСЛОРОД ЗАКОНЧИЛСЯ! Вы с громким кашлем вывалились из укрытия!", 4.0)
 
 		# 2. Громкий звук удушья и кашля, слышный на 50 метров
 		GameManager.emit_noise(cough_pos, 50.0, "player_cough")
