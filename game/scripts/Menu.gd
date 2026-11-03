@@ -3,6 +3,11 @@ extends Node3D
 const TextureHelper = preload("res://scripts/TextureHelper.gd")
 const PrefabBuilder = preload("res://scripts/PrefabBuilder.gd")
 
+# При каждом выпуске новой сборки увеличить GAME_BUILD и число в файле VERSION
+const GAME_BUILD: int = 2
+const VERSION_URL: String = "https://raw.githubusercontent.com/kuraa008/indi_game_DYBKB/main/VERSION"
+const DOWNLOAD_URL: String = "https://github.com/kuraa008/indi_game_DYBKB/raw/main/game/release.zip"
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  Menu.gd — Главное Меню: В центре тёмного леса со Скинвокером
 #  • Игрок в центре зловещей лесной поляны (360° глухой сосновый бор)
@@ -115,6 +120,49 @@ func _ready() -> void:
 	_setup_audio()
 	_build_ui()
 	_update_selection(0, false)
+	_setup_update_check()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Проверка обновлений: номер сборки сравнивается с файлом VERSION на GitHub
+# ──────────────────────────────────────────────────────────────────────────────
+func _setup_update_check() -> void:
+	var build_lbl = Label.new()
+	build_lbl.name = "BuildLabel"
+	build_lbl.text = "сборка %d" % GAME_BUILD
+	build_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	build_lbl.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	build_lbl.offset_left = -150.0
+	build_lbl.offset_top = -40.0
+	build_lbl.offset_right = -24.0
+	build_lbl.offset_bottom = -14.0
+	build_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	build_lbl.add_theme_font_size_override("font_size", 13)
+	build_lbl.add_theme_color_override("font_color", Color(0.72, 0.74, 0.78, 0.6))
+	ui_root.add_child(build_lbl)
+
+	var request = HTTPRequest.new()
+	request.timeout = 8.0
+	add_child(request)
+	request.request_completed.connect(_on_update_check_completed.bind(request))
+	# Без интернета кнопка просто не появится, игра работает как обычно
+	if request.request(VERSION_URL) != OK:
+		request.queue_free()
+
+func _on_update_check_completed(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray, request: HTTPRequest) -> void:
+	request.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		return
+	var latest_text = body.get_string_from_utf8().strip_edges()
+	if not latest_text.is_valid_int() or latest_text.to_int() <= GAME_BUILD:
+		return
+	var update_btn = _create_dialog_btn("Вышло обновление — скачать сборку %s" % latest_text, func(): OS.shell_open(DOWNLOAD_URL))
+	update_btn.name = "UpdateButton"
+	update_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	update_btn.offset_left = -400.0
+	update_btn.offset_top = 28.0
+	update_btn.offset_right = -28.0
+	update_btn.offset_bottom = 72.0
+	ui_root.add_child(update_btn)
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  1. Окружение, свет луны и графика
