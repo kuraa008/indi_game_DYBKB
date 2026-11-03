@@ -5,8 +5,9 @@ extends Node3D
 #
 #  Использует SubViewport + ViewportTexture, проецируемый на меш стекла:
 #   • Отражение не может выйти за пределы рамы
-#   • Ракурс персонажа (лицо, спина, бок) определяется со стороны игрока
-#   • Плавное зеркальное перемещение и центрирование
+#   • РЕАЛИЗМ: 3D-модель в своём мире, камера стоит там же, где глаза игрока,
+#     а стекло служит её окном, поэтому ракурс меняется как в настоящем зеркале
+#   • LEGACY: плоский рисунок персонажа, ракурс выбирается со стороны игрока
 # ══════════════════════════════════════════════════════════════════════════════
 
 const MAX_DIST: float = 6.0
@@ -24,6 +25,13 @@ var bg_rect: ColorRect = null
 var _current_view: String = ""
 var _textures_loaded: bool = false
 
+# 3D-отражение
+var world_root: Node3D = null
+var mirror_cam: Camera3D = null
+var mirror_model: PlayerModel = null
+var glass_size := Vector2(0.74, 1.44)
+var _legacy_active: bool = true
+
 const VP_W: float = 512.0
 const VP_H: float = 768.0
 const CHAR_W: float = 340.0
@@ -36,6 +44,8 @@ func _ready() -> void:
 			child.visible = false
 
 	_setup_viewport_mirror()
+	if viewport:
+		_set_mode(false)
 	call_deferred("_load_textures")
 
 
@@ -69,12 +79,103 @@ func _setup_viewport_mirror() -> void:
 	char_rect.visible = false
 	viewport.add_child(char_rect)
 
+	_setup_world()
+
 	# Проекция вьюпорта на материал стекла
 	var mat = StandardMaterial3D.new()
 	mat.albedo_texture = viewport.get_texture()
-	mat.metallic = 0.88
-	mat.roughness = 0.08
+	mat.metallic = 0.0
+	mat.roughness = 0.55
+	mat.metallic_specular = 0.15
+	# Зеркало видно и в тёмной комнате
+	mat.emission_enabled = true
+	mat.emission_texture = viewport.get_texture()
+	mat.emission_energy_multiplier = 0.55
 	glass_mesh.material_override = mat
+
+
+func _setup_world() -> void:
+	if glass_mesh.mesh is QuadMesh:
+		glass_size = (glass_mesh.mesh as QuadMesh).size
+	viewport.own_world_3d = true
+	viewport.msaa_3d = Viewport.MSAA_2X
+
+	world_root = Node3D.new()
+	world_root.name = "MirrorWorld"
+	viewport.add_child(world_root)
+
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.03, 0.04, 0.055)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.62, 0.64, 0.7)
+	env.ambient_light_energy = 0.55
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	world_root.add_child(world_env)
+
+	var light := DirectionalLight3D.new()
+	light.light_energy = 0.75
+	light.rotation_degrees = Vector3(-35.0, 25.0, 0.0)
+	world_root.add_child(light)
+
+	mirror_cam = Camera3D.new()
+	mirror_cam.projection = Camera3D.PROJECTION_FRUSTUM
+	mirror_cam.far = 14.0
+	mirror_cam.current = true
+	world_root.add_child(mirror_cam)
+
+	mirror_model = PlayerModel.new()
+	mirror_model.name = "MirrorModel"
+	mirror_model.scale = Vector3.ONE * (1.62 / PlayerModel.EYE_Y)
+	mirror_model.set_first_person(false)
+	mirror_model.set_shadows(false)
+	world_root.add_child(mirror_model)
+
+
+func _set_mode(legacy: bool) -> void:
+	_legacy_active = legacy
+	world_root.visible = not legacy
+	bg_rect.visible = legacy
+	if legacy:
+		viewport.size = Vector2i(int(VP_W), int(VP_H))
+		viewport.own_world_3d = false
+		mirror_cam.current = false
+	else:
+		char_rect.visible = false
+		viewport.size = Vector2i(int(round(VP_H * glass_size.x / glass_size.y)), int(VP_H))
+		viewport.own_world_3d = true
+		mirror_cam.current = true
+
+
+# Отражение: игрок смотрит сквозь стекло как сквозь окно на своего двойника за плоскостью зеркала
+func _update_world(delta: float, player: Node3D, mirror_sb: Node3D, local_p: Vector3) -> void:
+	var cam_node = player.get("camera") as Camera3D
+	var glass_pos: Vector3 = glass_mesh.position
+	var eye: Vector3 = mirror_sb.to_local(cam_node.global_position if cam_node else player.global_position + Vector3(0, 1.62, 0)) - glass_pos
+	eye.z = maxf(eye.z, 0.06)
+	mirror_cam.position = eye
+	mirror_cam.near = eye.z
+	mirror_cam.size = glass_size.y
+	mirror_cam.frustum_offset = Vector2(-eye.x, -eye.y)
+
+	var feet := local_p - glass_pos
+	mirror_model.position = Vector3(feet.x, feet.y, -feet.z)
+	var fwd: Vector3 = mirror_sb.global_transform.basis.inverse() * (-player.global_transform.basis.z)
+	mirror_model.rotation.y = atan2(fwd.x, -fwd.z)
+	mirror_model.visible = player.get("is_hiding") != true
+
+	var vel: Vector3 = player.get("velocity")
+	var speed := Vector2(vel.x, vel.z).length()
+	var mode := "idle"
+	if player.get("is_crouching") == true:
+		mode = "crouch"
+	elif speed > 0.25:
+		mode = "run" if speed > 4.8 else "walk"
+	mirror_model.update_motion(delta, mode, speed)
+	var head = player.get("head") as Node3D
+	if head:
+		mirror_model.set_look_pitch(head.rotation.x)
 
 
 func _find_glass_mesh() -> MeshInstance3D:
@@ -111,7 +212,7 @@ func _try_load(path: String) -> Texture2D:
 	return null
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not _textures_loaded or not is_instance_valid(char_rect) or not is_instance_valid(glass_mesh):
 		return
 
@@ -121,6 +222,7 @@ func _process(_delta: float) -> void:
 		player_ref = gm.get("player_ref")
 	if not is_instance_valid(player_ref) or not (player_ref is Node3D):
 		char_rect.visible = false
+		viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 		return
 	var player := player_ref as Node3D
 
@@ -131,12 +233,18 @@ func _process(_delta: float) -> void:
 	# ── 1. Позиция игрока относительно зеркала ───────────────────────────
 	var local_p = mirror_sb.to_local(player.global_position)
 
-	if local_p.z <= 0.08 or local_p.z > MAX_DIST:
+	# Вне зоны видимости зеркало не перерисовывается
+	if local_p.z <= 0.08 or local_p.z > MAX_DIST or abs(local_p.x) > 3.0:
 		char_rect.visible = false
+		viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 		return
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
-	if abs(local_p.x) > 3.0:
-		char_rect.visible = false
+	var legacy: bool = gm != null and gm.get("is_legacy_graphics") == true
+	if legacy != _legacy_active:
+		_set_mode(legacy)
+	if not legacy:
+		_update_world(delta, player, mirror_sb, local_p)
 		return
 
 	char_rect.visible = true
