@@ -95,6 +95,10 @@ var dust_particles:  GPUParticles3D = null
 # ── Подглядывание в замочную скважину дверей ──
 var is_peeking_keyhole: bool = false
 var peeking_door_ref: Node3D = null
+var keyhole_t: float = 0.0
+var keyhole_settled: bool = false
+var lean_amount: float = 0.0
+const LEAN_DIST: float = 0.42
 var keyhole_saved_head_pos: Vector3 = Vector3.ZERO
 var keyhole_saved_head_rot: Vector3 = Vector3.ZERO
 var keyhole_base_yaw: float = 0.0
@@ -210,6 +214,8 @@ func _setup_input_map() -> void:
 	])
 
 	# 9. Задержка дыхания (ТОЛЬКО В ШКАФУ): Q + Кнопка Y на геймпаде
+	_register_action("lean_left", [_key_event(KEY_Z)])
+	_register_action("lean_right", [_key_event(KEY_V)])
 	_register_action("hold_breath", [
 		_key_event(KEY_Q),
 		_joy_btn_event(JOY_BUTTON_Y)
@@ -669,6 +675,16 @@ func _physics_process(delta: float) -> void:
 	if is_peeking_keyhole:
 		velocity = Vector3.ZERO
 		move_and_slide()
+		_clear_lean()
+		# Итан прильнул к двери: дышит, чуть качается, рядом с монстром дыхание чаще
+		if keyhole_settled:
+			var pulse: float = 1.0
+			if breath_sys and breath_sys.call("is_breath_held"):
+				pulse = 0.15
+			keyhole_t += delta * (1.25 + 0.5 * pulse)
+			camera.position.y = sin(keyhole_t) * 0.0065 * pulse
+			camera.position.x = sin(keyhole_t * 0.53) * 0.004
+			camera.rotation.z = sin(keyhole_t * 0.41) * 0.012
 
 		var move_in = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 		if move_in.length_squared() > 0.04 or Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("ui_cancel"):
@@ -684,6 +700,7 @@ func _physics_process(delta: float) -> void:
 	# ── В укрытии (шкаф / кровать) ────────────
 	if is_hiding:
 		velocity = Vector3.ZERO
+		_clear_lean()
 		# Дыхательное покачивание в укрытии (замирает при Q)
 		var b_y = 0.0
 		if breath_sys and not breath_sys.call("is_breath_held"):
@@ -821,6 +838,8 @@ func _physics_process(delta: float) -> void:
 		velocity.z = lerpf(velocity.z, 0.0, delta * deaccel)
 
 	move_and_slide()
+
+	_update_corner_lean(delta)
 
 	# ── Живая динамическая камера (Organic Head Bob, Lean & Impact) ──
 	# 1. Динамический угол обзора (Sprint FOV Zoom)
@@ -2686,6 +2705,34 @@ func _find_hiding_spot_in_hierarchy(node: Node) -> Node3D:
 		curr = curr.get_parent()
 	return null
 
+# Наклон из-за угла: голова выходит вбок, но в стену не проваливается
+func _update_corner_lean(delta: float) -> void:
+	var want: float = Input.get_action_strength("lean_right") - Input.get_action_strength("lean_left")
+	if is_sprinting or GameManager.is_reading_note or GameManager.is_backpack_open:
+		want = 0.0
+	var target: float = want * LEAN_DIST
+	if absf(want) > 0.01:
+		var space := get_world_3d().direct_space_state
+		var from: Vector3 = global_position + Vector3.UP * head.position.y
+		var dir: Vector3 = global_transform.basis.x * signf(want)
+		var q := PhysicsRayQueryParameters3D.create(from, from + dir * (LEAN_DIST + 0.24))
+		q.exclude = [get_rid()]
+		q.collision_mask = 1
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			target = signf(want) * maxf(0.0, from.distance_to(hit.position) - 0.24)
+	lean_amount = lerpf(lean_amount, target, minf(1.0, delta * 9.0))
+	head.position.x = lean_amount
+	head.rotation.z = -lean_amount * 0.42
+
+
+func _clear_lean() -> void:
+	if lean_amount != 0.0 or head.position.x != 0.0:
+		lean_amount = 0.0
+		head.position.x = 0.0
+		head.rotation.z = 0.0
+
+
 func enter_keyhole_peek(door: Node3D) -> void:
 	if is_peeking_keyhole or is_hiding or is_dead:
 		return
@@ -2702,11 +2749,20 @@ func enter_keyhole_peek(door: Node3D) -> void:
 	var target_yaw = atan2(-look_dir.x, -look_dir.z)
 	keyhole_base_yaw = target_yaw - rotation.y
 
-	# Плавное опускание взгляда к замочной скважине (высота ~1.05м)
+	# Итан приседает, склоняет голову набок и прижимается глазом к скважине
+	keyhole_settled = false
+	keyhole_t = 0.0
 	var tw = create_tween()
-	tw.tween_property(head, "position:y", 1.05, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(head, "rotation:y", keyhole_base_yaw, 0.22)
-	tw.parallel().tween_property(head, "rotation:x", 0.0, 0.22)
+	tw.tween_property(head, "position:y", 1.2, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(head, "rotation:y", keyhole_base_yaw, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(head, "rotation:x", -0.07, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "rotation:z", 0.2, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(head, "position:y", 1.05, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(head, "rotation:x", 0.0, 0.34).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "rotation:z", 0.0, 0.34).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "position:z", -0.2, 0.34).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "fov", maxf(base_cam_fov - 14.0, 40.0), 0.34).set_trans(Tween.TRANS_SINE)
+	tw.tween_callback(func(): keyhole_settled = true)
 
 	if player_hands:
 		player_hands.visible = false
@@ -2721,10 +2777,13 @@ func exit_keyhole_peek() -> void:
 	is_peeking_keyhole = false
 	peeking_door_ref = null
 
+	keyhole_settled = false
 	var tw = create_tween()
 	var target_head_y = 0.88 if is_crouching else 1.62
-	tw.tween_property(head, "position:y", target_head_y, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(head, "rotation", Vector3.ZERO, 0.18)
+	tw.tween_property(head, "position:y", target_head_y, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(head, "rotation", Vector3.ZERO, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "position:z", 0.0, 0.2).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(camera, "rotation:z", 0.0, 0.2).set_trans(Tween.TRANS_SINE)
 
 	if player_hands and not is_hiding:
 		player_hands.visible = true

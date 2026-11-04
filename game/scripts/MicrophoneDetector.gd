@@ -16,6 +16,9 @@ var mic_player: AudioStreamPlayer = null
 var smoothed_volume: float = 0.0
 var noise_cooldown: float = 0.0
 var is_capturing: bool = false
+var noise_floor: float = 0.25
+var loud_time: float = 0.0
+const MIN_LOUD_TIME: float = 0.22
 
 func _ready() -> void:
 	call_deferred("_setup_microphone_bus")
@@ -94,6 +97,10 @@ func _process(delta: float) -> void:
 			if mag > peak:
 				peak = mag
 
+	_process_level(peak, delta)
+
+# Вынесено отдельно, чтобы логику порога можно было проверить без настоящего микрофона
+func _process_level(peak: float, delta: float) -> void:
 	# Плавная фильтрация громкости для HUD
 	if peak > smoothed_volume:
 		smoothed_volume = lerp(smoothed_volume, peak, 0.65)
@@ -102,11 +109,18 @@ func _process(delta: float) -> void:
 
 	GameManager.mic_volume = smoothed_volume
 
-	# Проверка превышения порога громкости
-	var threshold = GameManager.mic_threshold
-	var triggered = (smoothed_volume >= threshold)
+	# Шум комнаты: быстро опускаемся к тишине и медленно привыкаем к постоянному гулу
+	var follow: float = 2.0 if smoothed_volume < noise_floor else 0.12
+	noise_floor = lerpf(noise_floor, smoothed_volume, minf(1.0, delta * follow))
 
-	if triggered and noise_cooldown <= 0.0:
+	# Срабатываем на звук заметно громче фона, и только если он длится, а не на щелчок
+	var threshold: float = maxf(GameManager.mic_threshold, noise_floor * 2.2 + 0.035)
+	var triggered: bool = smoothed_volume >= threshold
+	loud_time = loud_time + delta if triggered else 0.0
+
+	var player = GameManager.player_ref
+	var in_cutscene: bool = is_instance_valid(player) and player.get("is_in_cutscene") == true
+	if triggered and loud_time >= MIN_LOUD_TIME and noise_cooldown <= 0.0 and not in_cutscene:
 		noise_cooldown = 0.35
 		_on_mic_noise_detected(smoothed_volume)
 
@@ -121,7 +135,7 @@ func _on_mic_noise_detected(vol: float) -> void:
 		return
 
 	var player_pos = player.global_position
-	var sound_radius = clamp(vol * 175.0, 14.0, 48.0)
+	var sound_radius = clamp((vol - noise_floor) * 150.0, 8.0, 48.0)
 
 	# Оповещаем монстра и создаем визуальную акустическую волну!
 	GameManager.emit_noise(player_pos, sound_radius, "mic")

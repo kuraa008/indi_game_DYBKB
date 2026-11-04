@@ -32,7 +32,7 @@ func _ready() -> void:
 	add_child(_knock)
 	if not wake_shown:
 		wake_shown = true
-		_show_wake_text()
+		add_child(WakeUpScene.new())
 
 
 func _process(delta: float) -> void:
@@ -251,34 +251,3 @@ func _build_grass() -> void:
 			mmi.visibility_range_end = 42.0
 			mmi.visibility_range_end_margin = 5.0
 			add_child(mmi)
-
-
-func _show_wake_text() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 20
-	add_child(layer)
-	var title := Label.new()
-	title.text = "Итан очнулся…"
-	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color(0.86, 0.84, 0.78))
-	title.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	title.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	title.grow_vertical = Control.GROW_DIRECTION_BOTH
-	title.modulate.a = 0.0
-	layer.add_child(title)
-	var stamp := Label.new()
-	stamp.text = "ОКТ. 31 1994    23:47"
-	stamp.add_theme_font_size_override("font_size", 20)
-	stamp.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
-	stamp.position = Vector2(30, 52)
-	stamp.modulate.a = 0.0
-	layer.add_child(stamp)
-	var tw := create_tween()
-	tw.tween_interval(1.0)
-	tw.tween_property(stamp, "modulate:a", 0.9, 0.5)
-	tw.parallel().tween_property(title, "modulate:a", 1.0, 1.2)
-	tw.tween_interval(2.6)
-	tw.tween_property(title, "modulate:a", 0.0, 1.2)
-	tw.tween_interval(1.5)
-	tw.tween_property(stamp, "modulate:a", 0.0, 1.0)
-	tw.tween_callback(layer.queue_free)

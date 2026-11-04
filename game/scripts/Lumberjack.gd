@@ -57,7 +57,12 @@ var indoor_anchors: Array[Vector3] = [
 const AIM_DURATION: float = 0.35
 const RELOAD_DURATION: float = 1.9
 const SHOT_DAMAGE: float = 40.0
-const SIGHT_MAX_DIST: float = 35.0
+const SIGHT_MAX_DIST: float = 30.0
+const SIGHT_DARK: float = 16.0
+const SIGHT_LIT: float = 26.0
+const FOV_CALM: float = 58.0
+const FOV_ALERT: float = 110.0
+const REACTION_TIME: float = 0.6
 const MAX_SHOOT_RANGE: float = 30.0
 
 var aim_timer: float = 0.0
@@ -69,6 +74,10 @@ var chase_memory_timer: float = 0.0
 var time_since_last_seen: float = 999.0
 var last_known_player_pos: Vector3 = Vector3.ZERO
 var player_in_sight: bool = false
+var detect_level: float = 0.0
+var suspect_pos: Vector3 = Vector3.ZERO
+var reaction_timer: float = 0.0
+var start_grace: float = 16.0
 var check_sight_timer: float = 0.0
 var witnessed_hiding_spot: Variant = null
 var _last_player_hidden: bool = false
@@ -232,6 +241,8 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 
+	start_grace = maxf(0.0, start_grace - delta)
+
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	else:
@@ -319,6 +330,9 @@ func _update_player_line_of_sight() -> void:
 	if not player or not is_instance_valid(player) or player.get("is_dead") == true:
 		player_in_sight = false
 		return
+	if start_grace > 0.0 or player.get("is_in_cutscene") == true:
+		player_in_sight = false
+		return
 
 	var hidden: bool = player.get("is_hiding") == true
 	if hidden and not _last_player_hidden and time_since_last_seen < 1.5:
@@ -329,32 +343,39 @@ func _update_player_line_of_sight() -> void:
 
 	# Игрок спрятан в шкафу или под кроватью — прямой видимости нет
 	if hidden:
-		player_in_sight = false
+		_lose_sight()
 		return
 
 	var head_pos = global_position + Vector3(0, 1.65, 0)
 	var p_center = player.global_position + Vector3(0, 1.15, 0)
 	var dist = head_pos.distance_to(p_center)
 
-	if dist > SIGHT_MAX_DIST:
-		player_in_sight = false
+	# Пока лесоруб спокоен, он видит ближе и уже. В темноте и на корточках игрока заметить труднее
+	var calm: bool = current_state in [State.PATROL, State.INVESTIGATE]
+	var max_sight: float = SIGHT_MAX_DIST
+	if calm:
+		max_sight = SIGHT_LIT if player.get("flashlight_on") == true else SIGHT_DARK
+		if player.get("is_crouching") == true:
+			max_sight *= 0.65
+	if dist > max_sight:
+		_lose_sight()
 		return
 
-	# Угол обзора при спокойном патрулировании
+	# Угол обзора: за спиной лесоруб не видит
 	var to_player = p_center - head_pos
 	var forward = -global_transform.basis.z
 	var to_player_flat = Vector2(to_player.x, to_player.z)
 	var forward_flat = Vector2(forward.x, forward.z)
 
-	if current_state == State.PATROL and to_player_flat.length_squared() > 0.001 and forward_flat.length_squared() > 0.001:
+	if dist > 1.8 and to_player_flat.length_squared() > 0.001 and forward_flat.length_squared() > 0.001:
 		var h_angle_deg = rad_to_deg(abs(forward_flat.angle_to(to_player_flat)))
-		if h_angle_deg > 85.0:
-			player_in_sight = false
+		if h_angle_deg > (FOV_CALM if calm else FOV_ALERT):
+			_lose_sight()
 			return
 
 	var space = get_world_3d().direct_space_state
 	if not space:
-		player_in_sight = false
+		_lose_sight()
 		return
 
 	var target_points: Array[Vector3] = [
@@ -396,12 +417,34 @@ func _update_player_line_of_sight() -> void:
 					break
 
 	if spotted_point != null:
+		if calm:
+			# Заметить можно не сразу: вблизи за долю секунды, издалека дольше
+			var need: float = lerpf(0.2, 1.4, clampf((dist - 3.0) / maxf(max_sight - 3.0, 1.0), 0.0, 1.0))
+			detect_level += 0.10 / need
+			suspect_pos = spotted_point
+			if detect_level < 1.0:
+				player_in_sight = false
+				return
 		_on_player_spotted(spotted_point)
 	else:
-		player_in_sight = false
+		_lose_sight()
+
+func _lose_sight() -> void:
+	player_in_sight = false
+	detect_level = maxf(0.0, detect_level - 0.04)
+
+# Лесоруб что-то заметил краем глаза: останавливается и всматривается
+func _suspicious_hold(delta: float) -> bool:
+	if detect_level < 0.25:
+		return false
+	velocity.x = move_toward(velocity.x, 0.0, delta * 10.0)
+	velocity.z = move_toward(velocity.z, 0.0, delta * 10.0)
+	_look_towards(suspect_pos, delta * 5.0)
+	return true
 
 func _on_player_spotted(p_pos: Vector3) -> void:
 	player_in_sight = true
+	detect_level = 0.0
 	last_known_player_pos = p_pos
 	time_since_last_seen = 0.0
 	chase_memory_timer = 9.0
@@ -409,12 +452,13 @@ func _on_player_spotted(p_pos: Vector3) -> void:
 	# При обнаружении игрока лесопил начинает активную ПОГОНЮ!
 	if current_state in [State.PATROL, State.INVESTIGATE]:
 		current_state = State.CHASE
+		reaction_timer = REACTION_TIME
 		_set_nav_target(p_pos)
 		_play_sound(sfx_cock, gun_audio, 1.0)
 
 # ── Логика состояний ──
 func _process_patrol(delta: float) -> void:
-	if player_in_sight:
+	if player_in_sight or _suspicious_hold(delta):
 		return
 
 	if is_blinded_by_light:
@@ -426,6 +470,8 @@ func _process_patrol(delta: float) -> void:
 		wait_timer -= delta
 		velocity.x = move_toward(velocity.x, 0.0, delta * 8.0)
 		velocity.z = move_toward(velocity.z, 0.0, delta * 8.0)
+		# Стоит и оглядывается по сторонам
+		rotation.y += sin(Time.get_ticks_msec() * 0.0011) * delta * 0.9
 		return
 
 	_navigate_towards_target(WALK_SPEED, delta)
@@ -439,7 +485,7 @@ func _process_patrol(delta: float) -> void:
 		_pick_new_patrol_target()
 
 func _process_investigate(delta: float) -> void:
-	if player_in_sight:
+	if player_in_sight or _suspicious_hold(delta):
 		return
 
 	if is_blinded_by_light:
@@ -466,6 +512,14 @@ func _process_chase(delta: float) -> void:
 	if not player or not is_instance_valid(player) or player.get("is_dead") == true:
 		current_state = State.PATROL
 		_pick_new_patrol_target()
+		return
+
+	# Только что заметил: замирает на миг и взводит ружьё
+	if reaction_timer > 0.0:
+		reaction_timer -= delta
+		velocity.x = move_toward(velocity.x, 0.0, delta * 12.0)
+		velocity.z = move_toward(velocity.z, 0.0, delta * 12.0)
+		_look_towards(player.global_position, delta * 9.0)
 		return
 
 	# Если лесопил видел, как игрок спрятался в шкаф или под кровать
@@ -722,7 +776,14 @@ func _check_close_melee() -> void:
 	if not player or not is_instance_valid(player) or player.get("is_dead") == true or player.get("is_hiding") == true:
 		return
 
+	if start_grace > 0.0 or player.get("is_in_cutscene") == true:
+		return
 	var dist = global_position.distance_to(player.global_position)
+	# Вплотную подошёл к ничего не подозревающему лесорубу: сначала он замечает, а потом бьёт
+	if dist <= 1.4 and current_state in [State.PATROL, State.INVESTIGATE]:
+		_on_player_spotted(player.global_position + Vector3(0, 1.15, 0))
+		melee_cooldown = maxf(melee_cooldown, REACTION_TIME + 0.3)
+		return
 	if dist <= 1.4 and melee_cooldown <= 0.0:
 		melee_cooldown = 1.15
 		if player.has_method("take_damage"):
@@ -984,9 +1045,11 @@ func on_noise_heard(noise_pos: Vector3, radius: float = 30.0, _source_type: Stri
 	_on_noise_made(noise_pos, radius, _source_type)
 
 func _on_noise_made(noise_pos: Vector3, radius: float = 30.0, _source_type: String = "environment") -> void:
+	if start_grace > 0.0:
+		return
 	var dist = global_position.distance_to(noise_pos)
-	var max_hear = maxf(radius, 24.0)
-	if dist <= max_hear:
+	# Слышит только то, что громко настолько, чтобы долететь до него
+	if dist <= radius:
 		if current_state == State.STAKEOUT_HIDING:
 			if is_instance_valid(stakeout_target_spot) and noise_pos.distance_to(stakeout_target_spot.global_position) < 3.2:
 				stakeout_timer = 99.0
@@ -994,28 +1057,18 @@ func _on_noise_made(noise_pos: Vector3, radius: float = 30.0, _source_type: Stri
 		if current_state == State.CHASE and player_in_sight:
 			return
 
-		# Реакция на бег игрока: дед слышит бег и начинает активную погоню!
-		var p_ref = GameManager.player_ref
-		var is_player_running: bool = false
-		if is_instance_valid(p_ref) and p_ref.get("is_sprinting") == true:
-			if p_ref.global_position.distance_to(noise_pos) < 3.5:
-				is_player_running = true
-
-		if is_player_running:
-			if dist < 14.0:
-				current_state = State.CHASE
-				last_known_player_pos = noise_pos
-				_set_nav_target(noise_pos)
-				_play_sound(sfx_cock, gun_audio, 1.0)
-				return
-			else:
-				current_state = State.INVESTIGATE
-				_set_nav_target(noise_pos)
-				return
-
-		if current_state in [State.PATROL, State.INVESTIGATE]:
+		# Шум сам по себе не даёт понять, где игрок: лесоруб идёт проверить примерное место
+		if current_state == State.CHASE:
+			last_known_player_pos = _rough_noise_point(noise_pos, dist)
+		elif current_state in [State.PATROL, State.INVESTIGATE]:
 			current_state = State.INVESTIGATE
-			_set_nav_target(noise_pos)
+			search_points.clear()
+			_set_nav_target(_rough_noise_point(noise_pos, dist))
+
+func _rough_noise_point(noise_pos: Vector3, dist: float) -> Vector3:
+	var spread: float = minf(dist * 0.22, 4.0)
+	var a: float = randf() * TAU
+	return noise_pos + Vector3(cos(a), 0.0, sin(a)) * randf_range(spread * 0.4, spread)
 
 func alert_player_cough(cough_pos: Vector3) -> void:
 	if GameManager and GameManager.game_ended:
@@ -1029,21 +1082,21 @@ func alert_player_cough(cough_pos: Vector3) -> void:
 		stakeout_timer = 99.0
 		return
 	_play_sound(sfx_cock, gun_audio, 1.0)
-	if dist < 20.0:
-		current_state = State.CHASE
-		last_known_player_pos = cough_pos
-		_set_nav_target(cough_pos)
-	else:
+	# Кашель выдаёт примерное место, но нападает он, только когда увидит
+	if current_state in [State.PATROL, State.INVESTIGATE]:
 		current_state = State.INVESTIGATE
-		_set_nav_target(cough_pos)
+		search_points.clear()
+		_set_nav_target(_rough_noise_point(cough_pos, dist))
 
 func _on_door_altered(door: Node3D, is_open_now: bool) -> void:
 	if not is_instance_valid(door):
 		return
 	if current_state == State.CHASE and player_in_sight:
 		return
+	if start_grace > 0.0:
+		return
 	var dist = global_position.distance_to(door.global_position)
-	if dist < 20.0 and is_open_now:
+	if dist < 12.0 and is_open_now:
 		if current_state in [State.PATROL, State.INVESTIGATE]:
 			current_state = State.INVESTIGATE
 			_set_nav_target(door.global_position)
@@ -1199,6 +1252,8 @@ func reset_ai() -> void:
 	aim_timer = 0.0
 	reload_timer = 0.0
 	player_in_sight = false
+	detect_level = 0.0
+	reaction_timer = 0.0
 	flashlight_suspicion_timer = 0.0
 	is_blinded_by_light = false
 	has_warned_light = false
@@ -1213,7 +1268,7 @@ func reset_ai() -> void:
 	_pick_new_patrol_target()
 
 func _check_flashlight_illumination(delta: float) -> void:
-	if current_state in [State.AIMING, State.SHOOT, State.RELOAD]:
+	if start_grace > 0.0 or current_state in [State.AIMING, State.SHOOT, State.RELOAD]:
 		_decay_flashlight_suspicion(delta)
 		return
 
