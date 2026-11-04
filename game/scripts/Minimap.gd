@@ -46,15 +46,6 @@ func _build_ui() -> void:
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.03, 0.05, 0.08, 0.72)
-	panel_style.border_width_left = 2
-	panel_style.border_width_right = 2
-	panel_style.border_width_top = 2
-	panel_style.border_width_bottom = 2
-	panel_style.border_color = Color(0.25, 0.45, 0.75, 0.75)
-	panel_style.corner_radius_top_left = 8
-	panel_style.corner_radius_top_right = 8
-	panel_style.corner_radius_bottom_left = 8
-	panel_style.corner_radius_bottom_right = 8
 	panel_style.content_margin_left = 8
 	panel_style.content_margin_right = 8
 	panel_style.content_margin_top = 6
@@ -69,7 +60,7 @@ func _build_ui() -> void:
 	map_panel.add_child(vb)
 
 	header_label = Label.new()
-	header_label.text = "ТАКТИЧЕСКИЙ РАДАР [M]"
+	header_label.text = "КАРТА"
 	header_label.add_theme_font_size_override("font_size", 11)
 	header_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 	header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

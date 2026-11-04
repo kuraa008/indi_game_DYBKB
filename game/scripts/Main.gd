@@ -75,6 +75,9 @@ func _ready() -> void:
 	# Выпекаем навмеш с открытыми дверными проёмами
 	await get_tree().physics_frame
 	_bake_nav_mesh()
+	# Сетка считается в фоне. Враги начинают ходить, когда она готова
+	await nav_region.bake_finished
+	nav_region.navigation_mesh = nav_region.navigation_mesh
 	# Wait for actual geometry, not just the initial empty map iteration.
 	var nav_map := nav_region.get_navigation_map()
 	for i in range(120):
@@ -333,7 +336,7 @@ func _apply_graphics_quality(quality: String) -> void:
 			env.ssil_sharpness = 0.75
 			# SSR — зеркала, мокрые полы
 			env.ssr_enabled = true
-			env.ssr_max_steps = 64
+			env.ssr_max_steps = 32
 			env.ssr_fade_in = 0.10
 			env.ssr_fade_out = 3.5
 			env.ssr_depth_tolerance = 0.2
@@ -372,6 +375,11 @@ func _apply_graphics_quality(quality: String) -> void:
 				moon_light.shadow_enabled = true
 				moon_light.shadow_blur = 1.8
 				moon_light.light_energy = 0.55
+			# Высокое отличается от ультра самыми дорогими эффектами
+			if quality == "high":
+				env.ssil_enabled = false
+				env.volumetric_fog_enabled = false
+				env.ssr_enabled = false
 		"medium":
 			env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 			env.tonemap_exposure = 1.0
@@ -467,9 +475,8 @@ func _bake_nav_mesh() -> void:
 					disabled_door_colliders.append(node)
 
 	# Bake only the playable bounds, not the entire kilometre-wide terrain.
-	nav_region.bake_navigation_mesh(false)
-	# Explicitly publish the finished resource, including its polygons.
-	nav_region.navigation_mesh = nav_region.navigation_mesh
+	# Коллизии читаются сразу в этом вызове, расчёт уходит в отдельный поток
+	nav_region.bake_navigation_mesh(true)
 
 	# Мгновенно возвращаем физическую коллизию дверей для игрока и монстра
 	for col in disabled_door_colliders:
@@ -766,6 +773,8 @@ func _load_map() -> void:
 				var w_node = _box(pos, sz, col, "wall_%d" % obj_id, true, rot)
 				if obj.has("wall_texture") and str(obj["wall_texture"]) != "":
 					TextureHelper.apply_wall_texture_to_node(w_node, str(obj["wall_texture"]), col)
+					if str(obj["wall_texture"]) == "brick_red" and abs(rot.x) < 0.5 and abs(rot.z) < 0.5:
+						NatureKit.add_protruding_bricks(w_node, sz, col, TextureHelper.WALL_TEXTURES["brick_red"]["triplanar_scale"].x)
 			_:
 				if is_legacy_map and obj_id == 82:
 					GameManager.door_position = pos
@@ -986,6 +995,8 @@ func _spawn_player() -> void:
 		rock.position = Vector3(-49.5, 0.0, 88.0)
 		rock.rotation_degrees = Vector3(5.0, 42.0, -8.0)
 		nav_region.add_child(rock)
+
+		add_child(ActDressing.new())
 
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"

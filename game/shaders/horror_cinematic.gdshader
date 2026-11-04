@@ -9,6 +9,7 @@ uniform float lens_distortion : hint_range(-0.1, 0.1) = 0.012;
 uniform float fear_factor : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 fear_color : source_color = vec4(0.85, 0.06, 0.04, 1.0);
 uniform float vhs_amount : hint_range(0.0, 1.0) = 1.0;
+uniform float vhs_stress : hint_range(0.0, 1.0) = 0.0;
 
 // Высококачественный процедурный 35mm пленочный шум
 float film_grain(vec2 uv, float t) {
@@ -35,7 +36,7 @@ void fragment() {
 	// ── Кассета: дрожание строк, полоса трекинга, срыв внизу кадра, редкие сбои ──
 	float line = floor(vy / SCREEN_PIXEL_SIZE.y / 2.0);
 	float burst_slot = floor(t * 0.4);
-	float burst = step(0.88, hash1(burst_slot)) * step(fract(t * 0.4), 0.14);
+	float burst = step(0.88 - vhs_stress * 0.75, hash1(burst_slot)) * step(fract(t * 0.4), 0.14 + vhs_stress * 0.5);
 	float wobble = sin(vy * 7.0 + t * 1.3) * 0.0007 + sin(vy * 90.0 + t * 9.0) * 0.00025;
 	float jitter = (hash1(line + floor(t * 30.0) * 13.0) - 0.5) * 0.0011;
 	float band_pos = fract(t * 0.055 + hash1(floor(t * 0.055)) * 0.6);
@@ -43,7 +44,7 @@ void fragment() {
 	float tear = band * (hash1(line * 1.7 + floor(t * 24.0)) - 0.5) * 0.02;
 	float head_switch = smoothstep(0.965, 1.0, vy);
 	float burst_shift = burst * (hash1(floor(vy * 22.0) + floor(t * 20.0) * 3.0) - 0.5) * 0.05;
-	uv.x += (wobble + jitter + tear + head_switch * 0.03 + burst_shift) * vhs_amount;
+	uv.x += (wobble * (1.0 + vhs_stress * 2.5) + jitter * (1.0 + vhs_stress * 3.0) + tear + head_switch * 0.03 + burst_shift) * vhs_amount;
 
 	// Динамическая хроматическая аберрация (усиливается при страхе и адреналине)
 	float dynamic_aberration = chromatic_aberration + fear_factor * 0.006;
@@ -81,7 +82,7 @@ void fragment() {
 		float scan = 0.94 + 0.06 * sin(vy / SCREEN_PIXEL_SIZE.y * PI * 0.5);
 		tape *= scan;
 		float noise_val = film_grain(vec2(SCREEN_UV.x * 40.0, line * 0.37), t);
-		tape += vec3(noise_val) * (0.022 + band * 0.22 + head_switch * 0.38 + burst * 0.1);
+		tape += vec3(noise_val) * (0.022 + vhs_stress * 0.05 + band * 0.22 + head_switch * 0.38 + burst * 0.1);
 		float speck_row = step(0.9985, hash1(line * 0.73 + floor(t * 18.0) * 7.0));
 		float speck = speck_row * step(0.55, hash1(floor(SCREEN_UV.x * 26.0) + line));
 		tape += vec3(speck * 0.45);

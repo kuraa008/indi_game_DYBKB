@@ -12,6 +12,22 @@ extends CanvasLayer
 
 const TextureHelper = preload("res://scripts/TextureHelper.gd")
 
+const HUD_TEXT   := Color(0.86, 0.87, 0.84)
+const HUD_DIM    := Color(0.52, 0.53, 0.50)
+const HUD_ACCENT := Color(0.95, 0.12, 0.09)
+
+const CONTROLS_LIST = [
+	["WASD", "идти"],
+	["SHIFT", "бежать"],
+	["C", "присесть"],
+	["ЛКМ / E", "действие"],
+	["F", "фонарик"],
+	["TAB", "рюкзак"],
+	["ПКМ", "выбросить предмет"],
+	["Q (зажать)", "не дышать рядом с монстром"],
+	["M", "микрофон"],
+]
+
 var root_ctrl:    Control
 var crowbar_icon: Label = null
 var key_icon:     Label = null
@@ -25,23 +41,16 @@ var fuse_green_icon: Label = null
 var interact_lbl: Label
 var hint_label:   Label
 var hint_timer:   float = 0.0
-var gfx_btn:      Button = null
-var backpack_btn: Button = null
 
 # ── Индикатор выносливости (Stamina Bar) ──
 var stamina_container: PanelContainer = null
 var stamina_bar:       ProgressBar = null
-var stamina_icon:      Label = null
 var end_screens:       Array[Node] = []
 
 # Виньетка страха и сердцебиения
 var fear_vignette: ColorRect
 var cinematic_lens_rect: ColorRect = null
 var cinematic_shader_mat: ShaderMaterial = null
-var vhs_rec_label: Label = null
-var vhs_counter_label: Label = null
-var vhs_date_label: Label = null
-var vhs_time := 0.0
 
 
 # Укрытия (шкаф и кровать)
@@ -84,26 +93,20 @@ var hotbar_slot_numbers: Array[Label] = []
 var hotbar_slot_counts: Array[Label] = []
 var hotbar_fade_timer: float = 3.5
 
-# ── Чек-лист двери побега и инспектор замков ──
-var escape_door_card: PanelContainer = null
-var escape_step_boards_lbl: Label = null
-var escape_step_power_lbl: Label = null
-var escape_step_key_lbl: Label = null
-var escape_status_lbl: Label = null
+# ── Что мешает открыть дверь ──
+var door_info_lbl: Label = null
+var door_info_text: String = ""
+var exit_info_text: String = ""
 
-var door_inspect_card: PanelContainer = null
-var door_inspect_title: Label = null
-var door_inspect_status_badge: Label = null
-var door_inspect_lock_lbl: Label = null
-var door_inspect_lock_status: Label = null
-var door_inspect_boards_lbl: Label = null
-var door_inspect_boards_status: Label = null
-var door_inspect_power_lbl: Label = null
-var door_inspect_action_prompt: Label = null
+# ── Счётчик кассеты и подсказка по кнопкам ──
+var tape_dot: ColorRect = null
+var tape_lbl: Label = null
+var tape_time: float = 0.0
+var controls_help: Control = null
 
-# ── Связка ключей и инструментов на HUD ──
-var keyring_card: PanelContainer = null
-var keyring_items_vbox: VBoxContainer = null
+# ── Пауза ──
+var pause_root: ColorRect = null
+var pause_first_btn: Button = null
 
 # ── Виджет микрофона (Real Mic Sound Detection) ──
 var mic_container: Control = null
@@ -130,7 +133,11 @@ var flash_warn_bar: ProgressBar = null
 
 # ══════════════════════════════════════════════
 func _ready() -> void:
+	# Пауза и её кнопки должны работать при остановленном дереве
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
+	VHSOverlay.set_fear(0.0)
+	VHSOverlay.glitch(0.7)
 	GameManager.connect("inventory_changed", _refresh_inventory)
 	GameManager.connect("game_won",          _on_win)
 	GameManager.connect("game_over",         _on_game_over)
@@ -180,13 +187,10 @@ func _build_ui() -> void:
 	interact_lbl = Label.new()
 	interact_lbl.text = ""
 	interact_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	interact_lbl.add_theme_font_size_override("font_size", 14)
-	interact_lbl.add_theme_color_override("font_color", Color(0.88, 0.85, 0.72, 0.95))
-	interact_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	interact_lbl.add_theme_constant_override("shadow_offset_x", 1)
-	interact_lbl.add_theme_constant_override("shadow_offset_y", 1)
-	interact_lbl.set_anchor_and_offset(SIDE_LEFT,   0.20, 0)
-	interact_lbl.set_anchor_and_offset(SIDE_RIGHT,  0.80, 0)
+	interact_lbl.add_theme_font_size_override("font_size", 17)
+	interact_lbl.add_theme_color_override("font_color", HUD_TEXT)
+	interact_lbl.set_anchor_and_offset(SIDE_RIGHT, 0.80, 0)
+	interact_lbl.set_anchor_and_offset(SIDE_LEFT, 0.20, 0)
 	interact_lbl.set_anchor_and_offset(SIDE_BOTTOM, 1,   -45)
 	interact_lbl.set_anchor_and_offset(SIDE_TOP,    1,   -75)
 	root_ctrl.add_child(interact_lbl)
@@ -196,13 +200,10 @@ func _build_ui() -> void:
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
 	hint_label.autowrap_mode        = TextServer.AUTOWRAP_WORD
-	hint_label.add_theme_font_size_override("font_size", 14)
-	hint_label.add_theme_color_override("font_color",        Color(0.88, 0.82, 0.62))
-	hint_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	hint_label.add_theme_constant_override("shadow_offset_x", 1)
-	hint_label.add_theme_constant_override("shadow_offset_y", 1)
-	hint_label.set_anchor_and_offset(SIDE_LEFT,   0.10, 0)
-	hint_label.set_anchor_and_offset(SIDE_RIGHT,  0.90, 0)
+	hint_label.add_theme_font_size_override("font_size", 17)
+	hint_label.add_theme_color_override("font_color", HUD_TEXT)
+	hint_label.set_anchor_and_offset(SIDE_RIGHT, 0.90, 0)
+	hint_label.set_anchor_and_offset(SIDE_LEFT, 0.10, 0)
 	hint_label.set_anchor_and_offset(SIDE_BOTTOM, 1,   -134)
 	hint_label.set_anchor_and_offset(SIDE_TOP,    1,   -184)
 	hint_label.visible = false
@@ -217,12 +218,8 @@ func _build_ui() -> void:
 	# ── Оверлей походного рюкзака (6 слотов) ─
 	_build_backpack_ui()
 
-	# ── Чек-лист двери победы и инспектор дверей/замков ───────────────
-	_build_escape_door_card()
-	_build_door_inspect_card()
-
-	# ── Связка ключей и инструментов на HUD ──
-	_build_keyring_hud()
+	# ── Что мешает открыть дверь ──
+	_build_door_info()
 
 	# ── Виджет микрофона (реакция ИИ на голос) ──
 	_build_mic_hud()
@@ -239,33 +236,10 @@ func _build_ui() -> void:
 	# ── Кинематографичный пост-процессинг объектива (35mm зерно, хроматика, виньетка) ──
 	_build_cinematic_lens_postprocess()
 
-	# ── Водяной знак версии игры ──
-	var alpha_lbl = Label.new()
-	alpha_lbl.name = "AlphaVersionLabel"
-	alpha_lbl.text = "alpha 0.1"
-	alpha_lbl.add_theme_font_size_override("font_size", 11)
-	alpha_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70, 0.40))
-	alpha_lbl.set_anchor_and_offset(SIDE_RIGHT, 1.0, -18)
-	alpha_lbl.set_anchor_and_offset(SIDE_TOP, 0.0, 14)
-	alpha_lbl.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	alpha_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(alpha_lbl)
-
-	# ── Маленькое объяснение кнопок как надпись alpha 0.1 ──
-	var guide_lbl = Label.new()
-	guide_lbl.name = "ControlsGuideLabel"
-	guide_lbl.text = "WASD — Ходить  •  Shift — Бег  •  C — Присесть  •  E — Действие  •  F — Фонарик  •  Tab — Рюкзак  •  ПКМ — Сброс"
-	guide_lbl.add_theme_font_size_override("font_size", 10)
-	guide_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70, 0.40))
-	guide_lbl.set_anchor_and_offset(SIDE_RIGHT, 1.0, -18)
-	guide_lbl.set_anchor_and_offset(SIDE_TOP, 0.0, 32)
-	guide_lbl.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	guide_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(guide_lbl)
-
-	var tw_g = create_tween()
-	tw_g.tween_interval(16.0)
-	tw_g.tween_property(guide_lbl, "modulate:a", 0.30, 4.0)
+	# ── Счётчик кассеты, подсказка по кнопкам и пауза ──
+	_build_tape_counter()
+	_build_controls_help()
+	_build_pause_menu()
 
 func _build_cinematic_lens_postprocess() -> void:
 	cinematic_lens_rect = ColorRect.new()
@@ -280,116 +254,41 @@ func _build_cinematic_lens_postprocess() -> void:
 
 	root_ctrl.add_child(cinematic_lens_rect)
 	_on_gfx_quality_changed(GameManager.graphics_quality if GameManager else "ultra")
-	_build_vhs_hud()
+	# Кассету рисует VHSOverlay, этот шейдер остаётся только объективом
+	if cinematic_shader_mat:
+		cinematic_shader_mat.set_shader_parameter("vhs_amount", 0.0)
+	if not GameManager.vhs_changed.is_connected(_on_vhs_changed):
+		GameManager.vhs_changed.connect(_on_vhs_changed)
 
-# Надписи видеокамеры: мигающий REC, счётчик плёнки, дата и время записи
-func _build_vhs_hud() -> void:
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
-	font.font_weight = 700
-	var make := func(lbl_name: String, size: int, col: Color) -> Label:
-		var l := Label.new()
-		l.name = lbl_name
-		l.add_theme_font_override("font", font)
-		l.add_theme_font_size_override("font_size", size)
-		l.add_theme_color_override("font_color", col)
-		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
-		l.add_theme_constant_override("shadow_offset_x", 2)
-		l.add_theme_constant_override("shadow_offset_y", 2)
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		root_ctrl.add_child(l)
-		return l
-
-	vhs_rec_label = make.call("VhsRec", 28, Color(0.95, 0.12, 0.08, 0.92))
-	vhs_rec_label.text = "● REC"
-	vhs_rec_label.set_anchor_and_offset(SIDE_LEFT, 0.0, 28)
-	vhs_rec_label.set_anchor_and_offset(SIDE_TOP, 0.0, 56)
-
-	vhs_counter_label = make.call("VhsCounter", 20, Color(0.92, 0.92, 0.86, 0.82))
-	vhs_counter_label.set_anchor_and_offset(SIDE_LEFT, 0.0, 28)
-	vhs_counter_label.set_anchor_and_offset(SIDE_TOP, 0.0, 94)
-
-	vhs_date_label = make.call("VhsDate", 22, Color(0.92, 0.92, 0.86, 0.82))
-	vhs_date_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	vhs_date_label.offset_left = -28
-	vhs_date_label.offset_right = -28
-	vhs_date_label.offset_top = -96
-	vhs_date_label.offset_bottom = -40
-	vhs_date_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	vhs_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_update_vhs_hud(0.0)
-
-func _update_vhs_hud(delta: float) -> void:
-	if not vhs_rec_label:
-		return
-	vhs_time += delta
-	vhs_rec_label.modulate.a = 1.0 if fmod(vhs_time, 1.0) < 0.6 else 0.0
-	var sec := int(vhs_time)
-	vhs_counter_label.text = "SP  %d:%02d:%02d" % [sec / 3600, (sec / 60) % 60, sec % 60]
-	# Запись начинается ночью 31 октября и идёт в реальном времени
-	var clock := 23 * 3600 + 47 * 60 + sec
-	vhs_date_label.text = "%02d:%02d:%02d\nОКТ. 31 1994" % [(clock / 3600) % 24, (clock / 60) % 60, clock % 60]
-
+func _on_vhs_changed(_enabled: bool) -> void:
+	_on_gfx_quality_changed(GameManager.graphics_quality)
 func _build_stamina_ui() -> void:
 	stamina_container = PanelContainer.new()
 	stamina_container.name = "StaminaContainer"
-	stamina_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -115)
-	stamina_container.set_anchor_and_offset(SIDE_RIGHT, 0.5, 115)
-	stamina_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -18)
-	stamina_container.set_anchor_and_offset(SIDE_TOP, 1.0, -32)
+	stamina_container.set_anchor_and_offset(SIDE_RIGHT, 0.5, 90)
+	stamina_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -90)
+	stamina_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -16)
+	stamina_container.set_anchor_and_offset(SIDE_TOP, 1.0, -19)
 	stamina_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var p_style = StyleBoxFlat.new()
-	p_style.bg_color = Color(0.04, 0.05, 0.07, 0.65)
-	p_style.border_width_left = 1
-	p_style.border_width_right = 1
-	p_style.border_width_top = 1
-	p_style.border_width_bottom = 1
-	p_style.border_color = Color(0.25, 0.28, 0.32, 0.55)
-	p_style.corner_radius_top_left = 3
-	p_style.corner_radius_top_right = 3
-	p_style.corner_radius_bottom_left = 3
-	p_style.corner_radius_bottom_right = 3
-	p_style.set_content_margin_all(2)
-	stamina_container.add_theme_stylebox_override("panel", p_style)
+	stamina_container.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	root_ctrl.add_child(stamina_container)
 
-	var hb = HBoxContainer.new()
-	hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	hb.add_theme_constant_override("separation", 6)
-	stamina_container.add_child(hb)
-
-	stamina_icon = Label.new()
-	stamina_icon.text = ""
-	stamina_icon.add_theme_font_size_override("font_size", 9)
-	stamina_icon.add_theme_color_override("font_color", Color(0.85, 0.88, 0.92, 0.75))
-	hb.add_child(stamina_icon)
-
 	stamina_bar = ProgressBar.new()
-	stamina_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stamina_bar.size_flags_vertical = Control.SIZE_FILL
 	stamina_bar.show_percentage = false
 	stamina_bar.min_value = 0.0
 	stamina_bar.max_value = 100.0
 	stamina_bar.value = 100.0
+	stamina_bar.custom_minimum_size = Vector2(0, 3)
 
 	var bar_bg = StyleBoxFlat.new()
-	bar_bg.bg_color = Color(0.06, 0.07, 0.09, 0.8)
-	bar_bg.corner_radius_top_left = 2
-	bar_bg.corner_radius_top_right = 2
-	bar_bg.corner_radius_bottom_left = 2
-	bar_bg.corner_radius_bottom_right = 2
+	bar_bg.bg_color = Color(1, 1, 1, 0.12)
 	stamina_bar.add_theme_stylebox_override("background", bar_bg)
 
 	var bar_fg = StyleBoxFlat.new()
-	bar_fg.bg_color = Color(0.85, 0.89, 0.95, 0.85)
-	bar_fg.corner_radius_top_left = 2
-	bar_fg.corner_radius_top_right = 2
-	bar_fg.corner_radius_bottom_left = 2
-	bar_fg.corner_radius_bottom_right = 2
+	bar_fg.bg_color = HUD_TEXT
 	stamina_bar.add_theme_stylebox_override("fill", bar_fg)
 
-	hb.add_child(stamina_bar)
+	stamina_container.add_child(stamina_bar)
 
 func _on_stamina_changed(cur_stamina: float, max_stamina: float, is_exhausted: bool) -> void:
 	if not stamina_bar or not stamina_container:
@@ -398,27 +297,9 @@ func _on_stamina_changed(cur_stamina: float, max_stamina: float, is_exhausted: b
 	stamina_bar.max_value = max_stamina
 	stamina_bar.value = cur_stamina
 
-	var ratio = cur_stamina / max(1.0, max_stamina)
 	var fg_mat = stamina_bar.get_theme_stylebox("fill") as StyleBoxFlat
-
-	if is_exhausted:
-		if fg_mat:
-			fg_mat.bg_color = Color(0.92, 0.25, 0.25, 0.90)
-		if stamina_icon:
-			stamina_icon.text = ""
-			stamina_icon.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	elif ratio < 0.30:
-		if fg_mat:
-			fg_mat.bg_color = Color(0.95, 0.68, 0.22, 0.90)
-		if stamina_icon:
-			stamina_icon.text = ""
-			stamina_icon.add_theme_color_override("font_color", Color(0.95, 0.70, 0.25))
-	else:
-		if fg_mat:
-			fg_mat.bg_color = Color(0.85, 0.89, 0.95, 0.85)
-		if stamina_icon:
-			stamina_icon.text = ""
-			stamina_icon.add_theme_color_override("font_color", Color(0.85, 0.88, 0.92, 0.75))
+	if fg_mat:
+		fg_mat.bg_color = HUD_ACCENT if is_exhausted else HUD_TEXT
 
 # ══════════════════════════════════════════════
 #  Быстрый HUD Хотбар предметов [1]..[6]
@@ -426,8 +307,8 @@ func _on_stamina_changed(cur_stamina: float, max_stamina: float, is_exhausted: b
 func _build_hotbar_ui() -> void:
 	hotbar_container = PanelContainer.new()
 	hotbar_container.name = "HUDHotbar"
-	hotbar_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -172)
 	hotbar_container.set_anchor_and_offset(SIDE_RIGHT, 0.5, 172)
+	hotbar_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -172)
 	hotbar_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -38)
 	hotbar_container.set_anchor_and_offset(SIDE_TOP, 1.0, -96)
 	hotbar_container.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -439,10 +320,6 @@ func _build_hotbar_ui() -> void:
 	hb_style.border_width_top = 1
 	hb_style.border_width_bottom = 1
 	hb_style.border_color = Color(0.32, 0.36, 0.44, 0.45)
-	hb_style.corner_radius_top_left = 6
-	hb_style.corner_radius_top_right = 6
-	hb_style.corner_radius_bottom_left = 6
-	hb_style.corner_radius_bottom_right = 6
 	hb_style.content_margin_left = 5
 	hb_style.content_margin_right = 5
 	hb_style.content_margin_top = 4
@@ -477,10 +354,6 @@ func _build_hotbar_ui() -> void:
 		slot_style.border_width_top = 1
 		slot_style.border_width_bottom = 1
 		slot_style.border_color = Color(0.28, 0.32, 0.38, 0.55)
-		slot_style.corner_radius_top_left = 5
-		slot_style.corner_radius_top_right = 5
-		slot_style.corner_radius_bottom_left = 5
-		slot_style.corner_radius_bottom_right = 5
 		slot_p.add_theme_stylebox_override("panel", slot_style)
 		hbox.add_child(slot_p)
 
@@ -557,10 +430,6 @@ func _refresh_hotbar() -> void:
 		var is_active: bool = (i == active_idx) and has_item
 
 		var s = StyleBoxFlat.new()
-		s.corner_radius_top_left = 5
-		s.corner_radius_top_right = 5
-		s.corner_radius_bottom_left = 5
-		s.corner_radius_bottom_right = 5
 
 		if is_active:
 			# Активный экипированный слот — яркая золотистая кайма и янтарный фон
@@ -639,412 +508,60 @@ func _flash_hotbar() -> void:
 	if hotbar_container:
 		hotbar_container.modulate.a = 1.0
 
-func _build_escape_door_card() -> void:
-	escape_door_card = PanelContainer.new()
-	escape_door_card.set_anchor_and_offset(SIDE_LEFT, 0.5, -200)
-	escape_door_card.set_anchor_and_offset(SIDE_RIGHT, 0.5, 200)
-	escape_door_card.set_anchor_and_offset(SIDE_TOP, 0, 16)
-	escape_door_card.set_anchor_and_offset(SIDE_BOTTOM, 0, 150)
-	escape_door_card.visible = false
-	escape_door_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+func _build_door_info() -> void:
+	door_info_lbl = Label.new()
+	door_info_lbl.name = "DoorInfo"
+	door_info_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	door_info_lbl.add_theme_font_size_override("font_size", 16)
+	door_info_lbl.add_theme_color_override("font_color", HUD_TEXT)
+	door_info_lbl.set_anchor_and_offset(SIDE_RIGHT, 0.85, 0)
+	door_info_lbl.set_anchor_and_offset(SIDE_LEFT, 0.15, 0)
+	door_info_lbl.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -84)
+	door_info_lbl.set_anchor_and_offset(SIDE_TOP, 1.0, -170)
+	door_info_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	door_info_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	door_info_lbl.visible = false
+	root_ctrl.add_child(door_info_lbl)
 
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.08, 0.12, 0.94)
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 3
-	style.border_width_bottom = 2
-	style.border_color = Color(0.85, 0.72, 0.32, 0.90)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_left = 6
-	style.corner_radius_bottom_right = 6
-	style.set_content_margin_all(8)
-	escape_door_card.add_theme_stylebox_override("panel", style)
-	root_ctrl.add_child(escape_door_card)
-
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 3)
-	escape_door_card.add_child(vb)
-
-	var title = Label.new()
-	title.text = "ВЫХОДНАЯ ДВЕРЬ ОСОБНЯКА"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(0.96, 0.88, 0.60))
-	vb.add_child(title)
-
-	escape_step_boards_lbl = Label.new()
-	escape_step_boards_lbl.add_theme_font_size_override("font_size", 10)
-	vb.add_child(escape_step_boards_lbl)
-
-	escape_step_power_lbl = Label.new()
-	escape_step_power_lbl.add_theme_font_size_override("font_size", 10)
-	vb.add_child(escape_step_power_lbl)
-
-	escape_step_key_lbl = Label.new()
-	escape_step_key_lbl.add_theme_font_size_override("font_size", 10)
-	vb.add_child(escape_step_key_lbl)
-
-	escape_status_lbl = Label.new()
-	escape_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	escape_status_lbl.add_theme_font_size_override("font_size", 10)
-	vb.add_child(escape_status_lbl)
-
-func _build_door_inspect_card() -> void:
-	door_inspect_card = PanelContainer.new()
-	door_inspect_card.set_anchor_and_offset(SIDE_LEFT, 0.5, -215)
-	door_inspect_card.set_anchor_and_offset(SIDE_RIGHT, 0.5, 215)
-	door_inspect_card.set_anchor_and_offset(SIDE_TOP, 0, 16)
-	door_inspect_card.set_anchor_and_offset(SIDE_BOTTOM, 0, 155)
-	door_inspect_card.visible = false
-	door_inspect_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.08, 0.12, 0.95)
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 3
-	style.border_width_bottom = 2
-	style.border_color = Color(0.85, 0.72, 0.32, 0.90)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_left = 6
-	style.corner_radius_bottom_right = 6
-	style.set_content_margin_all(8)
-	door_inspect_card.add_theme_stylebox_override("panel", style)
-	root_ctrl.add_child(door_inspect_card)
-
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 3)
-	door_inspect_card.add_child(vb)
-
-	var header_hb = HBoxContainer.new()
-	vb.add_child(header_hb)
-
-	door_inspect_title = Label.new()
-	door_inspect_title.text = "ДВЕРЬ"
-	door_inspect_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	door_inspect_title.add_theme_font_size_override("font_size", 13)
-	door_inspect_title.add_theme_color_override("font_color", Color(0.96, 0.88, 0.60))
-	header_hb.add_child(door_inspect_title)
-
-	door_inspect_status_badge = Label.new()
-	door_inspect_status_badge.text = "[ЗАПЕРТА]"
-	door_inspect_status_badge.add_theme_font_size_override("font_size", 11)
-	door_inspect_status_badge.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
-	header_hb.add_child(door_inspect_status_badge)
-
-	# Замок
-	var lock_hb = HBoxContainer.new()
-	lock_hb.name = "LockRow"
-	vb.add_child(lock_hb)
-
-	door_inspect_lock_lbl = Label.new()
-	door_inspect_lock_lbl.text = "Замок:"
-	door_inspect_lock_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	door_inspect_lock_lbl.add_theme_font_size_override("font_size", 11)
-	lock_hb.add_child(door_inspect_lock_lbl)
-
-	door_inspect_lock_status = Label.new()
-	door_inspect_lock_status.text = "—"
-	door_inspect_lock_status.add_theme_font_size_override("font_size", 11)
-	lock_hb.add_child(door_inspect_lock_status)
-
-	# Доски
-	var boards_hb = HBoxContainer.new()
-	boards_hb.name = "BoardsRow"
-	vb.add_child(boards_hb)
-
-	door_inspect_boards_lbl = Label.new()
-	door_inspect_boards_lbl.text = "Доски:"
-	door_inspect_boards_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	door_inspect_boards_lbl.add_theme_font_size_override("font_size", 11)
-	boards_hb.add_child(door_inspect_boards_lbl)
-
-	door_inspect_boards_status = Label.new()
-	door_inspect_boards_status.text = "—"
-	door_inspect_boards_status.add_theme_font_size_override("font_size", 11)
-	boards_hb.add_child(door_inspect_boards_status)
-
-	# Электрощиток / Питание
-	door_inspect_power_lbl = Label.new()
-	door_inspect_power_lbl.text = ""
-	door_inspect_power_lbl.add_theme_font_size_override("font_size", 10)
-	door_inspect_power_lbl.visible = false
-	vb.add_child(door_inspect_power_lbl)
-
-	# Действие
-	door_inspect_action_prompt = Label.new()
-	door_inspect_action_prompt.text = "[E] Открыть"
-	door_inspect_action_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	door_inspect_action_prompt.add_theme_font_size_override("font_size", 11)
-	door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.35, 1.0, 0.65))
-	vb.add_child(door_inspect_action_prompt)
-
-func _build_keyring_hud() -> void:
-	keyring_card = PanelContainer.new()
-	keyring_card.name = "KeyringCard"
-	keyring_card.set_anchor_and_offset(SIDE_LEFT, 0.0, 20)
-	keyring_card.set_anchor_and_offset(SIDE_TOP, 0.0, 115)
-	keyring_card.custom_minimum_size = Vector2(230, 0)
-	keyring_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.07, 0.10, 0.88)
-	style.border_width_left = 2
-	style.border_width_right = 1
-	style.border_width_top = 1
-	style.border_width_bottom = 1
-	style.border_color = Color(0.82, 0.68, 0.28, 0.75)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	style.set_content_margin_all(6)
-	keyring_card.add_theme_stylebox_override("panel", style)
-	root_ctrl.add_child(keyring_card)
-
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 2)
-	keyring_card.add_child(vb)
-
-	var title = Label.new()
-	title.text = "КЛЮЧИ И ИНСТРУМЕНТЫ:"
-	title.add_theme_font_size_override("font_size", 10)
-	title.add_theme_color_override("font_color", Color(0.95, 0.82, 0.40))
-	vb.add_child(title)
-
-	keyring_items_vbox = VBoxContainer.new()
-	keyring_items_vbox.add_theme_constant_override("separation", 2)
-	vb.add_child(keyring_items_vbox)
-
-	_refresh_keyring_hud()
-
-func _refresh_keyring_hud() -> void:
-	if not keyring_items_vbox:
+func _refresh_door_info() -> void:
+	if not door_info_lbl:
 		return
-	for ch in keyring_items_vbox.get_children():
-		ch.queue_free()
-
-	var count = 0
-	var player = GameManager.player_ref
-	var held_kid = 0
-	if player and player.has_method("get_held_key_id"):
-		held_kid = int(player.call("get_held_key_id"))
-
-	# 1. Лом
-	if GameManager.has_crowbar:
-		count += 1
-		var row = Label.new()
-		row.text = "Лом-гвоздодер (срывает доски)"
-		row.add_theme_font_size_override("font_size", 10)
-		row.add_theme_color_override("font_color", Color(1.0, 0.75, 0.20))
-		keyring_items_vbox.add_child(row)
-
-	# 2. Ключи по ID
-	var DoorScript = load("res://scripts/Door.gd")
-	for kid in GameManager.keys_by_id:
-		count += 1
-		var th = DoorScript.get_lock_theme(kid)
-		var row = Label.new()
-		var in_hands = (kid == held_kid)
-		row.text = "%s ключ №%d  —  Дверь №%d %s" % [th["name"], kid, kid, "[в руках]" if in_hands else ""]
-		row.add_theme_font_size_override("font_size", 10)
-		row.add_theme_color_override("font_color", th["color"])
-		keyring_items_vbox.add_child(row)
-
-	if keyring_card:
-		keyring_card.visible = (count > 0)
-
-	if count == 0:
-		var empty_lbl = Label.new()
-		empty_lbl.text = "— Нет ключей"
-		empty_lbl.add_theme_font_size_override("font_size", 9)
-		empty_lbl.add_theme_color_override("font_color", Color(0.55, 0.58, 0.62))
-		keyring_items_vbox.add_child(empty_lbl)
+	var text = exit_info_text if exit_info_text != "" else door_info_text
+	door_info_lbl.text = text
+	door_info_lbl.visible = text != ""
 
 func update_door_inspector(info: Dictionary) -> void:
-	if not door_inspect_card:
-		return
-	if info.is_empty():
-		door_inspect_card.visible = false
-		return
-
-	door_inspect_card.visible = true
-
-	var d_name = str(info.get("door_name", "ДВЕРЬ"))
-	var is_open = bool(info.get("is_open", false))
-	var is_exit = bool(info.get("is_exit", false))
-	var lock_id = int(info.get("lock_id", 0))
-	var has_key = bool(info.get("has_key", false))
-	var is_unlocked = bool(info.get("door_key_unlocked", false)) or (lock_id <= 0)
-	var requires_boards = bool(info.get("requires_boards", false))
-	var boards_needed = bool(info.get("boards_needed", false))
-	var has_cb = bool(info.get("has_crowbar", false))
-	var th = info.get("lock_theme", {})
-
-	door_inspect_title.text = d_name.to_upper()
-	if is_open:
-		door_inspect_status_badge.text = "[ОТКРЫТА]"
-		door_inspect_status_badge.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-	elif (lock_id > 0 and not is_unlocked) or boards_needed:
-		door_inspect_status_badge.text = "[ЗАПЕРТА]"
-		door_inspect_status_badge.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
-	else:
-		door_inspect_status_badge.text = "[ЗАКРЫТА]"
-		door_inspect_status_badge.add_theme_color_override("font_color", Color(0.95, 0.85, 0.40))
-
-	# 1. Замок
-	var lock_row = door_inspect_card.find_child("LockRow", true, false)
-	if lock_id > 0:
-		if lock_row: lock_row.visible = true
-		var t_name = th.get("name", "Обычный")
-		door_inspect_lock_lbl.text = "%s замок №%d:" % [t_name, lock_id]
-		door_inspect_lock_lbl.add_theme_color_override("font_color", th.get("color", Color(1.0, 0.85, 0.2)))
-		if is_unlocked:
-			door_inspect_lock_status.text = "Отперт"
-			door_inspect_lock_status.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-		elif has_key:
-			door_inspect_lock_status.text = "Ключ №%d есть — [E] Отпереть" % lock_id
-			door_inspect_lock_status.add_theme_color_override("font_color", Color(0.25, 1.0, 0.45))
-		else:
-			door_inspect_lock_status.text = "Заперт (нужен ключ №%d)" % lock_id
-			door_inspect_lock_status.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	else:
-		if lock_row: lock_row.visible = false
-
-	# 2. Доски
-	var boards_row = door_inspect_card.find_child("BoardsRow", true, false)
-	if requires_boards:
-		if boards_row: boards_row.visible = true
-		if not boards_needed:
-			door_inspect_boards_status.text = "Сорваны"
-			door_inspect_boards_status.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-		elif has_cb:
-			door_inspect_boards_status.text = "Лом готов — [E] Сорвать"
-			door_inspect_boards_status.add_theme_color_override("font_color", Color(1.0, 0.78, 0.15))
-		else:
-			door_inspect_boards_status.text = "Заколочено (нужен лом)"
-			door_inspect_boards_status.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	else:
-		if boards_row: boards_row.visible = false
-
-	# 3. Электрощиток / Питание
-	var wp = bool(info.get("requires_wire_panel", false))
-	var wp_solved = bool(info.get("wire_panel_solved", false))
-	var pwr_needed = bool(info.get("requires_power", false))
-	var pwr_done = bool(info.get("is_powered", false))
-
-	if wp and not wp_solved:
-		door_inspect_power_lbl.visible = true
-		door_inspect_power_lbl.text = "Электрощиток: [E] Соединить цветные провода"
-		door_inspect_power_lbl.add_theme_color_override("font_color", Color(0.35, 0.85, 1.0))
-	elif pwr_needed and not pwr_done:
-		door_inspect_power_lbl.visible = true
-		var bats = int(info.get("power_cells_have", 0))
-		if bats >= 1:
-			door_inspect_power_lbl.text = "Энергосчетчик: [E] Вставить батарею и запитать замок"
-			door_inspect_power_lbl.add_theme_color_override("font_color", Color(0.35, 1.0, 0.50))
-		else:
-			door_inspect_power_lbl.text = "Энергосчетчик: Обесточен (нужна батарея)"
-			door_inspect_power_lbl.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	else:
-		door_inspect_power_lbl.visible = false
-
-	# 4. Итоговое действие
-	if is_open:
-		door_inspect_action_prompt.text = "[E]  Закрыть дверь"
-		door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
-	elif boards_needed:
-		if has_cb:
-			door_inspect_action_prompt.text = "[E]  Сорвать доски ломом"
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(1.0, 0.85, 0.20))
-		else:
-			door_inspect_action_prompt.text = "[Заколочено досками — нужен лом]"
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	elif wp and not wp_solved:
-		door_inspect_action_prompt.text = "[E]  Открыть электрощиток"
-		door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.35, 0.90, 1.0))
-	elif pwr_needed and not pwr_done:
-		if int(info.get("power_cells_have", 0)) >= 1:
-			door_inspect_action_prompt.text = "[E]  Запитать счетчик батареей"
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.35, 1.0, 0.50))
-		else:
-			door_inspect_action_prompt.text = "[Обесточено — нужна батарея]"
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	elif lock_id > 0 and not is_unlocked:
-		if has_key:
-			door_inspect_action_prompt.text = "[E]  Отпереть замок ключом №%d" % lock_id
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.30, 1.0, 0.50))
-		else:
-			door_inspect_action_prompt.text = "[Заперто: нужен %s ключ №%d]" % [th.get("name", ""), lock_id]
-			door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-	elif is_exit:
-		door_inspect_action_prompt.text = "[E]  Открыть выход"
-		door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.35, 1.0, 0.60))
-	else:
-		door_inspect_action_prompt.text = "[E]  Открыть дверь"
-		door_inspect_action_prompt.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0))
+	door_info_text = ""
+	if not info.is_empty() and not bool(info.get("is_open", false)):
+		var lines: Array[String] = []
+		if bool(info.get("boards_needed", false)):
+			lines.append("Заколочено досками." if bool(info.get("has_crowbar", false)) else "Заколочено досками. Нужен лом.")
+		if bool(info.get("requires_wire_panel", false)) and not bool(info.get("wire_panel_solved", false)):
+			lines.append("Щиток не подключён. Соедини провода.")
+		elif bool(info.get("requires_power", false)) and not bool(info.get("is_powered", false)):
+			lines.append("Нет питания." if int(info.get("power_cells_have", 0)) >= 1 else "Нет питания. Нужна батарея.")
+		var lock_id = int(info.get("lock_id", 0))
+		var is_unlocked = bool(info.get("door_key_unlocked", false)) or lock_id <= 0
+		if not is_unlocked and not bool(info.get("has_key", false)):
+			var th = info.get("lock_theme", {})
+			lines.append("Заперто. Нужен %s ключ №%d." % [str(th.get("name", "")).to_lower(), lock_id])
+		door_info_text = "\n".join(lines)
+	_refresh_door_info()
 
 func update_escape_checklist(chk: Dictionary) -> void:
-	if not escape_door_card:
-		return
-
-	if chk.is_empty() or not chk.get("is_exit", false) or chk.get("is_open", false):
-		escape_door_card.visible = false
-		return
-
-	escape_door_card.visible = true
-
-	# 1. Доски
-	if chk.get("boards_needed", false):
-		escape_step_boards_lbl.visible = true
-		if chk.get("boards_done", false):
-			escape_step_boards_lbl.text = "1. Доски:            Сорваны"
-			escape_step_boards_lbl.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-		else:
-			var has_cb = GameManager.has_crowbar
-			escape_step_boards_lbl.text = "1. Доски:            Заколочено " + ("(лом готов)" if has_cb else "(нужен лом)")
-			escape_step_boards_lbl.add_theme_color_override("font_color", Color(0.95, 0.70, 0.25) if has_cb else Color(0.95, 0.35, 0.35))
-	else:
-		escape_step_boards_lbl.visible = false
-
-	# 2. Питание
-	if chk.get("power_needed", false):
-		escape_step_power_lbl.visible = true
-		if chk.get("power_done", false):
-			escape_step_power_lbl.text = "2. Энергосчетчик:    Питание подано"
-			escape_step_power_lbl.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-		else:
-			var has_bat = GameManager.battery_cells >= 1
-			escape_step_power_lbl.text = "2. Энергосчетчик:    Обесточен " + ("(батарея есть)" if has_bat else "(нужна батарея)")
-			escape_step_power_lbl.add_theme_color_override("font_color", Color(0.95, 0.70, 0.25) if has_bat else Color(0.95, 0.35, 0.35))
-	else:
-		escape_step_power_lbl.visible = false
-
-	# 3. Замок
-	if chk.get("key_needed", false):
-		escape_step_key_lbl.visible = true
-		var k_ru = str(chk.get("key_name_ru", "Золотой"))
-		var k_col = str(chk.get("key_color", "gold"))
-		if chk.get("key_done", false):
-			escape_step_key_lbl.text = "3. Замок выхода:     Ключ есть"
-			escape_step_key_lbl.add_theme_color_override("font_color", Color(0.35, 0.95, 0.50))
-		else:
-			var has_k = GameManager.has_key_color(k_col)
-			escape_step_key_lbl.text = "3. Замок выхода:     Заперт (" + ("ключ готов" if has_k else "нужен " + k_ru + " ключ") + ")"
-			escape_step_key_lbl.add_theme_color_override("font_color", Color(0.95, 0.70, 0.25) if has_k else Color(0.95, 0.35, 0.35))
-	else:
-		escape_step_key_lbl.visible = false
-
-	# 4. Общий статус
-	if chk.get("is_ready_to_open", false):
-		escape_status_lbl.text = "Все условия выполнены. Нажмите [E], чтобы открыть выход."
-		escape_status_lbl.add_theme_color_override("font_color", Color(0.35, 1.0, 0.65))
-	else:
-		escape_status_lbl.text = "Выполните условия для открытия выхода"
-		escape_status_lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.80))
+	exit_info_text = ""
+	if not chk.is_empty() and chk.get("is_exit", false) and not chk.get("is_open", false):
+		var lines: Array[String] = []
+		if chk.get("boards_needed", false) and not chk.get("boards_done", false):
+			lines.append("Заколочено досками." if GameManager.has_crowbar else "Заколочено досками. Нужен лом.")
+		if chk.get("power_needed", false) and not chk.get("power_done", false):
+			lines.append("Нет питания." if GameManager.battery_cells >= 1 else "Нет питания. Нужна батарея.")
+		if chk.get("key_needed", false) and not chk.get("key_done", false):
+			if not GameManager.has_key_color(str(chk.get("key_color", "gold"))):
+				lines.append("Заперто. Нужен %s ключ." % str(chk.get("key_name_ru", "золотой")).to_lower())
+		if not lines.is_empty():
+			exit_info_text = "ВЫХОД\n" + "\n".join(lines)
+	_refresh_door_info()
 
 func _build_note_overlay() -> void:
 	note_overlay = PanelContainer.new()
@@ -1052,20 +569,6 @@ func _build_note_overlay() -> void:
 	note_overlay.size = Vector2(520, 360)
 	note_overlay.position = Vector2(-260, -180)
 	note_overlay.visible = false
-
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.92, 0.88, 0.77, 0.98) # Пожелтевшая старая бумага
-	style.border_width_left = 3
-	style.border_width_right = 3
-	style.border_width_top = 3
-	style.border_width_bottom = 3
-	style.border_color = Color(0.42, 0.30, 0.16)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 3
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 8
-	style.set_content_margin_all(18)
-	note_overlay.add_theme_stylebox_override("panel", style)
 	root_ctrl.add_child(note_overlay)
 
 	var vb = VBoxContainer.new()
@@ -1073,50 +576,23 @@ func _build_note_overlay() -> void:
 	note_overlay.add_child(vb)
 
 	var title = Label.new()
-	title.text = "ОБРЫВОК ЗАПИСКИ (МОЖНО ПИСАТЬ И РЕДАКТИРОВАТЬ)"
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(0.35, 0.22, 0.12))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = "ЗАПИСКА"
+	title.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", HUD_TEXT)
 	vb.add_child(title)
 
 	note_edit = TextEdit.new()
 	note_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	note_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	note_edit.add_theme_font_size_override("font_size", 15)
-	note_edit.add_theme_color_override("font_color", Color(0.15, 0.10, 0.05))
-	note_edit.add_theme_color_override("caret_color", Color(0.2, 0.1, 0.05))
-
-	var edit_style = StyleBoxFlat.new()
-	edit_style.bg_color = Color(0.96, 0.93, 0.85, 0.85)
-	edit_style.border_width_left = 1
-	edit_style.border_width_right = 1
-	edit_style.border_width_top = 1
-	edit_style.border_width_bottom = 1
-	edit_style.border_color = Color(0.7, 0.6, 0.45)
-	edit_style.corner_radius_top_left = 4
-	edit_style.corner_radius_top_right = 4
-	edit_style.corner_radius_bottom_left = 4
-	edit_style.corner_radius_bottom_right = 4
-	edit_style.set_content_margin_all(10)
-	note_edit.add_theme_stylebox_override("normal", edit_style)
-	note_edit.add_theme_stylebox_override("focus", edit_style)
+	note_edit.add_theme_font_size_override("font_size", 17)
 	vb.add_child(note_edit)
 
 	var hb = HBoxContainer.new()
-	hb.alignment = BoxContainer.ALIGNMENT_CENTER
 	hb.add_theme_constant_override("separation", 16)
 
 	var save_btn = Button.new()
-	save_btn.text = "Сохранить надпись"
-	save_btn.add_theme_font_size_override("font_size", 12)
-	var btn_s = StyleBoxFlat.new()
-	btn_s.bg_color = Color(0.32, 0.48, 0.28)
-	btn_s.corner_radius_top_left = 4
-	btn_s.corner_radius_top_right = 4
-	btn_s.corner_radius_bottom_left = 4
-	btn_s.corner_radius_bottom_right = 4
-	btn_s.set_content_margin_all(6)
-	save_btn.add_theme_stylebox_override("normal", btn_s)
+	save_btn.text = "СОХРАНИТЬ"
 	save_btn.pressed.connect(func():
 		if note_edit:
 			GameManager.save_note_text(note_edit.text)
@@ -1124,16 +600,7 @@ func _build_note_overlay() -> void:
 	hb.add_child(save_btn)
 
 	var close_btn = Button.new()
-	close_btn.text = "Закрыть [ESC]"
-	close_btn.add_theme_font_size_override("font_size", 12)
-	var btn_c = StyleBoxFlat.new()
-	btn_c.bg_color = Color(0.55, 0.28, 0.24)
-	btn_c.corner_radius_top_left = 4
-	btn_c.corner_radius_top_right = 4
-	btn_c.corner_radius_bottom_left = 4
-	btn_c.corner_radius_bottom_right = 4
-	btn_c.set_content_margin_all(6)
-	close_btn.add_theme_stylebox_override("normal", btn_c)
+	close_btn.text = "ESC  ЗАКРЫТЬ"
 	close_btn.pressed.connect(func():
 		GameManager.close_note()
 	)
@@ -1163,42 +630,42 @@ func _build_hiding_overlay() -> void:
 	# ── Шкаф: створки слева и справа с широким обзором в центре ──
 	hiding_left_panel = ColorRect.new()
 	hiding_left_panel.color = Color(0.10, 0.06, 0.04, 0.96)
-	hiding_left_panel.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	hiding_left_panel.set_anchor_and_offset(SIDE_RIGHT, 0.22, 0)
-	hiding_left_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	hiding_left_panel.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	hiding_left_panel.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	hiding_left_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	hiding_overlay.add_child(hiding_left_panel)
 
 	var edge_l = ColorRect.new()
 	edge_l.color = Color(0.24, 0.15, 0.08, 1.0)
 	edge_l.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
 	edge_l.set_anchor_and_offset(SIDE_LEFT, 1, -8)
-	edge_l.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	edge_l.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	edge_l.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	hiding_left_panel.add_child(edge_l)
 
 	hiding_right_panel = ColorRect.new()
 	hiding_right_panel.color = Color(0.10, 0.06, 0.04, 0.96)
-	hiding_right_panel.set_anchor_and_offset(SIDE_LEFT, 0.78, 0)
 	hiding_right_panel.set_anchor_and_offset(SIDE_RIGHT, 1.0, 0)
-	hiding_right_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	hiding_right_panel.set_anchor_and_offset(SIDE_LEFT, 0.78, 0)
 	hiding_right_panel.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	hiding_right_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	hiding_overlay.add_child(hiding_right_panel)
 
 	var edge_r = ColorRect.new()
 	edge_r.color = Color(0.24, 0.15, 0.08, 1.0)
-	edge_r.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	edge_r.set_anchor_and_offset(SIDE_RIGHT, 0, 8)
-	edge_r.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	edge_r.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	edge_r.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	edge_r.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	hiding_right_panel.add_child(edge_r)
 
 	# Горизонтальные полупрозрачные жалюзи шкафа (видно сквозь них)
 	wardrobe_slats = Control.new()
-	wardrobe_slats.set_anchor_and_offset(SIDE_LEFT, 0.22, 0)
 	wardrobe_slats.set_anchor_and_offset(SIDE_RIGHT, 0.78, 0)
-	wardrobe_slats.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	wardrobe_slats.set_anchor_and_offset(SIDE_LEFT, 0.22, 0)
 	wardrobe_slats.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	wardrobe_slats.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	wardrobe_slats.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hiding_overlay.add_child(wardrobe_slats)
 
@@ -1206,38 +673,35 @@ func _build_hiding_overlay() -> void:
 		var slat = ColorRect.new()
 		var y_rel = 0.08 + s_idx * 0.13
 		slat.color = Color(0.12, 0.07, 0.04, 0.65)
-		slat.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 		slat.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
-		slat.set_anchor_and_offset(SIDE_TOP, y_rel, 0)
+		slat.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 		slat.set_anchor_and_offset(SIDE_BOTTOM, y_rel, 12)
+		slat.set_anchor_and_offset(SIDE_TOP, y_rel, 0)
 		wardrobe_slats.add_child(slat)
 
 	# ── Кровать: легкий навес каркаса сверху (широкий обзор пола и комнаты снизу) ──
 	hiding_top_panel = ColorRect.new()
 	hiding_top_panel.color = Color(0.08, 0.06, 0.05, 0.78)
-	hiding_top_panel.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	hiding_top_panel.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
-	hiding_top_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	hiding_top_panel.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	hiding_top_panel.set_anchor_and_offset(SIDE_BOTTOM, 0.22, 0)
+	hiding_top_panel.set_anchor_and_offset(SIDE_TOP, 0, 0)
 	hiding_overlay.add_child(hiding_top_panel)
 
 	var bed_fringe = ColorRect.new()
 	bed_fringe.color = Color(0.18, 0.12, 0.08, 1.0)
-	bed_fringe.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	bed_fringe.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
-	bed_fringe.set_anchor_and_offset(SIDE_TOP, 1, -10)
+	bed_fringe.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	bed_fringe.set_anchor_and_offset(SIDE_BOTTOM, 1, 0)
+	bed_fringe.set_anchor_and_offset(SIDE_TOP, 1, -10)
 	hiding_top_panel.add_child(bed_fringe)
 
 	hiding_prompt = Label.new()
 	hiding_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hiding_prompt.add_theme_font_size_override("font_size", 14)
-	hiding_prompt.add_theme_color_override("font_color", Color(0.92, 0.88, 0.72))
-	hiding_prompt.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	hiding_prompt.add_theme_constant_override("shadow_offset_x", 1)
-	hiding_prompt.add_theme_constant_override("shadow_offset_y", 1)
-	hiding_prompt.set_anchor_and_offset(SIDE_LEFT, 0.1, 0)
+	hiding_prompt.add_theme_font_size_override("font_size", 16)
+	hiding_prompt.add_theme_color_override("font_color", HUD_TEXT)
 	hiding_prompt.set_anchor_and_offset(SIDE_RIGHT, 0.9, 0)
+	hiding_prompt.set_anchor_and_offset(SIDE_LEFT, 0.1, 0)
 	hiding_prompt.set_anchor_and_offset(SIDE_BOTTOM, 1, -16)
 	hiding_prompt.set_anchor_and_offset(SIDE_TOP, 1, -44)
 	hiding_overlay.add_child(hiding_prompt)
@@ -1245,24 +709,21 @@ func _build_hiding_overlay() -> void:
 	# ── Индикатор запаса кислорода и задержки дыхания ──
 	oxygen_container = Control.new()
 	oxygen_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	oxygen_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -170)
 	oxygen_container.set_anchor_and_offset(SIDE_RIGHT, 0.5, 170)
+	oxygen_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -170)
 	oxygen_container.set_anchor_and_offset(SIDE_BOTTOM, 1, -48)
 	oxygen_container.set_anchor_and_offset(SIDE_TOP, 1, -94)
 	hiding_overlay.add_child(oxygen_container)
 
 	oxygen_status_label = Label.new()
 	oxygen_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	oxygen_status_label.add_theme_font_size_override("font_size", 13)
-	oxygen_status_label.add_theme_color_override("font_color", Color(0.85, 0.92, 1.0))
-	oxygen_status_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	oxygen_status_label.add_theme_constant_override("shadow_offset_x", 1)
-	oxygen_status_label.add_theme_constant_override("shadow_offset_y", 1)
-	oxygen_status_label.set_anchor_and_offset(SIDE_LEFT, 0, 0)
+	oxygen_status_label.add_theme_font_size_override("font_size", 16)
+	oxygen_status_label.add_theme_color_override("font_color", HUD_TEXT)
 	oxygen_status_label.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
-	oxygen_status_label.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	oxygen_status_label.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	oxygen_status_label.set_anchor_and_offset(SIDE_BOTTOM, 0, 20)
-	oxygen_status_label.text = "🫁 Кислород: 15.0 с  [Зажмите Q / Y]"
+	oxygen_status_label.set_anchor_and_offset(SIDE_TOP, 0, 0)
+	oxygen_status_label.text = "Воздух: 15.0 с"
 	oxygen_container.add_child(oxygen_status_label)
 
 	oxygen_progress_bar = ProgressBar.new()
@@ -1271,30 +732,17 @@ func _build_hiding_overlay() -> void:
 	oxygen_progress_bar.value = 15.0
 	oxygen_progress_bar.show_percentage = false
 	oxygen_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	oxygen_progress_bar.set_anchor_and_offset(SIDE_LEFT, 0, 0)
 	oxygen_progress_bar.set_anchor_and_offset(SIDE_RIGHT, 1, 0)
-	oxygen_progress_bar.set_anchor_and_offset(SIDE_TOP, 0, 24)
-	oxygen_progress_bar.set_anchor_and_offset(SIDE_BOTTOM, 0, 36)
+	oxygen_progress_bar.set_anchor_and_offset(SIDE_LEFT, 0, 0)
+	oxygen_progress_bar.set_anchor_and_offset(SIDE_BOTTOM, 0, 31)
+	oxygen_progress_bar.set_anchor_and_offset(SIDE_TOP, 0, 28)
 
 	var bg_box = StyleBoxFlat.new()
-	bg_box.bg_color = Color(0.04, 0.06, 0.10, 0.85)
-	bg_box.border_color = Color(0.30, 0.45, 0.60, 0.8)
-	bg_box.border_width_left = 1
-	bg_box.border_width_right = 1
-	bg_box.border_width_top = 1
-	bg_box.border_width_bottom = 1
-	bg_box.corner_radius_top_left = 4
-	bg_box.corner_radius_top_right = 4
-	bg_box.corner_radius_bottom_left = 4
-	bg_box.corner_radius_bottom_right = 4
+	bg_box.bg_color = Color(1, 1, 1, 0.12)
 	oxygen_progress_bar.add_theme_stylebox_override("background", bg_box)
 
 	oxygen_bar_fill = StyleBoxFlat.new()
-	oxygen_bar_fill.bg_color = Color(0.20, 0.75, 0.95, 0.92)
-	oxygen_bar_fill.corner_radius_top_left = 3
-	oxygen_bar_fill.corner_radius_top_right = 3
-	oxygen_bar_fill.corner_radius_bottom_left = 3
-	oxygen_bar_fill.corner_radius_bottom_right = 3
+	oxygen_bar_fill.bg_color = HUD_TEXT
 	oxygen_progress_bar.add_theme_stylebox_override("fill", oxygen_bar_fill)
 	oxygen_container.add_child(oxygen_progress_bar)
 
@@ -1314,108 +762,68 @@ func set_hiding_mode(mode: String) -> void:
 		hiding_right_panel.visible = false
 		if wardrobe_slats: wardrobe_slats.visible = false
 		hiding_top_panel.visible = false
-		hiding_prompt.text = "[ЛКМ / RT] Выйти из шкафа   •   [Зажмите Q / Y] Задержать дыхание"
+		hiding_prompt.text = "[ЛКМ / RT] Выйти    [Q / Y, зажать] Не дышать"
 	elif mode == "bed":
 		hiding_left_panel.visible = false
 		hiding_right_panel.visible = false
 		if wardrobe_slats: wardrobe_slats.visible = false
 		hiding_top_panel.visible = true
-		hiding_prompt.text = "[ЛКМ / RT] Вылезти из-под кровати   •   [Зажмите Q / Y] Задержать дыхание"
+		hiding_prompt.text = "[ЛКМ / RT] Вылезти    [Q / Y, зажать] Не дышать"
 
 # ══════════════════════════════════════════════
 #  ВИДЖЕТ МИКРОФОНА (ЗВУКОВАЯ РЕАКЦИЯ ИИ)
 # ══════════════════════════════════════════════
 func _build_mic_hud() -> void:
-	mic_container = PanelContainer.new()
+	mic_container = HBoxContainer.new()
 	mic_container.name = "MicContainer"
-	mic_container.set_anchor_and_offset(SIDE_LEFT, 0.0, 24)
-	mic_container.set_anchor_and_offset(SIDE_RIGHT, 0.0, 195)
-	mic_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -18)
+	mic_container.set_anchor_and_offset(SIDE_RIGHT, 0.0, 170)
+	mic_container.set_anchor_and_offset(SIDE_LEFT, 0.0, 30)
+	mic_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -14)
 	mic_container.set_anchor_and_offset(SIDE_TOP, 1.0, -34)
+	mic_container.add_theme_constant_override("separation", 8)
 	mic_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var p_style = StyleBoxFlat.new()
-	p_style.bg_color = Color(0.04, 0.05, 0.07, 0.65)
-	p_style.border_width_left = 1
-	p_style.border_width_right = 1
-	p_style.border_width_top = 1
-	p_style.border_width_bottom = 1
-	p_style.border_color = Color(0.25, 0.28, 0.32, 0.55)
-	p_style.corner_radius_top_left = 3
-	p_style.corner_radius_top_right = 3
-	p_style.corner_radius_bottom_left = 3
-	p_style.corner_radius_bottom_right = 3
-	p_style.set_content_margin_all(2)
-	mic_container.add_theme_stylebox_override("panel", p_style)
 	root_ctrl.add_child(mic_container)
 
-	var hb = HBoxContainer.new()
-	hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	hb.add_theme_constant_override("separation", 5)
-	mic_container.add_child(hb)
-
 	mic_icon = Label.new()
-	mic_icon.text = "MIC"
-	mic_icon.add_theme_font_size_override("font_size", 9)
-	mic_icon.add_theme_color_override("font_color", Color(0.85, 0.90, 0.95))
-	hb.add_child(mic_icon)
+	mic_icon.text = "МИК"
+	mic_icon.add_theme_font_size_override("font_size", 12)
+	mic_icon.add_theme_color_override("font_color", HUD_DIM)
+	mic_container.add_child(mic_icon)
 
 	mic_bar = ProgressBar.new()
 	mic_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mic_bar.size_flags_vertical = Control.SIZE_FILL
+	mic_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mic_bar.custom_minimum_size = Vector2(0, 2)
 	mic_bar.show_percentage = false
 	mic_bar.min_value = 0.0
 	mic_bar.max_value = 100.0
 	mic_bar.value = 0.0
 
 	var bar_bg = StyleBoxFlat.new()
-	bar_bg.bg_color = Color(0.06, 0.07, 0.09, 0.8)
-	bar_bg.corner_radius_top_left = 2
-	bar_bg.corner_radius_top_right = 2
-	bar_bg.corner_radius_bottom_left = 2
-	bar_bg.corner_radius_bottom_right = 2
+	bar_bg.bg_color = Color(1, 1, 1, 0.10)
 	mic_bar.add_theme_stylebox_override("background", bar_bg)
 
 	var bar_fg = StyleBoxFlat.new()
-	bar_fg.bg_color = Color(0.35, 0.85, 0.45, 0.85)
-	bar_fg.corner_radius_top_left = 2
-	bar_fg.corner_radius_top_right = 2
-	bar_fg.corner_radius_bottom_left = 2
-	bar_fg.corner_radius_bottom_right = 2
+	bar_fg.bg_color = HUD_DIM
 	mic_bar.add_theme_stylebox_override("fill", bar_fg)
-	hb.add_child(mic_bar)
+	mic_container.add_child(mic_bar)
 
 	mic_status_lbl = Label.new()
-	mic_status_lbl.text = "ВКЛ [M]"
-	mic_status_lbl.add_theme_font_size_override("font_size", 10)
-	mic_status_lbl.add_theme_color_override("font_color", Color(0.70, 0.75, 0.80, 0.8))
-	hb.add_child(mic_status_lbl)
+	mic_status_lbl.text = ""
+	mic_status_lbl.add_theme_font_size_override("font_size", 12)
+	mic_status_lbl.add_theme_color_override("font_color", HUD_DIM)
+	mic_container.add_child(mic_status_lbl)
 
 func _on_mic_status_changed(enabled: bool, volume: float, triggered: bool) -> void:
 	if not mic_bar or not mic_container:
 		return
 
+	mic_status_lbl.text = "" if enabled else "ВЫКЛ  M"
+	mic_bar.visible = enabled
+	mic_bar.value = clamp(volume * 1000.0, 0.0, 100.0) if enabled else 0.0
 	var fg = mic_bar.get_theme_stylebox("fill") as StyleBoxFlat
-	if not enabled:
-		mic_icon.text = "OFF"
-		mic_bar.value = 0.0
-		if fg: fg.bg_color = Color(0.35, 0.35, 0.35, 0.5)
-		mic_status_lbl.text = "ВЫКЛ [M]"
-		mic_status_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55, 0.7))
-		return
-
-	mic_icon.text = "MIC"
-	var val = clamp(volume * 1000.0, 0.0, 100.0)
-	mic_bar.value = val
-
-	if triggered:
-		if fg: fg.bg_color = Color(0.95, 0.20, 0.20, 0.95)
-		mic_status_lbl.text = "ВКЛ [M]"
-		mic_status_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.90, 0.8))
-	else:
-		if fg: fg.bg_color = Color(0.35, 0.85, 0.45, 0.85)
-		mic_status_lbl.text = "ВКЛ [M]"
-		mic_status_lbl.add_theme_color_override("font_color", Color(0.65, 0.88, 0.75, 0.8))
+	if fg:
+		fg.bg_color = HUD_ACCENT if triggered else HUD_DIM
 
 # ══════════════════════════════════════════════
 #  ОВЕРЛЕЙ ПРИСТАЛЬНОГО ВЗГЛЯДА МОНСТРА
@@ -1438,14 +846,11 @@ func _build_stare_overlay() -> void:
 	stare_warning_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stare_warning_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stare_warning_lbl.add_theme_font_size_override("font_size", 17)
-	stare_warning_lbl.add_theme_color_override("font_color", Color(1.0, 0.25, 0.25))
-	stare_warning_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	stare_warning_lbl.add_theme_constant_override("shadow_offset_x", 2)
-	stare_warning_lbl.add_theme_constant_override("shadow_offset_y", 2)
-	stare_warning_lbl.set_anchor_and_offset(SIDE_LEFT, 0.05, 0)
+	stare_warning_lbl.add_theme_color_override("font_color", HUD_ACCENT)
 	stare_warning_lbl.set_anchor_and_offset(SIDE_RIGHT, 0.95, 0)
-	stare_warning_lbl.set_anchor_and_offset(SIDE_TOP, 0.80, 0)
+	stare_warning_lbl.set_anchor_and_offset(SIDE_LEFT, 0.05, 0)
 	stare_warning_lbl.set_anchor_and_offset(SIDE_BOTTOM, 0.90, 0)
+	stare_warning_lbl.set_anchor_and_offset(SIDE_TOP, 0.80, 0)
 	stare_overlay.add_child(stare_warning_lbl)
 
 # ══════════════════════════════════════════════
@@ -1469,16 +874,13 @@ func _build_keyhole_overlay() -> void:
 	keyhole_overlay.add_child(keyhole_texture_rect)
 
 	keyhole_hint_lbl = Label.new()
-	keyhole_hint_lbl.text = "Замочная скважина   •   [C / E / WASD] Отойти"
+	keyhole_hint_lbl.text = "[C / E / WASD] Отойти"
 	keyhole_hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	keyhole_hint_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	keyhole_hint_lbl.add_theme_font_size_override("font_size", 14)
-	keyhole_hint_lbl.add_theme_color_override("font_color", Color(0.85, 0.80, 0.70, 0.75))
-	keyhole_hint_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	keyhole_hint_lbl.add_theme_constant_override("shadow_offset_x", 1)
-	keyhole_hint_lbl.add_theme_constant_override("shadow_offset_y", 1)
-	keyhole_hint_lbl.set_anchor_and_offset(SIDE_LEFT, 0.1, 0)
+	keyhole_hint_lbl.add_theme_color_override("font_color", HUD_DIM)
 	keyhole_hint_lbl.set_anchor_and_offset(SIDE_RIGHT, 0.9, 0)
+	keyhole_hint_lbl.set_anchor_and_offset(SIDE_LEFT, 0.1, 0)
 	keyhole_hint_lbl.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -32)
 	keyhole_hint_lbl.set_anchor_and_offset(SIDE_TOP, 1.0, -60)
 	keyhole_overlay.add_child(keyhole_hint_lbl)
@@ -1559,8 +961,8 @@ func show_keyhole_overlay(active: bool) -> void:
 func _build_flashlight_warning_ui() -> void:
 	flash_warn_container = PanelContainer.new()
 	flash_warn_container.name = "FlashlightWarningContainer"
-	flash_warn_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -180)
 	flash_warn_container.set_anchor_and_offset(SIDE_RIGHT, 0.5, 180)
+	flash_warn_container.set_anchor_and_offset(SIDE_LEFT, 0.5, -180)
 	flash_warn_container.set_anchor_and_offset(SIDE_BOTTOM, 1.0, -84)
 	flash_warn_container.set_anchor_and_offset(SIDE_TOP, 1.0, -122)
 	flash_warn_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1573,10 +975,6 @@ func _build_flashlight_warning_ui() -> void:
 	style.border_width_top = 1
 	style.border_width_bottom = 1
 	style.border_color = Color(0.92, 0.28, 0.25, 0.90)
-	style.corner_radius_top_left = 3
-	style.corner_radius_top_right = 3
-	style.corner_radius_bottom_left = 3
-	style.corner_radius_bottom_right = 3
 	style.set_content_margin_all(4)
 	flash_warn_container.add_theme_stylebox_override("panel", style)
 	root_ctrl.add_child(flash_warn_container)
@@ -1591,7 +989,7 @@ func _build_flashlight_warning_ui() -> void:
 	flash_warn_lbl.add_theme_font_size_override("font_size", 12)
 	flash_warn_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.85, 0.95))
 	flash_warn_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	flash_warn_lbl.text = "Враг щурится от света фонарика   •   [F] Погасить свет"
+	flash_warn_lbl.text = "Враг щурится от света фонарика    [F] Погасить свет"
 	vb.add_child(flash_warn_lbl)
 
 	flash_warn_bar = ProgressBar.new()
@@ -1631,11 +1029,11 @@ func _on_monster_stare_changed(active: bool, _spot_type: String, witnessed: bool
 	# Никаких 2D фото-скримеров! Во время слежки — только напряженная виньетка и предупреждение задержки дыхания
 	var btn_hint = "[LB / R3]" if (GameManager and GameManager.is_gamepad) else "[Q]"
 	if witnessed:
-		stare_warning_lbl.text = "%s  Задержите дыхание (оно рядом!)" % btn_hint
-		stare_warning_lbl.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+		stare_warning_lbl.text = "%s  Задержи дыхание. Оно рядом." % btn_hint
+		stare_warning_lbl.add_theme_color_override("font_color", HUD_ACCENT)
 	else:
-		stare_warning_lbl.text = "%s  Задержите дыхание" % btn_hint
-		stare_warning_lbl.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45))
+		stare_warning_lbl.text = "%s  Задержи дыхание" % btn_hint
+		stare_warning_lbl.add_theme_color_override("font_color", HUD_TEXT)
 
 	stare_overlay.visible = true
 	stare_overlay.modulate.a = 0.0
@@ -1648,7 +1046,9 @@ func _on_monster_stare_changed(active: bool, _spot_type: String, witnessed: bool
 	stare_pulse_tween.tween_property(stare_vignette, "color:a", 0.25, 0.50)
 
 func pulse_heartbeat(amount: float) -> void:
-	if cinematic_shader_mat:
+	if GameManager.vhs_enabled:
+		VHSOverlay.glitch(clampf(amount * 0.35, 0.0, 0.5))
+	elif cinematic_shader_mat:
 		var target_f = clamp(amount * 0.75, 0.0, 1.0)
 		cinematic_shader_mat.set_shader_parameter("fear_factor", target_f)
 		var t = create_tween()
@@ -1682,7 +1082,7 @@ func _build_backpack_ui() -> void:
 	# Затемнение заднего плана
 	backpack_dim_rect = ColorRect.new()
 	backpack_dim_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	backpack_dim_rect.color = Color(0.01, 0.02, 0.03, 0.0)
+	backpack_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 	backpack_dim_rect.mouse_filter = Control.MOUSE_FILTER_STOP
 	backpack_dim_rect.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
@@ -1690,7 +1090,6 @@ func _build_backpack_ui() -> void:
 	)
 	backpack_overlay.add_child(backpack_dim_rect)
 
-	# Минималистичная компактная панель инвентаря по центру
 	backpack_container = PanelContainer.new()
 	backpack_container.name = "BackpackContainer"
 	backpack_container.size = Vector2(580, 240)
@@ -1701,60 +1100,30 @@ func _build_backpack_ui() -> void:
 	backpack_container.offset_right = 290
 	backpack_container.offset_top = -120
 	backpack_container.offset_bottom = 120
-
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.05, 0.07, 0.10, 0.94)
-	panel_style.border_width_left = 1
-	panel_style.border_width_right = 1
-	panel_style.border_width_top = 1
-	panel_style.border_width_bottom = 1
-	panel_style.border_color = Color(0.25, 0.30, 0.38, 0.85)
-	panel_style.corner_radius_top_left = 6
-	panel_style.corner_radius_top_right = 6
-	panel_style.corner_radius_bottom_left = 6
-	panel_style.corner_radius_bottom_right = 6
-	panel_style.set_content_margin_all(14)
-	backpack_container.add_theme_stylebox_override("panel", panel_style)
 	backpack_overlay.add_child(backpack_container)
 
 	var main_vb = VBoxContainer.new()
 	main_vb.add_theme_constant_override("separation", 10)
 	backpack_container.add_child(main_vb)
 
-	# 1. Заголовок и быстрые кнопки
+	# 1. Заголовок
 	var header_hb = HBoxContainer.new()
-	header_hb.alignment = BoxContainer.ALIGNMENT_CENTER
 	main_vb.add_child(header_hb)
 
 	var title_lbl = Label.new()
-	title_lbl.text = "РЮКЗАК  •  alpha 0.1"
-	title_lbl.add_theme_font_size_override("font_size", 12)
-	title_lbl.add_theme_color_override("font_color", Color(0.88, 0.92, 0.98))
+	title_lbl.text = "РЮКЗАК"
+	title_lbl.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	title_lbl.add_theme_font_size_override("font_size", 16)
+	title_lbl.add_theme_color_override("font_color", HUD_TEXT)
 	header_hb.add_child(title_lbl)
 
 	var spacer = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_hb.add_child(spacer)
 
-	gfx_btn = Button.new()
-	gfx_btn.name = "BackpackGfxBtn"
-	gfx_btn.custom_minimum_size = Vector2(140, 26)
-	var q = GameManager.graphics_quality if GameManager else "ultra"
-	var q_lbl = "УЛЬТРА"
-	if q == "medium": q_lbl = "СРЕДНЯЯ"
-	elif q == "low": q_lbl = "НИЗКАЯ"
-	gfx_btn.text = "Графика: %s" % q_lbl
-	gfx_btn.add_theme_font_size_override("font_size", 10)
-	gfx_btn.pressed.connect(func():
-		if GameManager:
-			GameManager.cycle_graphics_quality()
-	)
-	header_hb.add_child(gfx_btn)
-
 	var close_btn = Button.new()
-	close_btn.text = "Закрыть [Tab / X]"
-	close_btn.custom_minimum_size = Vector2(100, 26)
-	close_btn.add_theme_font_size_override("font_size", 10)
+	close_btn.text = "TAB  ЗАКРЫТЬ"
+	close_btn.add_theme_font_size_override("font_size", 13)
 	close_btn.pressed.connect(func():
 		GameManager.close_backpack()
 	)
@@ -1788,44 +1157,23 @@ func _build_backpack_ui() -> void:
 		slots_hb.add_child(btn)
 		backpack_slot_buttons.append(btn)
 
-	# 3. Информационный блок выбранного слота
-	var info_box = PanelContainer.new()
-	var info_style = StyleBoxFlat.new()
-	info_style.bg_color = Color(0.08, 0.10, 0.14, 0.85)
-	info_style.border_width_left = 1
-	info_style.border_width_right = 1
-	info_style.border_width_top = 1
-	info_style.border_width_bottom = 1
-	info_style.border_color = Color(0.20, 0.24, 0.32, 0.70)
-	info_style.corner_radius_top_left = 4
-	info_style.corner_radius_top_right = 4
-	info_style.corner_radius_bottom_left = 4
-	info_style.corner_radius_bottom_right = 4
-	info_style.set_content_margin_all(6)
-	info_box.add_theme_stylebox_override("panel", info_style)
-	main_vb.add_child(info_box)
-
-	var info_vb = VBoxContainer.new()
-	info_vb.add_theme_constant_override("separation", 2)
-	info_box.add_child(info_vb)
-
+	# 3. Описание выбранного предмета
 	backpack_active_lbl = Label.new()
-	backpack_active_lbl.add_theme_font_size_override("font_size", 11)
-	backpack_active_lbl.add_theme_color_override("font_color", Color(0.96, 0.88, 0.55))
-	info_vb.add_child(backpack_active_lbl)
+	backpack_active_lbl.add_theme_font_size_override("font_size", 15)
+	backpack_active_lbl.add_theme_color_override("font_color", HUD_TEXT)
+	main_vb.add_child(backpack_active_lbl)
 
 	backpack_desc_lbl = Label.new()
 	backpack_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-	backpack_desc_lbl.add_theme_font_size_override("font_size", 10)
-	backpack_desc_lbl.add_theme_color_override("font_color", Color(0.80, 0.84, 0.90))
-	info_vb.add_child(backpack_desc_lbl)
+	backpack_desc_lbl.custom_minimum_size = Vector2(540, 0)
+	backpack_desc_lbl.add_theme_font_size_override("font_size", 14)
+	backpack_desc_lbl.add_theme_color_override("font_color", HUD_DIM)
+	main_vb.add_child(backpack_desc_lbl)
 
-	# 4. Нижняя панель подсказок
+	# 4. Подсказка
 	var nav_hint = Label.new()
-	nav_hint.text = "[ЛКМ] Взять в руку   •   [ПКМ] Выбросить на пол   •   [Tab / Esc] Закрыть"
-	nav_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nav_hint.add_theme_font_size_override("font_size", 10)
-	nav_hint.add_theme_color_override("font_color", Color(0.60, 0.65, 0.75))
+	nav_hint.add_theme_font_size_override("font_size", 13)
+	nav_hint.add_theme_color_override("font_color", HUD_DIM)
 	backpack_nav_hint = nav_hint
 	main_vb.add_child(nav_hint)
 
@@ -1932,10 +1280,6 @@ func _handle_gamepad_backpack_click(is_right_click: bool = false) -> void:
 		if backpack_close_btn and backpack_close_btn.is_inside_tree() and backpack_close_btn.get_global_rect().has_point(mpos):
 			GameManager.close_backpack()
 			return
-		if gfx_btn and gfx_btn.is_inside_tree() and gfx_btn.get_global_rect().has_point(mpos):
-			if GameManager:
-				GameManager.cycle_graphics_quality()
-			return
 
 	var target_slot = -1
 	for i in range(backpack_slot_buttons.size()):
@@ -1985,9 +1329,9 @@ func _refresh_backpack() -> void:
 		return
 	if backpack_nav_hint:
 		if GameManager.is_gamepad:
-			backpack_nav_hint.text = "[A] Взять в руку   •   [LT / Y] Выбросить   •   [Стик] Курсор-мышь   •   [◄/►] Слоты   •   [B / X] Закрыть"
+			backpack_nav_hint.text = "[A] Взять в руку    [LT / Y] Выбросить    [B] Закрыть"
 		else:
-			backpack_nav_hint.text = "[ЛКМ] Взять в руку   •   [ПКМ] Выбросить на пол   •   [Tab / Esc] Закрыть"
+			backpack_nav_hint.text = "[ЛКМ] Взять в руку    [ПКМ] Выбросить"
 	var items = GameManager.get_backpack_items()
 	var act_idx = GameManager.active_item_index
 
@@ -2002,131 +1346,69 @@ func _refresh_backpack() -> void:
 		var has_item = (itm != null and itm.get("id", "empty") != "empty")
 
 		var s = StyleBoxFlat.new()
-		s.corner_radius_top_left = 5
-		s.corner_radius_top_right = 5
-		s.corner_radius_bottom_left = 5
-		s.corner_radius_bottom_right = 5
-		s.set_content_margin_all(5)
-
-		if is_cursor:
-			s.bg_color = Color(0.12, 0.22, 0.32, 0.95) if has_item else Color(0.08, 0.14, 0.22, 0.70)
-			s.border_width_left = 3
-			s.border_width_right = 3
-			s.border_width_top = 3
-			s.border_width_bottom = 3
-			s.border_color = Color(0.35, 0.85, 1.0, 1.0)
-		elif is_active and has_item:
-			s.bg_color = Color(0.24, 0.18, 0.05, 0.90)
-			s.border_width_left = 2
-			s.border_width_right = 2
-			s.border_width_top = 2
+		s.bg_color = Color(1, 1, 1, 0.09) if has_item else Color(1, 1, 1, 0.03)
+		if is_active and has_item:
+			s.bg_color = Color(1, 1, 1, 0.14)
 			s.border_width_bottom = 2
-			s.border_color = Color(1.0, 0.85, 0.32, 0.98)
-		elif has_item:
-			s.bg_color = Color(0.10, 0.12, 0.17, 0.88)
+			s.border_color = HUD_ACCENT
+		if is_cursor:
 			s.border_width_left = 1
 			s.border_width_right = 1
 			s.border_width_top = 1
 			s.border_width_bottom = 1
-			s.border_color = Color(0.35, 0.40, 0.50, 0.80)
-		else:
-			s.bg_color = Color(0.04, 0.05, 0.07, 0.50)
-			s.border_width_left = 1
-			s.border_width_right = 1
-			s.border_width_top = 1
-			s.border_width_bottom = 1
-			s.border_color = Color(0.18, 0.20, 0.26, 0.40)
-
-		btn.add_theme_stylebox_override("normal", s)
+			s.border_color = HUD_TEXT
 
 		var sh = s.duplicate()
-		sh.bg_color = s.bg_color.lightened(0.15)
-		sh.border_color = Color(0.85, 0.90, 1.0, 0.95)
-		if is_active and has_item:
-			sh.border_color = Color(1.0, 0.95, 0.55, 1.0)
+		sh.bg_color = Color(1, 1, 1, s.bg_color.a + 0.07)
+		btn.add_theme_stylebox_override("normal", s)
 		btn.add_theme_stylebox_override("hover", sh)
+		btn.add_theme_stylebox_override("pressed", sh)
 
-		var vb = VBoxContainer.new()
-		vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-		vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vb.alignment = BoxContainer.ALIGNMENT_CENTER
-		vb.add_theme_constant_override("separation", 2)
-		btn.add_child(vb)
-
-		var top_hb = HBoxContainer.new()
-		top_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-		top_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var num_lbl = Label.new()
-		num_lbl.text = "[%d]" % (i + 1)
-		num_lbl.add_theme_font_size_override("font_size", 9)
-		num_lbl.add_theme_color_override("font_color", Color(0.65, 0.70, 0.78))
-		top_hb.add_child(num_lbl)
+		num_lbl.text = str(i + 1)
+		num_lbl.position = Vector2(6, 3)
+		num_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		num_lbl.add_theme_font_size_override("font_size", 11)
+		num_lbl.add_theme_color_override("font_color", HUD_DIM)
+		btn.add_child(num_lbl)
 
-		if is_active and has_item:
-			var act_badge = Label.new()
-			act_badge.text = " [В РУКЕ]"
-			act_badge.add_theme_font_size_override("font_size", 8)
-			act_badge.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
-			top_hb.add_child(act_badge)
-
-		vb.add_child(top_hb)
-
-		var short_tag = "—"
-		var tag_color = Color(0.45, 0.48, 0.55)
-		if has_item:
-			var iid = str(itm.get("id", ""))
-			if itm.has("key_id"):
-				short_tag = "№%d" % int(itm["key_id"])
-				var DoorScript = load("res://scripts/Door.gd")
-				var th = DoorScript.get_lock_theme(int(itm["key_id"]))
-				tag_color = th.get("color", Color(1.0, 0.85, 0.25))
-			elif iid == "crowbar":
-				short_tag = "ЛОМ"
-				tag_color = Color(0.95, 0.35, 0.30)
-			elif iid == "battery":
-				short_tag = "АКК"
-				tag_color = Color(0.35, 0.95, 0.45)
-			elif iid == "bottle":
-				short_tag = "БУТ"
-				tag_color = Color(0.45, 0.85, 0.90)
-			elif iid == "fuse_red":
-				short_tag = "ПР-КР"
-				tag_color = Color(1.0, 0.35, 0.35)
-			elif iid == "fuse_blue":
-				short_tag = "ПР-СИ"
-				tag_color = Color(0.35, 0.70, 1.0)
-			elif iid == "fuse_green":
-				short_tag = "ПР-ЗЕ"
-				tag_color = Color(0.35, 1.0, 0.45)
-			elif iid == "road_flare":
-				short_tag = "РАКЕТА"
-				tag_color = Color(1.0, 0.55, 0.20)
-			else:
-				short_tag = str(itm.get("name", "ПРЕДМЕТ")).substr(0, 5).to_upper()
-				tag_color = Color(0.85, 0.88, 0.95)
-
-		var tag_lbl = Label.new()
-		tag_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tag_lbl.text = short_tag
-		tag_lbl.add_theme_font_size_override("font_size", 13)
-		tag_lbl.add_theme_color_override("font_color", tag_color)
-		vb.add_child(tag_lbl)
+		if not has_item:
+			continue
 
 		var name_lbl = Label.new()
+		var cnt_val = itm.get("count", 1)
+		name_lbl.text = str(itm["name"]) + (" x%d" % cnt_val if cnt_val > 1 else "")
+		name_lbl.position = Vector2(4, 20)
+		name_lbl.size = Vector2(74, 50)
+		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		if has_item:
-			var cnt_val = itm.get("count", 1)
-			var cnt_suffix = " x%d" % cnt_val if cnt_val > 1 else ""
-			name_lbl.text = itm["name"] + cnt_suffix
-			name_lbl.add_theme_font_size_override("font_size", 9)
-			name_lbl.add_theme_color_override("font_color", Color(0.85, 0.88, 0.95))
-		else:
-			name_lbl.text = "Пусто"
-			name_lbl.add_theme_font_size_override("font_size", 8)
-			name_lbl.add_theme_color_override("font_color", Color(0.40, 0.44, 0.50, 0.6))
-		vb.add_child(name_lbl)
+		name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_lbl.add_theme_font_size_override("font_size", 13)
+		name_lbl.add_theme_color_override("font_color", HUD_TEXT)
+		btn.add_child(name_lbl)
+
+		# Цвет важен только там, где он что-то значит: ключи и предохранители
+		var chip_color = _item_chip_color(itm)
+		if chip_color.a > 0.0:
+			var chip = ColorRect.new()
+			chip.color = chip_color
+			chip.position = Vector2(29, 72)
+			chip.size = Vector2(24, 3)
+			chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn.add_child(chip)
 
 	_update_backpack_desc(act_idx)
+
+func _item_chip_color(itm: Dictionary) -> Color:
+	if itm.has("key_id"):
+		var DoorScript = load("res://scripts/Door.gd")
+		return DoorScript.get_lock_theme(int(itm["key_id"])).get("color", HUD_TEXT)
+	match str(itm.get("id", "")):
+		"fuse_red": return Color(0.9, 0.2, 0.2)
+		"fuse_blue": return Color(0.25, 0.5, 0.95)
+		"fuse_green": return Color(0.25, 0.8, 0.35)
+	return Color(0, 0, 0, 0)
 
 func _update_backpack_desc(idx: int) -> void:
 	if not backpack_desc_lbl or not backpack_active_lbl:
@@ -2135,12 +1417,12 @@ func _update_backpack_desc(idx: int) -> void:
 	if idx >= 0 and idx < items.size():
 		var itm = items[idx]
 		if itm.get("id", "empty") != "empty":
-			var act_txt = "В РУКЕ" if idx == GameManager.active_item_index else ("A / ЛКМ — взять в руку  •  LT / Y / ПКМ — выбросить" if GameManager.is_gamepad else "ЛКМ — взять в руку  •  ПКМ — выбросить")
-			backpack_active_lbl.text = "%s   [%s]" % [itm["name"], act_txt]
+			var in_hand = "  (в руке)" if idx == GameManager.active_item_index else ""
+			backpack_active_lbl.text = str(itm["name"]) + in_hand
 			backpack_desc_lbl.text = itm.get("desc", "")
-		else:
-			backpack_active_lbl.text = "Слот [%d]  —  Пусто" % (idx + 1)
-			backpack_desc_lbl.text = "Свободный слот. Подбирайте ключи, лом, батареи и припасы в особняке."
+			return
+	backpack_active_lbl.text = "Пусто"
+	backpack_desc_lbl.text = ""
 
 # ══════════════════════════════════════════════
 #  Helpers
@@ -2158,7 +1440,7 @@ func _icon(t: String, sz: int) -> Label:
 func _process(delta: float) -> void:
 	if GameManager.game_ended:
 		return
-	_update_vhs_hud(delta)
+	_update_tape_counter(delta)
 	if hint_label.visible:
 		hint_timer -= delta
 		if hint_timer <= 0.6:
@@ -2214,26 +1496,19 @@ func _update_hiding_hud(_delta: float) -> void:
 		oxygen_progress_bar.value = oxygen
 
 	if oxygen_status_label and oxygen_bar_fill:
-		if is_held:
-			oxygen_bar_fill.bg_color = Color(0.20, 0.90, 1.0, 0.95)
-			oxygen_status_label.text = "🌬️ ДЫХАНИЕ ЗАДЕРЖАНО: %0.1f с  [Q / Y]" % oxygen
-			oxygen_status_label.add_theme_color_override("font_color", Color(0.40, 0.95, 1.0))
-		elif oxygen <= 0.2:
-			oxygen_bar_fill.bg_color = Color(1.0, 0.20, 0.20, 0.95)
-			oxygen_status_label.text = "💥 НЕТ КИСЛОРОДА! ПРИНУДИТЕЛЬНЫЙ ВЫДОХ!"
-			oxygen_status_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.25))
+		var low_air = oxygen < 4.0
+		oxygen_bar_fill.bg_color = HUD_ACCENT if low_air else HUD_TEXT
+		oxygen_status_label.add_theme_color_override("font_color", HUD_ACCENT if low_air else HUD_TEXT)
+		if oxygen <= 0.2:
+			oxygen_status_label.text = "Воздух кончился"
+		elif is_held:
+			oxygen_status_label.text = "Не дышишь: %0.1f с" % oxygen
 		elif rec_timer > 0.0:
-			oxygen_bar_fill.bg_color = Color(1.0, 0.65, 0.20, 0.95)
-			oxygen_status_label.text = "😮‍💨 ПЕРЕДЫШКА (восстановление): %0.1f с" % rec_timer
-			oxygen_status_label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.30))
-		elif oxygen < 4.0:
-			oxygen_bar_fill.bg_color = Color(1.0, 0.55, 0.15, 0.95)
-			oxygen_status_label.text = "⚠️ МАЛО ВОЗДУХА: %0.1f с  [Зажмите Q / Y]" % oxygen
-			oxygen_status_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.20))
+			oxygen_status_label.text = "Отдышка: %0.1f с" % rec_timer
+		elif low_air:
+			oxygen_status_label.text = "Мало воздуха: %0.1f с" % oxygen
 		else:
-			oxygen_bar_fill.bg_color = Color(0.25, 0.65, 0.85, 0.85)
-			oxygen_status_label.text = "🫁 Кислород: %0.1f с  [Зажмите Q / Y]" % oxygen
-			oxygen_status_label.add_theme_color_override("font_color", Color(0.85, 0.92, 1.0))
+			oxygen_status_label.text = "Воздух: %0.1f с" % oxygen
 
 func _update_proximity_fear(delta: float) -> void:
 	if not fear_vignette:
@@ -2250,6 +1525,10 @@ func _update_proximity_fear(delta: float) -> void:
 			target_alpha = clampf((18.0 - dist) / 18.0, 0.0, 1.0) * 0.24
 		elif dist < 12.0:
 			target_alpha = clampf((12.0 - dist) / 12.0, 0.0, 1.0) * 0.12
+	# С кассетой страх виден по помехам: чем ближе монстр, тем хуже запись
+	if GameManager.vhs_enabled:
+		VHSOverlay.set_fear(move_toward(VHSOverlay.fear, clampf(target_alpha / 0.24, 0.0, 1.0) * 0.7, delta * 0.8))
+		target_alpha = 0.0
 	fear_vignette.color = Color(tint.r, tint.g, tint.b, move_toward(fear_vignette.color.a, target_alpha, delta * 0.45))
 
 # ══════════════════════════════════════════════
@@ -2330,23 +1609,17 @@ func _refresh_inventory() -> void:
 
 	_refresh_backpack()
 	_refresh_hotbar()
-	_refresh_keyring_hud()
 	_flash_hotbar()
 
 func _on_gfx_quality_changed(quality: String) -> void:
+	if cinematic_lens_rect:
+		cinematic_lens_rect.visible = (quality != "low") and not GameManager.vhs_enabled
 	if cinematic_shader_mat:
 		var high := quality in ["ultra", "high"]
 		cinematic_shader_mat.set_shader_parameter("vignette_opacity", 0.35 if high else 0.50)
 		cinematic_shader_mat.set_shader_parameter("grain_intensity", 0.009 if high else 0.016)
 		cinematic_shader_mat.set_shader_parameter("chromatic_aberration", 0.0008 if high else 0.0015)
 		cinematic_shader_mat.set_shader_parameter("lens_distortion", 0.005 if high else 0.008)
-	if gfx_btn:
-		var q_title = "УЛЬТРА (MAX)"
-		if quality == "medium":
-			q_title = "СРЕДНЯЯ"
-		elif quality == "low":
-			q_title = "НИЗКАЯ (60+ FPS)"
-		gfx_btn.text = "[F3] %s" % q_title
 
 
 # ══════════════════════════════════════════════
@@ -2355,18 +1628,10 @@ func _on_gfx_quality_changed(quality: String) -> void:
 func _on_game_over() -> void:
 	_play_jumpscare()
 
-func _load_ui_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var res = load(path)
-		if res is Texture2D:
-			return res
-	var img = Image.new()
-	if img.load(path) == OK:
-		return ImageTexture.create_from_image(img)
-	return null
-
 func _play_jumpscare() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	VHSOverlay.set_fear(1.0)
+	VHSOverlay.glitch(1.0)
 
 	var is_lumberjack = false
 	if GameManager and is_instance_valid(GameManager.last_killer):
@@ -2380,177 +1645,12 @@ func _play_jumpscare() -> void:
 		_play_skinwalker_jumpscare()
 		return
 
-	var jumpscare_container = Control.new()
-	jumpscare_container.name = "RealHorrorJumpscare"
-	jumpscare_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	jumpscare_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(jumpscare_container)
-
-	# ── 1. ЗВУКОВОЙ ТЕРРОР: мощнейший многослойный взрыв ─────────────
-	# Сокрушительный выстрел из ружья в упор
-	var snd_shot = AudioStreamPlayer.new()
-	var st_shot = load("res://assets/audio/shotgun_shot.mp3") if ResourceLoader.exists("res://assets/audio/shotgun_shot.mp3") else null
-	if st_shot:
-		snd_shot.stream = st_shot
-		snd_shot.volume_db = 6.0
-		jumpscare_container.add_child(snd_shot)
-		snd_shot.play()
-
-	# Зловещий тяжелый храп/хрип деда над поверженной жертвой
-	var snd_ded = AudioStreamPlayer.new()
-	var st_ded = load("res://assets/ded.mp3") if ResourceLoader.exists("res://assets/ded.mp3") else null
-	if st_ded:
-		snd_ded.stream = st_ded
-		snd_ded.volume_db = 4.0
-		jumpscare_container.add_child(snd_ded)
-		snd_ded.play()
-
-	# Глухой удар / сокрушительный саб-бас (костеломный импакт удара)
-	var snd_impact = AudioStreamPlayer.new()
-	var st_crash = load("res://assets/audio/car_crash.wav")
-	if st_crash:
-		snd_impact.stream = st_crash
-		snd_impact.volume_db = 6.0
-		snd_impact.pitch_scale = 0.74
-		jumpscare_container.add_child(snd_impact)
-		snd_impact.play()
-
-	# Шок / ультразвуковой писк / радио-помехи
-	var snd_static = AudioStreamPlayer.new()
-	var st_static = load("res://assets/audio/tv_static.wav")
-	if st_static:
-		snd_static.stream = st_static
-		snd_static.volume_db = -2.0
-		snd_static.pitch_scale = 1.35
-		jumpscare_container.add_child(snd_static)
-		snd_static.play()
-
-	# ── 2. ВСПОЛОХ КРОВИ НА ЭКРАНЕ (мгновенная зрительная вспышка) ──
-	var red_flash = ColorRect.new()
-	red_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	red_flash.color = Color(1.0, 0.04, 0.04, 0.92)
-	red_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	jumpscare_container.add_child(red_flash)
-
-	# ── 3. ТЕМНАЯ КРОВАВАЯ ВИНЬЕТКА ПО КРАЯМ ─────────────────────────
-	var vignette = ColorRect.new()
-	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vignette.color = Color(0.12, 0.01, 0.01, 0.75)
-	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	jumpscare_container.add_child(vignette)
-
-	# ── 4. КРОВАВЫЕ РАЗРЫВЫ КОГТЯМИ ПО ЭКРАНУ ──────────────────────
-	var tex_claw = _load_ui_texture("res://assets/textures/ui/jumpscare_claw_slash.png")
-	var claw_rect = TextureRect.new()
-	claw_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	claw_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	claw_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	claw_rect.texture = tex_claw
-	claw_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	claw_rect.modulate = Color(1.3, 0.2, 0.2, 0.0)
-	claw_rect.pivot_offset = Vector2(960, 540)
-	jumpscare_container.add_child(claw_rect)
-
-	# Второй встречный взмах когтей
-	var claw_rect2 = TextureRect.new()
-	claw_rect2.set_anchors_preset(Control.PRESET_FULL_RECT)
-	claw_rect2.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	claw_rect2.stretch_mode = TextureRect.STRETCH_SCALE
-	claw_rect2.texture = tex_claw
-	claw_rect2.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	claw_rect2.modulate = Color(1.3, 0.2, 0.2, 0.0)
-	claw_rect2.pivot_offset = Vector2(960, 540)
-	claw_rect2.flip_h = true
-	claw_rect2.flip_v = true
-	jumpscare_container.add_child(claw_rect2)
-
-	# ── 5. АРТЕРИАЛЬНЫЕ БРЫЗГИ КРОВИ НА ОБЪЕКТИВЕ ──────────────────
-	var tex_blood = _load_ui_texture("res://assets/textures/ui/jumpscare_blood_splatter.png")
-	var blood_rect = TextureRect.new()
-	blood_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blood_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	blood_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	blood_rect.texture = tex_blood
-	blood_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blood_rect.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	jumpscare_container.add_child(blood_rect)
-
-	# ── 6. ПОЛНОЦЕННАЯ 3D КИНЕМАТОГРАФИЧНАЯ ДИНАМИКА ХОРРОРА ──────
-	# (Никакого 2D слайдшоу! Вся сцена видна в честном 3D: морда монстра в упор,
-	# когти, разлетающаяся кровь, тряска камеры и падение тела на пол)
-	var total_steps = 22
-	for i in range(total_steps):
-		if not is_inside_tree() or not is_instance_valid(jumpscare_container):
-			return
-
-		var progress = float(i) / float(total_steps - 1)
-
-		# Быстрое затухание вспышки (за первые 0.15 сек)
-		if is_instance_valid(red_flash):
-			red_flash.color.a = maxf(0.0, 0.92 - progress * 5.0)
-
-		# Первый сокрушительный удар когтей (0.05 - 0.25 сек)
-		if i == 2:
-			claw_rect.modulate = Color(1.4, 0.3, 0.3, 0.98)
-			claw_rect.scale = Vector2(1.15, 1.15)
-			claw_rect.rotation_degrees = randf_range(-12.0, 12.0)
-		elif i > 2 and is_instance_valid(claw_rect):
-			claw_rect.modulate.a = maxf(0.0, claw_rect.modulate.a - 0.12)
-
-		# Второй добивающий удар когтей (0.28 - 0.45 сек)
-		if i == 7:
-			claw_rect2.modulate = Color(1.5, 0.2, 0.2, 0.98)
-			claw_rect2.scale = Vector2(1.2, 1.2)
-			claw_rect2.rotation_degrees = randf_range(-15.0, 15.0)
-		elif i > 7 and is_instance_valid(claw_rect2):
-			claw_rect2.modulate.a = maxf(0.0, claw_rect2.modulate.a - 0.14)
-
-		# Брызги крови заливают стекло объектива камеры и стекают вниз
-		if i == 4:
-			blood_rect.modulate = Color(1.1, 0.9, 0.9, 0.96)
-		elif i > 4 and is_instance_valid(blood_rect):
-			blood_rect.position.y += 2.2
-
-		# Травматическая тряска интерфейса в унисон с камерой 3D
-		var ui_shake = lerpf(35.0, 8.0, progress)
-		jumpscare_container.position = Vector2(randf_range(-ui_shake, ui_shake), randf_range(-ui_shake * 0.7, ui_shake * 0.7))
-
-		# Сужение туннельного зрения (агония)
-		if is_instance_valid(vignette):
-			vignette.color = Color(0.15 + progress * 0.25, 0.01, 0.01, minf(0.95, 0.4 + progress * 0.55))
-
-		var frame_dt = 0.040 if i < 14 else 0.052
-		await get_tree().create_timer(frame_dt).timeout
-
-	# ── 7. ЗАТЕМНЕНИЕ В КРОВЬ И ПУСТОТУ (Падение на пол и смерть) ──
+	var scare := LumberjackScare.new()
+	add_child(scare)
+	await scare.finished
 	if not is_inside_tree() or not is_instance_valid(root_ctrl):
 		return
-
-	var blood_wash = ColorRect.new()
-	blood_wash.name = "BloodWash"
-	blood_wash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blood_wash.color = Color(0.60, 0.02, 0.02, 0.90)
-	blood_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(blood_wash)
-
-	var blackout = ColorRect.new()
-	blackout.name = "Blackout"
-	blackout.set_anchors_preset(Control.PRESET_FULL_RECT)
-	blackout.color = Color(0, 0, 0, 0)
-	blackout.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_ctrl.add_child(blackout)
-
-	var fade_tw = create_tween()
-	fade_tw.tween_property(blackout, "color:a", 1.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	await fade_tw.finished
-
-	if is_instance_valid(jumpscare_container):
-		jumpscare_container.queue_free()
-	if is_instance_valid(blood_wash):
-		blood_wash.queue_free()
-
-	await get_tree().create_timer(0.25).timeout
-	_show_death_screen()
+	_finish_scare(scare)
 
 
 func _play_skinwalker_jumpscare() -> void:
@@ -2559,6 +1659,10 @@ func _play_skinwalker_jumpscare() -> void:
 	await scare.finished
 	if not is_inside_tree() or not is_instance_valid(root_ctrl):
 		return
+	_finish_scare(scare)
+
+
+func _finish_scare(scare: Node) -> void:
 	var blackout = ColorRect.new()
 	blackout.name = "Blackout"
 	blackout.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2577,10 +1681,10 @@ func clear_end_screens() -> void:
 	end_screens.clear()
 	if root_ctrl and is_instance_valid(root_ctrl):
 		for ch in root_ctrl.get_children():
-			if ch.name in ["RealHorrorJumpscare", "BloodWash", "Blackout"]:
+			if ch.name == "Blackout":
 				ch.queue_free()
 	for ch in get_children():
-		if ch is SkinwalkerScare:
+		if ch is SkinwalkerScare or ch is LumberjackScare:
 			ch.queue_free()
 	if GameManager:
 		GameManager.game_ended = false
@@ -2590,11 +1694,20 @@ func clear_end_screens() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if pause_root and pause_root.visible:
+		if (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE) or \
+		   (event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_START, JOY_BUTTON_B]):
+			_close_pause()
+			get_viewport().set_input_as_handled()
+		return
+
 	# Горячие клавиши перезапуска при завершении игры (смерть или побег)
 	if GameManager and GameManager.game_ended:
 		if (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R) or \
 		   (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A):
 			var cur_scene = get_tree().current_scene
+			# Отмечаем до перезапуска: после него у узла уже нет вьюпорта
+			get_viewport().set_input_as_handled()
 			clear_end_screens()
 			if cur_scene and cur_scene.name == "DebugEditor" and cur_scene.has_method("restart_playtest"):
 				cur_scene.restart_playtest()
@@ -2602,7 +1715,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				if GameManager:
 					GameManager.reset_state()
 				get_tree().reload_current_scene()
-			get_viewport().set_input_as_handled()
 			return
 		elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_7:
 			var cur_scene = get_tree().current_scene
@@ -2614,8 +1726,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE) or \
 			 (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_START):
 			clear_end_screens()
-			get_tree().change_scene_to_file("res://scenes/Menu.tscn")
 			get_viewport().set_input_as_handled()
+			get_tree().change_scene_to_file("res://scenes/Menu.tscn")
 			return
 
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -2630,7 +1742,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			elif GameManager.game_ended:
 				clear_end_screens()
+				get_viewport().set_input_as_handled()
 				get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+				return
+			elif _can_pause():
+				_open_pause()
 				get_viewport().set_input_as_handled()
 				return
 		elif GameManager.is_backpack_open and event.keycode >= KEY_1 and event.keycode <= KEY_6:
@@ -2683,12 +1799,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif event.button_index == JOY_BUTTON_START:
 				if GameManager.game_ended:
 					clear_end_screens()
+					get_viewport().set_input_as_handled()
 					get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+					return
+				elif _can_pause():
+					_open_pause()
 					get_viewport().set_input_as_handled()
 					return
 
 func _show_death_screen() -> void:
 	clear_end_screens()
+	# clear_end_screens сбрасывает флаг, а на экране смерти игра должна оставаться законченной:
+	# иначе монстр продолжает ходить за экраном, а клавиши R и ESC не срабатывают
+	if GameManager:
+		GameManager.game_ended = true
+	VHSOverlay.set_fear(0.0)
 
 	var bg = ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.94)
@@ -2706,14 +1831,15 @@ func _show_death_screen() -> void:
 	var msg = Label.new()
 	msg.text                  = "ОН НАШЁЛ ТЕБЯ"
 	msg.horizontal_alignment  = HORIZONTAL_ALIGNMENT_CENTER
-	msg.add_theme_font_size_override("font_size", 52)
-	msg.add_theme_color_override("font_color", Color(0.85, 0.08, 0.06))
+	msg.add_theme_font_override("font", VHSOverlay.tracked_font(6))
+	msg.add_theme_font_size_override("font_size", 34)
+	msg.add_theme_color_override("font_color", HUD_ACCENT)
 	vb.add_child(msg)
 
 	var cur_scene = get_tree().current_scene
 	if cur_scene and cur_scene.name == "DebugEditor":
 		var rst_btn = Button.new()
-		rst_btn.text = "В ИСХОДНОЕ ПОЛОЖЕНИЕ (R)"
+		rst_btn.text = "В ИСХОДНОЕ ПОЛОЖЕНИЕ  R"
 		rst_btn.custom_minimum_size = Vector2(280, 44)
 		rst_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		rst_btn.add_theme_font_size_override("font_size", 16)
@@ -2725,7 +1851,7 @@ func _show_death_screen() -> void:
 		vb.add_child(rst_btn)
 
 		var ed_btn = Button.new()
-		ed_btn.text = "ВЕРНУТЬСЯ В РЕДАКТОР (7)"
+		ed_btn.text = "ВЕРНУТЬСЯ В РЕДАКТОР  7"
 		ed_btn.custom_minimum_size = Vector2(280, 44)
 		ed_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		ed_btn.add_theme_font_size_override("font_size", 16)
@@ -2737,7 +1863,7 @@ func _show_death_screen() -> void:
 		vb.add_child(ed_btn)
 	else:
 		var camp_rst = Button.new()
-		camp_rst.text = "НАЧАТЬ ЗАНОВО (R)"
+		camp_rst.text = "НАЧАТЬ ЗАНОВО  R"
 		camp_rst.custom_minimum_size = Vector2(280, 44)
 		camp_rst.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		camp_rst.add_theme_font_size_override("font_size", 16)
@@ -2750,7 +1876,7 @@ func _show_death_screen() -> void:
 		vb.add_child(camp_rst)
 
 	var sub_btn = Button.new()
-	sub_btn.text = "В ГЛАВНОЕ МЕНЮ (ESC)"
+	sub_btn.text = "В ГЛАВНОЕ МЕНЮ  ESC"
 	sub_btn.custom_minimum_size = Vector2(280, 44)
 	sub_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	sub_btn.add_theme_font_size_override("font_size", 16)
@@ -2778,7 +1904,7 @@ func show_alpha_end_screen() -> void:
 
 	# Полноэкранный фон с плавным появлением (темный бархат)
 	var bg = ColorRect.new()
-	bg.color = Color(0.02, 0.02, 0.04, 0.0)
+	bg.color = Color(0.0, 0.0, 0.0, 0.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root_ctrl.add_child(bg)
 	end_screens.append(bg)
@@ -2791,28 +1917,20 @@ func show_alpha_end_screen() -> void:
 	root_ctrl.add_child(vb)
 	end_screens.append(vb)
 
-	# Декоративный бейдж
-	var badge = Label.new()
-	badge.text = "✦  ДЕМО-ВЕРСИЯ  ✦"
-	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge.add_theme_font_size_override("font_size", 16)
-	badge.add_theme_color_override("font_color", Color(0.95, 0.75, 0.25, 0.85))
-	vb.add_child(badge)
-
 	# Главный заголовок по запросу игрока
 	var msg = Label.new()
 	msg.text = "Alpha заканчивается тут, спасибо поиграли"
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	msg.add_theme_font_size_override("font_size", 42)
-	msg.add_theme_color_override("font_color", Color(0.96, 0.94, 0.90))
+	msg.add_theme_font_size_override("font_size", 26)
+	msg.add_theme_color_override("font_color", HUD_TEXT)
 	vb.add_child(msg)
 
 	# Подзаголовок
 	var submsg = Label.new()
-	submsg.text = "Побег успешно завершён. Железная электро-дверь открыта."
+	submsg.text = "Ты выбрался."
 	submsg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	submsg.add_theme_font_size_override("font_size", 18)
-	submsg.add_theme_color_override("font_color", Color(0.65, 0.70, 0.75, 0.9))
+	submsg.add_theme_font_size_override("font_size", 15)
+	submsg.add_theme_color_override("font_color", HUD_DIM)
 	vb.add_child(submsg)
 
 	# Отступ перед кнопками
@@ -2822,7 +1940,7 @@ func show_alpha_end_screen() -> void:
 
 	# Кнопка «В главное меню»
 	var menu_btn = Button.new()
-	menu_btn.text = "В ГЛАВНОЕ МЕНЮ (ESC)"
+	menu_btn.text = "В ГЛАВНОЕ МЕНЮ  ESC"
 	menu_btn.custom_minimum_size = Vector2(300, 48)
 	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	menu_btn.add_theme_font_size_override("font_size", 17)
@@ -2836,7 +1954,7 @@ func show_alpha_end_screen() -> void:
 
 	# Кнопка «Начать заново»
 	var rst_btn = Button.new()
-	rst_btn.text = "НАЧАТЬ ЗАНОВО (R)"
+	rst_btn.text = "НАЧАТЬ ЗАНОВО  R"
 	rst_btn.custom_minimum_size = Vector2(300, 48)
 	rst_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	rst_btn.add_theme_font_size_override("font_size", 17)
@@ -2890,8 +2008,8 @@ func _build_crosshair_ui() -> void:
 	crosshair_dot = ColorRect.new()
 	crosshair_dot.name = "CrosshairDot"
 	crosshair_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	crosshair_dot.size = Vector2(4, 4)
-	crosshair_dot.position = Vector2(-2, -2)
+	crosshair_dot.size = Vector2(3, 3)
+	crosshair_dot.position = Vector2(-1.5, -1.5)
 	crosshair_dot.color = Color(1.0, 1.0, 1.0, 0.65)
 	crosshair_container.add_child(crosshair_dot)
 
@@ -2909,7 +2027,7 @@ func _build_crosshair_ui() -> void:
 	for i in range(4):
 		var b_line1 = ColorRect.new()
 		var b_line2 = ColorRect.new()
-		var col = Color(1.0, 0.92, 0.50, 0.95)
+		var col = Color(HUD_TEXT.r, HUD_TEXT.g, HUD_TEXT.b, 0.9)
 		b_line1.color = col
 		b_line2.color = col
 		b_line1.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2936,23 +2054,22 @@ func _build_crosshair_ui() -> void:
 	throw_charge_container = Control.new()
 	throw_charge_container.name = "ThrowChargeContainer"
 	throw_charge_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	throw_charge_container.size = Vector2(64, 6)
+	throw_charge_container.size = Vector2(64, 3)
 	throw_charge_container.position = Vector2(-32, 22)
 	throw_charge_container.visible = false
 
 	throw_charge_bg = ColorRect.new()
 	throw_charge_bg.name = "ChargeBG"
 	throw_charge_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	throw_charge_bg.size = Vector2(64, 6)
-	throw_charge_bg.color = Color(0.05, 0.05, 0.08, 0.75)
+	throw_charge_bg.size = Vector2(64, 3)
+	throw_charge_bg.color = Color(1, 1, 1, 0.12)
 	throw_charge_container.add_child(throw_charge_bg)
 
 	throw_charge_bar = ColorRect.new()
 	throw_charge_bar.name = "ChargeFill"
 	throw_charge_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	throw_charge_bar.size = Vector2(0, 4)
-	throw_charge_bar.position = Vector2(1, 1)
-	throw_charge_bar.color = Color(1.0, 0.65, 0.15, 0.95)
+	throw_charge_bar.size = Vector2(0, 3)
+	throw_charge_bar.color = HUD_TEXT
 	throw_charge_container.add_child(throw_charge_bar)
 
 	crosshair_container.add_child(throw_charge_container)
@@ -2968,7 +2085,7 @@ func set_crosshair_hover(hover: bool) -> void:
 	if hover:
 		tw.tween_property(crosshair_ring, "modulate:a", 1.0, 0.12)
 		tw.tween_property(crosshair_ring, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_property(crosshair_dot, "color", Color(1.0, 0.92, 0.45, 1.0), 0.12)
+		tw.tween_property(crosshair_dot, "color", Color(1.0, 1.0, 1.0, 1.0), 0.12)
 		tw.tween_property(crosshair_dot, "scale", Vector2(1.4, 1.4), 0.12)
 	else:
 		tw.tween_property(crosshair_ring, "modulate:a", 0.0, 0.15)
@@ -2984,10 +2101,169 @@ func update_throw_charge(charge_val: float) -> void:
 		throw_charge_bar.size.x = 0
 	else:
 		throw_charge_container.visible = true
-		var max_w = 62.0
+		var max_w = 64.0
 		throw_charge_bar.size.x = clampf(charge_val, 0.0, 1.0) * max_w
-		throw_charge_bar.color = Color(1.0, lerpf(0.75, 0.15, charge_val), 0.10, 0.95)
+		throw_charge_bar.color = HUD_TEXT.lerp(HUD_ACCENT, charge_val)
 
 func set_crosshair_visible(v: bool) -> void:
 	if crosshair_container:
 		crosshair_container.visible = v
+
+# ──────────────────────────────────────────────
+#  Счётчик кассеты
+# ──────────────────────────────────────────────
+func _build_tape_counter() -> void:
+	tape_dot = ColorRect.new()
+	tape_dot.color = HUD_ACCENT
+	tape_dot.position = Vector2(30, 27)
+	tape_dot.size = Vector2(8, 8)
+	tape_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_ctrl.add_child(tape_dot)
+
+	tape_lbl = Label.new()
+	tape_lbl.position = Vector2(46, 20)
+	tape_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tape_lbl.add_theme_font_override("font", VHSOverlay.tracked_font(2))
+	tape_lbl.add_theme_font_size_override("font_size", 14)
+	tape_lbl.add_theme_color_override("font_color", HUD_DIM)
+	root_ctrl.add_child(tape_lbl)
+
+func _update_tape_counter(delta: float) -> void:
+	if not tape_lbl or get_tree().paused:
+		return
+	tape_time += delta
+	var total = int(tape_time)
+	tape_lbl.text = "ЗАП  %02d:%02d:%02d" % [total / 3600, (total / 60) % 60, total % 60]
+	tape_dot.visible = fmod(tape_time, 1.0) < 0.6
+
+# ──────────────────────────────────────────────
+#  Подсказка по кнопкам в начале игры
+# ──────────────────────────────────────────────
+func _add_controls_rows(parent: Control, rows: Array, x: float, y: float, step: float) -> void:
+	for i in range(rows.size()):
+		var key_lbl = Label.new()
+		key_lbl.text = rows[i][0]
+		key_lbl.position = Vector2(x, y + i * step)
+		key_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		key_lbl.add_theme_font_size_override("font_size", 14)
+		key_lbl.add_theme_color_override("font_color", HUD_TEXT)
+		parent.add_child(key_lbl)
+
+		var act_lbl = Label.new()
+		act_lbl.text = rows[i][1]
+		act_lbl.position = Vector2(x + 96, y + i * step)
+		act_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		act_lbl.add_theme_font_size_override("font_size", 14)
+		act_lbl.add_theme_color_override("font_color", HUD_DIM)
+		parent.add_child(act_lbl)
+
+func _build_controls_help() -> void:
+	controls_help = Control.new()
+	controls_help.name = "ControlsHelp"
+	controls_help.set_anchors_preset(Control.PRESET_FULL_RECT)
+	controls_help.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_ctrl.add_child(controls_help)
+
+	var rows = [
+		["WASD", "идти"],
+		["ЛКМ / E", "действие"],
+		["F", "фонарик"],
+		["TAB", "рюкзак"],
+		["ESC", "пауза и все кнопки"],
+	]
+	_add_controls_rows(controls_help, rows, 30.0, 540.0, 24.0)
+
+	var tw = create_tween()
+	tw.tween_interval(22.0)
+	tw.tween_property(controls_help, "modulate:a", 0.0, 2.5)
+	tw.tween_callback(controls_help.hide)
+
+# ──────────────────────────────────────────────
+#  Пауза
+# ──────────────────────────────────────────────
+func _can_pause() -> bool:
+	if GameManager.game_ended or GameManager.is_reading_note or GameManager.is_backpack_open:
+		return false
+	# Без захваченной мыши открыт сейф, щиток или другое окно
+	if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
+		return false
+	var cur_scene = get_tree().current_scene
+	if cur_scene and cur_scene.name in ["DebugEditor", "Polygon"]:
+		return false
+	var player = GameManager.player_ref
+	if is_instance_valid(player):
+		if player.get("is_hiding") == true or player.get("is_peeking_keyhole") == true or player.get("is_in_cutscene") == true:
+			return false
+	return true
+
+func _make_pause_button(text: String, y: float, cb: Callable) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.position = Vector2(92, y)
+	btn.size = Vector2(300, 32)
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.pressed.connect(cb)
+	pause_root.add_child(btn)
+
+	var bar = ColorRect.new()
+	bar.color = Color(1.0, 0.07, 0.05)
+	bar.position = Vector2(-10, 7)
+	bar.size = Vector2(3, 18)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.visible = false
+	btn.add_child(bar)
+	btn.focus_entered.connect(func(): bar.visible = true)
+	btn.focus_exited.connect(func(): bar.visible = false)
+	btn.mouse_entered.connect(btn.grab_focus)
+	return btn
+
+func _build_pause_menu() -> void:
+	pause_root = ColorRect.new()
+	pause_root.name = "PauseMenu"
+	pause_root.color = Color(0.0, 0.0, 0.0, 0.72)
+	pause_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pause_root.visible = false
+	root_ctrl.add_child(pause_root)
+
+	var title = Label.new()
+	title.text = "ПАУЗА"
+	title.position = Vector2(97, 178)
+	title.add_theme_font_override("font", VHSOverlay.tracked_font(5))
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	pause_root.add_child(title)
+
+	pause_first_btn = _make_pause_button("ПРОДОЛЖИТЬ", 258.0, _close_pause)
+	_make_pause_button("НАЧАТЬ ЗАНОВО", 295.0, func():
+		get_tree().paused = false
+		GameManager.reset_state()
+		get_tree().reload_current_scene()
+	)
+	_make_pause_button("В ГЛАВНОЕ МЕНЮ", 332.0, func():
+		get_tree().paused = false
+		GameManager.reset_state()
+		get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+	)
+
+	var ctrl_title = Label.new()
+	ctrl_title.text = "УПРАВЛЕНИЕ"
+	ctrl_title.position = Vector2(620, 262)
+	ctrl_title.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	ctrl_title.add_theme_font_size_override("font_size", 15)
+	ctrl_title.add_theme_color_override("font_color", HUD_DIM)
+	pause_root.add_child(ctrl_title)
+	_add_controls_rows(pause_root, CONTROLS_LIST, 620.0, 298.0, 25.0)
+
+func _open_pause() -> void:
+	pause_root.visible = true
+	get_tree().paused = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	pause_first_btn.grab_focus()
+	VHSOverlay.glitch(0.5)
+
+func _close_pause() -> void:
+	pause_root.visible = false
+	get_tree().paused = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)

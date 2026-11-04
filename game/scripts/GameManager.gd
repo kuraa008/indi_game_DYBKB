@@ -48,8 +48,28 @@ var is_gamepad: bool = false
 #  Графика и качество (Высокая / Низкая [F3])
 # ──────────────────────────────────────────────
 var graphics_quality: String = "ultra"
+var vhs_enabled: bool = true
+var dynamic_resolution: bool = true
+const SETTINGS_PATH := "user://settings.cfg"
+const QUALITY_SCALE := {"ultra": 1.0, "high": 1.0, "medium": 0.9, "low": 0.75}
+const MIN_SCALE: float = 0.6
+var _res_scale: float = 1.0
+var _res_timer: float = 0.0
+var _res_good_time: float = 0.0
+var _res_raise_block: float = 0.0
+var _res_last_raise: float = -100.0
+var _res_clock: float = 0.0
+signal vhs_changed(enabled: bool)
 var is_legacy_graphics: bool = false
 var intro_cutscene_played: bool = false
+
+# ──────────────────────────────────────────────
+#  Настройки игрока (хранятся между запусками)
+# ──────────────────────────────────────────────
+const RESOLUTION_MODES: Array[String] = ["auto", "1280x720", "1600x900", "1920x1080"]
+var sound_level: int = 80
+var mouse_sensitivity: float = 1.0
+var resolution_mode: String = "auto"
 
 # ──────────────────────────────────────────────
 #  Случайный шифр для сейфа и записок
@@ -187,6 +207,7 @@ var director_grace_timer: float = 0.0
 var game_ended: bool = false
 
 func _process(delta: float) -> void:
+	_update_dynamic_resolution(delta)
 	if game_ended:
 		return
 	timer_elapsed += delta
@@ -242,6 +263,7 @@ func _process_director_ai(delta: float) -> void:
 
 func _ready() -> void:
 	_setup_gamepad_input_map()
+	load_settings()
 	generate_new_safe_code()
 	var ai_report = preload("res://scripts/AIReport.gd").new()
 	ai_report.name = "AIReport"
@@ -343,6 +365,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_tree().change_scene_to_file("res://scenes/DebugEditor.tscn")
 		elif event.keycode == KEY_F3:
 			toggle_graphics_quality()
+		elif event.keycode == KEY_F4:
+			set_vhs_enabled(not vhs_enabled)
 
 
 # ──────────────────────────────────────────────
@@ -354,7 +378,9 @@ func generate_new_safe_code() -> String:
 
 func cycle_graphics_quality() -> String:
 	match graphics_quality:
-		"ultra", "high":
+		"ultra":
+			set_graphics_quality("high")
+		"high":
 			set_graphics_quality("medium")
 		"medium":
 			set_graphics_quality("low")
@@ -369,7 +395,159 @@ func toggle_graphics_quality() -> String:
 
 func set_graphics_quality(quality: String) -> void:
 	graphics_quality = quality
+	_apply_viewport_quality()
+	save_settings()
 	emit_signal("graphics_quality_changed", graphics_quality)
+
+func set_dynamic_resolution(enabled: bool) -> void:
+	dynamic_resolution = enabled
+	save_settings()
+	if not enabled:
+		_apply_viewport_quality()
+
+func set_vhs_enabled(enabled: bool) -> void:
+	vhs_enabled = enabled
+	save_settings()
+	vhs_changed.emit(enabled)
+
+# Первый запуск: встроенная графика получает среднее качество, дискретная — высокое.
+# Дальше выбор игрока запоминается в user://settings.cfg
+func load_settings() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) == OK:
+		vhs_enabled = bool(cfg.get_value("video", "vhs", vhs_enabled))
+		graphics_quality = str(cfg.get_value("video", "quality", graphics_quality))
+		dynamic_resolution = bool(cfg.get_value("video", "dynamic_resolution", dynamic_resolution))
+		is_legacy_graphics = bool(cfg.get_value("video", "legacy_models", is_legacy_graphics))
+		resolution_mode = str(cfg.get_value("video", "resolution", resolution_mode))
+		sound_level = int(cfg.get_value("audio", "level", sound_level))
+		mouse_sensitivity = float(cfg.get_value("input", "sensitivity", mouse_sensitivity))
+	else:
+		match RenderingServer.get_video_adapter_type():
+			RenderingDevice.DEVICE_TYPE_DISCRETE_GPU:
+				graphics_quality = "high"
+			_:
+				graphics_quality = "medium"
+		save_settings()
+	set_sound_level(sound_level)
+	set_resolution_mode(resolution_mode)
+	_apply_viewport_quality()
+
+func save_settings() -> void:
+	var cfg = ConfigFile.new()
+	cfg.set_value("video", "vhs", vhs_enabled)
+	cfg.set_value("video", "quality", graphics_quality)
+	cfg.set_value("video", "dynamic_resolution", dynamic_resolution)
+	cfg.set_value("video", "legacy_models", is_legacy_graphics)
+	cfg.set_value("video", "resolution", resolution_mode)
+	cfg.set_value("audio", "level", sound_level)
+	cfg.set_value("input", "sensitivity", mouse_sensitivity)
+	cfg.save(SETTINGS_PATH)
+func _apply_viewport_quality() -> void:
+	var vp := get_tree().root if is_inside_tree() else null
+	if vp == null:
+		return
+	var heavy := graphics_quality in ["ultra", "high"]
+	vp.msaa_3d = Viewport.MSAA_2X if heavy else Viewport.MSAA_DISABLED
+	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED if heavy else Viewport.SCREEN_SPACE_AA_FXAA
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR
+	_res_scale = float(QUALITY_SCALE.get(graphics_quality, 1.0))
+	_res_good_time = 0.0
+	_res_raise_block = 0.0
+	vp.scaling_3d_scale = _res_scale
+
+# Динамическое разрешение: при просадке 3D-картинка рендерится мельче, UI остаётся чётким.
+# Если повышение снова уронило FPS, повторная попытка откладывается на 30 секунд.
+func _update_dynamic_resolution(delta: float) -> void:
+	_res_clock += delta
+	if not dynamic_resolution:
+		return
+	_res_timer += delta
+	if _res_timer < 1.0:
+		return
+	_res_timer = 0.0
+	_res_raise_block = maxf(0.0, _res_raise_block - 1.0)
+	var fps := Engine.get_frames_per_second()
+	var top := float(QUALITY_SCALE.get(graphics_quality, 1.0))
+	var next := _res_scale
+	if fps < 40.0:
+		_res_good_time = 0.0
+		next = maxf(MIN_SCALE, _res_scale - (0.1 if fps < 28.0 else 0.05))
+		if _res_clock - _res_last_raise < 4.0:
+			_res_raise_block = 30.0
+	elif fps >= 57.0:
+		_res_good_time += 1.0
+		if _res_good_time >= 5.0 and _res_raise_block <= 0.0 and _res_scale < top:
+			next = minf(top, _res_scale + 0.05)
+			_res_last_raise = _res_clock
+			_res_good_time = 0.0
+	else:
+		_res_good_time = 0.0
+	if not is_equal_approx(next, _res_scale):
+		_res_scale = next
+		get_tree().root.scaling_3d_scale = _res_scale
+
+func set_sound_level(level: int) -> void:
+	sound_level = clampi(level, 0, 100)
+	AudioServer.set_bus_volume_db(0, linear_to_db(sound_level / 100.0))
+	AudioServer.set_bus_mute(0, sound_level == 0)
+
+func set_resolution_mode(mode: String) -> void:
+	resolution_mode = mode if mode in RESOLUTION_MODES else "auto"
+	if DisplayServer.get_name() == "headless":
+		return
+	if resolution_mode == "auto":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	var parts = resolution_mode.split("x")
+	var win_size = Vector2i(int(parts[0]), int(parts[1]))
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(win_size)
+	var screen_rect = DisplayServer.screen_get_usable_rect()
+	DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - win_size) / 2)
+
+# Переход на другую карту. Живёт в автозагрузке, потому что дверь исчезает вместе со старой сценой.
+# Затемнение короткое, а светлеть экран начинает только когда новая карта уже загрузилась.
+func start_level_transition(map_path: String) -> void:
+	var tree := get_tree()
+	var door_sound: AudioStream = load("res://assets/audio/monster/basement_door_open.wav")
+	var audio := AudioStreamPlayer.new()
+	audio.name = "LevelTransitionAudio"
+	audio.stream = door_sound
+	audio.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(audio)
+	audio.play()
+	audio.finished.connect(audio.queue_free)
+
+	var layer := CanvasLayer.new()
+	layer.layer = 126
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0, 0, 0, 0)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(shade)
+	add_child(layer)
+
+	var dark := layer.create_tween()
+	dark.tween_property(shade, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await dark.finished
+
+	reset_state(true)
+	active_map_path = map_path
+	intro_cutscene_played = true
+	ActDressing.wake_shown = false
+	var old_scene := tree.current_scene
+	tree.change_scene_to_file("res://scenes/Main.tscn")
+	while tree.current_scene == null or tree.current_scene == old_scene or not is_instance_valid(player_ref):
+		await tree.process_frame
+	# Первый кадр новой карты рисуется дольше обычного, его лучше оставить за шторкой
+	await tree.process_frame
+	await tree.process_frame
+
+	var light := layer.create_tween()
+	light.tween_property(shade, "color:a", 0.0, 0.45)
+	await light.finished
+	layer.queue_free()
 
 func toggle_legacy_graphics() -> bool:
 	is_legacy_graphics = not is_legacy_graphics
@@ -878,9 +1056,9 @@ func trigger_pain(who: String, reason: String) -> void:
 		emit_signal("pain_triggered", "monster", 40, reason)
 		emit_signal("score_updated", player_score, monster_score, "Штраф Скинвокеру: " + reason)
 
-		if tree and tree.current_scene and ResourceLoader.exists("res://assets/audio/skinwalker_scream.wav"):
+		if tree and tree.current_scene and ResourceLoader.exists("res://assets/audio/monster/monster_growl.wav"):
 			var p = AudioStreamPlayer.new()
-			p.stream = load("res://assets/audio/skinwalker_scream.wav")
+			p.stream = load("res://assets/audio/monster/monster_growl.wav")
 			p.volume_db = -5.0
 			tree.current_scene.add_child(p)
 			p.play()

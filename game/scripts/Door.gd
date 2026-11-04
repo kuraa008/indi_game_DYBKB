@@ -671,8 +671,8 @@ func get_interaction_hint() -> String:
 		if _is_exit_door():
 			return "[ЛКМ / RT]  Открыть выход"
 		if absf(current_open_angle) < 45.0:
-			return "[ЛКМ / RT] Закрыть  •  [Колесико] Щель: %d°" % int(abs(current_open_angle))
-		return "[ЛКМ / RT]  Закрыть дверь  •  [Колесико] Прикрыть"
+			return "[ЛКМ / RT] Закрыть    [Колесико] Щель: %d°" % int(abs(current_open_angle))
+		return "[ЛКМ / RT]  Закрыть дверь    [Колесико] Прикрыть"
 
 	var is_exit = _is_exit_door()
 	var d_type = _get_door_type()
@@ -736,10 +736,10 @@ func get_interaction_hint() -> String:
 
 	if is_hatch:
 		if _is_level_2():
-			return "[🔒] Земной люк заперт снаружи"
+			return "[] Земной люк заперт снаружи"
 		return "[ЛКМ / RT]  Открыть люк"
 
-	return "[ЛКМ / RT] Открыть  •  [Колесико] Приоткрыть"
+	return "[ЛКМ / RT] Открыть    [Колесико] Приоткрыть"
 
 func get_escape_checklist() -> Dictionary:
 	var boards_done = not requires_boards or door_boards_broken or GameManager.door_boards_broken
@@ -1232,7 +1232,7 @@ func _toggle_simple_door(opener: Node3D = null) -> void:
 			is_animating = false
 			_play_locked_sound()
 			if GameManager and GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
-				GameManager.ui_ref.call("show_hint", "🔒 Люк заперт снаружи и пока не открывается...", 3.0)
+				GameManager.ui_ref.call("show_hint", "Люк заперт снаружи и пока не открывается...", 3.0)
 			return
 		is_open = not is_open
 		var target_rot_node: Node3D = hinge_node if hinge_node else find_child("Panel", true, false)
@@ -1666,7 +1666,7 @@ func _open_door() -> void:
 	exit_area.body_entered.connect(_on_exit_entered)
 
 	if get_tree():
-		var exit_timer = get_tree().create_timer(1.2 if _is_level_1() else 0.8)
+		var exit_timer = get_tree().create_timer(0.5 if _is_level_1() else 0.8)
 		exit_timer.timeout.connect(func():
 			if is_open and not transition_started:
 				if _is_level_1():
@@ -1711,63 +1711,13 @@ func _teleport_to_level_2() -> void:
 	if not tree:
 		return
 
-	# 1. Воспроизведение звука перехода opennext.mp3 через корень сцены
-	var s: AudioStream = null
-	if ResourceLoader.exists("res://assets/opennext.mp3"):
-		s = load("res://assets/opennext.mp3")
-	elif ResourceLoader.exists("res://assets/audio/opennext.mp3"):
-		s = load("res://assets/audio/opennext.mp3")
-	if s and tree.root:
-		var asp = AudioStreamPlayer.new()
-		asp.name = "LevelTransitionAudio"
-		asp.stream = s
-		asp.volume_db = 2.0
-		tree.root.add_child(asp)
-		asp.play()
-		asp.finished.connect(func(): if is_instance_valid(asp): asp.queue_free())
-
-	# 2. Подсказка на экране
 	if GameManager and GameManager.ui_ref and is_instance_valid(GameManager.ui_ref) and GameManager.ui_ref.has_method("show_hint"):
-		GameManager.ui_ref.call("show_hint", "🚪 Дверь открыта! Переход на следующий уровень...", 4.0)
+		GameManager.ui_ref.call("show_hint", "Дверь открыта! Переход на следующий уровень...", 4.0)
 
-	# 3. Экранное затемнение
-	var cv = CanvasLayer.new()
-	cv.layer = 150
-	var cr = ColorRect.new()
-	cr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	cr.color = Color(0, 0, 0, 0)
-	cr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cv.add_child(cr)
-	if tree.root:
-		tree.root.add_child(cv)
-
-	var tw = tree.create_tween() if tree else null
-	if tw:
-		tw.tween_property(cr, "color:a", 1.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw.tween_interval(0.3)
-		tw.tween_callback(func():
-			if GameManager:
-				GameManager.reset_state(true)
-				GameManager.active_map_path = "res://scenes/Карта_6_fix.json"
-				GameManager.intro_cutscene_played = true
-			if is_instance_valid(tree):
-				tree.change_scene_to_file("res://scenes/Main.tscn")
-			if is_instance_valid(cv):
-				var tw2 = cv.create_tween()
-				if tw2:
-					tw2.tween_interval(0.2)
-					tw2.tween_property(cr, "color:a", 0.0, 0.8)
-					tw2.tween_callback(func(): if is_instance_valid(cv): cv.queue_free())
-				else:
-					cv.queue_free()
-		)
+	if GameManager:
+		GameManager.start_level_transition("res://scenes/Карта_6_fix.json")
 	else:
-		if GameManager:
-			GameManager.reset_state(true)
-			GameManager.active_map_path = "res://scenes/Карта_6_fix.json"
-			GameManager.intro_cutscene_played = true
 		tree.change_scene_to_file("res://scenes/Main.tscn")
-
 func _on_exit_entered(body: Node) -> void:
 	if transition_started:
 		return

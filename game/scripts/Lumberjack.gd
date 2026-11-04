@@ -23,7 +23,7 @@ const INVESTIGATE_SPEED: float = 2.22
 const CHASE_SPEED: float = 3.37
 const RELOAD_SPEED: float = 2.87
 const GRAVITY: float = 18.0
-const BASE_SPRITE_Y: float = 1.05
+
 
 var nav_agent: NavigationAgent3D = null
 var current_target_pos: Vector3 = Vector3.ZERO
@@ -76,22 +76,11 @@ var search_points: Array[Vector3] = []
 var search_index: int = 0
 var is_in_cutscene: bool = false
 
-# ── 4-ракурсный направленный спрайт персонажа ──
-var lumberjack_sprite: Sprite3D = null
-var tex_front: Texture2D = null
-var tex_front_walk_0: Texture2D = null
-var tex_front_walk_1: Texture2D = null
-var tex_back: Texture2D = null
-var tex_back_walk_0: Texture2D = null
-var tex_back_walk_1: Texture2D = null
-var tex_left: Texture2D = null
-var tex_left_walk_0: Texture2D = null
-var tex_left_walk_1: Texture2D = null
-var tex_right: Texture2D = null
-var tex_right_walk_0: Texture2D = null
-var tex_right_walk_1: Texture2D = null
+# ── Процедурная 3D-модель ──
+var model: LumberjackModel = null
+var headlamp_glow: OmniLight3D = null
+var _anim_accum: float = 0.0
 
-var _current_view: String = "front"
 var walk_cycle_t: float = 0.0
 var last_step_phase: int = 0
 
@@ -102,10 +91,6 @@ var headlamp: SpotLight3D = null
 # ── Аудио ──
 var step_audio: AudioStreamPlayer3D = null
 var gun_audio: AudioStreamPlayer3D = null
-var voice_audio: AudioStreamPlayer3D = null
-var breath_audio: AudioStreamPlayer3D = null
-var creepy_sounds: Array[AudioStream] = []
-var creepy_timer: float = 6.0
 
 var sfx_shot: AudioStream = null
 var sfx_cock: AudioStreamWAV = null
@@ -113,7 +98,6 @@ var sfx_pump: AudioStreamWAV = null
 var sfx_step: AudioStreamWAV = null
 var lumberjack_step_streams: Array[AudioStream] = []
 var lumberjack_step_idx: int = 0
-var sfx_grunt: AudioStreamWAV = null
 var sfx_impact: AudioStreamWAV = null
 
 # ── Реакция на свет фонарика игрока ──
@@ -132,7 +116,6 @@ func _ready() -> void:
 	safe_margin = 0.03
 
 	_generate_sound_effects()
-	_load_textures()
 	_build_collision()
 	_build_visual_sprite()
 	_setup_navigation()
@@ -168,48 +151,12 @@ func _build_collision() -> void:
 	col.position = Vector3(0, 0.95, 0)
 	add_child(col)
 
-func _load_textures() -> void:
-	const DIR = "res://assets/textures/lumberjack/"
-	tex_front        = _try_load(DIR + "lumberjack_front.png")
-	tex_front_walk_0 = _try_load(DIR + "lumberjack_front_walk_0.png")
-	tex_front_walk_1 = _try_load(DIR + "lumberjack_front_walk_1.png")
-
-	tex_back         = _try_load(DIR + "lumberjack_back.png")
-	tex_back_walk_0  = _try_load(DIR + "lumberjack_back_walk_0.png")
-	tex_back_walk_1  = _try_load(DIR + "lumberjack_back_walk_1.png")
-
-	tex_left         = _try_load(DIR + "lumberjack_left.png")
-	tex_left_walk_0  = _try_load(DIR + "lumberjack_left_walk_0.png")
-	tex_left_walk_1  = _try_load(DIR + "lumberjack_left_walk_1.png")
-
-	tex_right        = _try_load(DIR + "lumberjack_right.png")
-	tex_right_walk_0 = _try_load(DIR + "lumberjack_right_walk_0.png")
-	tex_right_walk_1 = _try_load(DIR + "lumberjack_right_walk_1.png")
-
-func _try_load(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var res = load(path)
-		if res is Texture2D:
-			return res
-	if FileAccess.file_exists(path):
-		var img = Image.load_from_file(ProjectSettings.globalize_path(path))
-		if img and not img.is_empty():
-			return ImageTexture.create_from_image(img)
-	return null
-
 func _build_visual_sprite() -> void:
-	lumberjack_sprite = Sprite3D.new()
-	lumberjack_sprite.name = "LumberjackSprite"
-	lumberjack_sprite.texture = tex_front
-	lumberjack_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	# При высоте спрайта 1024px, pixel_size = 0.0022 дает рост персонажа ~2.0м в игре
-	lumberjack_sprite.pixel_size = 0.0022
-	lumberjack_sprite.position = Vector3(0, BASE_SPRITE_Y, 0)
-	lumberjack_sprite.shaded = true
-	lumberjack_sprite.double_sided = true
-	lumberjack_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	lumberjack_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	add_child(lumberjack_sprite)
+	# Лесоруб смотрит вдоль -Z, а модель построена лицом к +Z
+	model = LumberjackModel.new()
+	model.name = "LumberjackModel"
+	model.rotation.y = PI
+	add_child(model)
 
 	# Налобный фонарик охотника — светит ярким желтым пучком вперед по направлению взгляда
 	headlamp = SpotLight3D.new()
@@ -221,14 +168,19 @@ func _build_visual_sprite() -> void:
 	headlamp.spot_angle = 38.0
 	headlamp.spot_angle_attenuation = 0.85
 	headlamp.shadow_enabled = true
+	headlamp.light_cull_mask = 0xFFFFFFFF & ~2
 	add_child(headlamp)
+	_on_quality_for_lights(GameManager.graphics_quality)
+	if not GameManager.graphics_quality_changed.is_connected(_on_quality_for_lights):
+		GameManager.graphics_quality_changed.connect(_on_quality_for_lights)
 
-	var headlamp_glow = OmniLight3D.new()
+	headlamp_glow = OmniLight3D.new()
 	headlamp_glow.name = "HeadlampGlow"
 	headlamp_glow.position = Vector3(0, 1.65, 0.2)
 	headlamp_glow.light_color = Color(1.0, 0.82, 0.18)
 	headlamp_glow.light_energy = 0.9
 	headlamp_glow.omni_range = 2.2
+	headlamp_glow.light_cull_mask = 0xFFFFFFFF & ~2
 	add_child(headlamp_glow)
 
 	# Вспышка дула ружья (Muzzle Flash)
@@ -238,8 +190,12 @@ func _build_visual_sprite() -> void:
 	muzzle_flash_light.light_color = Color(1.0, 0.72, 0.28)
 	muzzle_flash_light.light_energy = 0.0
 	muzzle_flash_light.omni_range = 8.0
-	muzzle_flash_light.shadow_enabled = true
+	muzzle_flash_light.shadow_enabled = false
 	add_child(muzzle_flash_light)
+
+func _on_quality_for_lights(quality: String) -> void:
+	if headlamp and is_instance_valid(headlamp):
+		headlamp.shadow_enabled = quality in ["ultra", "high"]
 
 func _setup_navigation() -> void:
 	nav_agent = NavigationAgent3D.new()
@@ -261,85 +217,6 @@ func _setup_audio_players() -> void:
 	gun_audio.unit_size = 8.0
 	add_child(gun_audio)
 
-	voice_audio = AudioStreamPlayer3D.new()
-	voice_audio.name = "VoiceAudio"
-	voice_audio.max_distance = 32.0
-	voice_audio.unit_size = 6.0
-	add_child(voice_audio)
-
-	# 3D тяжёлое дыхание деда (слышно сквозь стены и в коридорах)
-	breath_audio = AudioStreamPlayer3D.new()
-	breath_audio.name = "DedBreathAudio"
-	var b_stream = load("res://assets/ded.mp3")
-	if b_stream:
-		if b_stream is AudioStreamMP3:
-			(b_stream as AudioStreamMP3).loop = true
-		breath_audio.stream = b_stream
-		breath_audio.unit_size = 4.5
-		breath_audio.max_distance = 28.0
-		breath_audio.volume_db = -3.0
-		breath_audio.autoplay = true
-	add_child(breath_audio)
-
-	_load_creepy_sounds()
-
-func _load_creepy_sounds() -> void:
-	creepy_sounds.clear()
-	var sound_paths = [
-		"res://assets/creepy_groan.mp3",
-		"res://assets/creepy_mutter.mp3",
-		"res://assets/creepy_laugh.mp3",
-		"res://assets/creepy_whisper.mp3"
-	]
-	for p in sound_paths:
-		if ResourceLoader.exists(p):
-			var snd = load(p)
-			if snd:
-				creepy_sounds.append(snd)
-
-func play_creepy_voice(specific_type: String = "") -> void:
-	if not voice_audio or creepy_sounds.is_empty():
-		return
-	if voice_audio.playing:
-		return
-
-	var pick_snd: AudioStream = null
-	match specific_type:
-		"laugh":
-			if ResourceLoader.exists("res://assets/creepy_laugh.mp3"):
-				pick_snd = load("res://assets/creepy_laugh.mp3")
-		"mutter":
-			if ResourceLoader.exists("res://assets/creepy_mutter.mp3"):
-				pick_snd = load("res://assets/creepy_mutter.mp3")
-		"groan":
-			if ResourceLoader.exists("res://assets/creepy_groan.mp3"):
-				pick_snd = load("res://assets/creepy_groan.mp3")
-		"whisper":
-			if ResourceLoader.exists("res://assets/creepy_whisper.mp3"):
-				pick_snd = load("res://assets/creepy_whisper.mp3")
-		_:
-			pick_snd = creepy_sounds.pick_random()
-
-	if not pick_snd:
-		pick_snd = creepy_sounds.pick_random()
-
-	# «тем ближе тем громче звуки»: динамическая подстройка громкости в зависимости от расстояния до игрока
-	var p = GameManager.player_ref if GameManager else null
-	if p and is_instance_valid(p):
-		var dist = global_position.distance_to(p.global_position)
-		var prox = clampf(1.0 - dist / 30.0, 0.0, 1.0)
-		voice_audio.volume_db = lerpf(-10.0, 5.0, prox)
-		voice_audio.unit_size = lerpf(4.0, 8.5, prox)
-	else:
-		voice_audio.volume_db = 0.0
-
-	voice_audio.stream = pick_snd
-	voice_audio.pitch_scale = randf_range(0.92, 1.08)
-	voice_audio.play()
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Проверка нахождения (свободное перемещение по всему дому и двору)
-# ══════════════════════════════════════════════════════════════════════════════
 func is_indoor(_pos: Vector3) -> bool:
 	return true
 
@@ -370,24 +247,6 @@ func _physics_process(delta: float) -> void:
 	_check_flashlight_illumination(delta)
 	melee_cooldown = maxf(0.0, melee_cooldown - delta)
 
-	# «тем ближе тем громче»: обновление громкости 3D дыхания деда
-	if breath_audio:
-		var p_ref = GameManager.player_ref if GameManager else null
-		if is_instance_valid(p_ref):
-			var dist = global_position.distance_to(p_ref.global_position)
-			var prox = clampf(1.0 - dist / 26.0, 0.0, 1.0)
-			breath_audio.volume_db = lerpf(-14.0, 3.5, prox)
-			if current_state in [State.CHASE, State.AIMING]:
-				breath_audio.pitch_scale = 1.25
-			else:
-				breath_audio.pitch_scale = 1.0
-
-	# Периодические жуткие звуки деда (смех, бормотание, хрипы, шепот)
-	creepy_timer -= delta
-	if creepy_timer <= 0.0:
-		creepy_timer = randf_range(8.0, 16.0)
-		play_creepy_voice()
-
 	# Проверка укрытия рядом при обычном патрулировании, поиске или погоне
 	if current_state in [State.PATROL, State.INVESTIGATE, State.CHASE] and current_state != State.STAKEOUT_HIDING:
 		var p_node = GameManager.player_ref
@@ -405,7 +264,6 @@ func _physics_process(delta: float) -> void:
 						stakeout_timer = 0.0
 						silence_timer = 0.0
 						current_state = State.STAKEOUT_HIDING
-						_play_sound(sfx_grunt, voice_audio, 0.5, 0.85)
 
 	match current_state:
 		State.PATROL:
@@ -553,7 +411,6 @@ func _on_player_spotted(p_pos: Vector3) -> void:
 		current_state = State.CHASE
 		_set_nav_target(p_pos)
 		_play_sound(sfx_cock, gun_audio, 1.0)
-		play_creepy_voice("laugh")
 
 # ── Логика состояний ──
 func _process_patrol(delta: float) -> void:
@@ -626,7 +483,6 @@ func _process_chase(delta: float) -> void:
 				stakeout_timer = 0.0
 				silence_timer = 0.0
 				current_state = State.STAKEOUT_HIDING
-				_play_sound(sfx_grunt, voice_audio, 0.5, 0.85)
 				return
 
 	if player_in_sight:
@@ -665,7 +521,6 @@ func _process_chase(delta: float) -> void:
 		if chase_memory_timer <= 0.0 or (reached_last and (nav_agent and nav_agent.is_navigation_finished())):
 			current_state = State.INVESTIGATE
 			_pick_search_points_near(last_known_player_pos)
-			_play_sound(sfx_grunt, voice_audio, 1.0)
 
 func _approach_and_inspect_hiding(delta: float) -> void:
 	if not is_instance_valid(witnessed_hiding_spot):
@@ -870,7 +725,6 @@ func _check_close_melee() -> void:
 	var dist = global_position.distance_to(player.global_position)
 	if dist <= 1.4 and melee_cooldown <= 0.0:
 		melee_cooldown = 1.15
-		_play_sound(sfx_grunt, voice_audio, 2.0, randf_range(0.9, 1.1))
 		if player.has_method("take_damage"):
 			player.call("take_damage", 25.0, self)
 		if player is CharacterBody3D:
@@ -883,7 +737,9 @@ func _fire_shotgun() -> void:
 	# 1. Громкий звук выстрела
 	_play_sound(sfx_shot, gun_audio, 4.0)
 
-	# 2. Вспышка пороховых газов
+	# 2. Вспышка пороховых газов и отдача в руках
+	if model:
+		model.kick()
 	if muzzle_flash_light:
 		muzzle_flash_light.light_energy = 6.0
 	get_tree().create_timer(0.08).timeout.connect(func():
@@ -1151,18 +1007,15 @@ func _on_noise_made(noise_pos: Vector3, radius: float = 30.0, _source_type: Stri
 				last_known_player_pos = noise_pos
 				_set_nav_target(noise_pos)
 				_play_sound(sfx_cock, gun_audio, 1.0)
-				play_creepy_voice("laugh")
 				return
 			else:
 				current_state = State.INVESTIGATE
 				_set_nav_target(noise_pos)
-				play_creepy_voice("mutter")
 				return
 
 		if current_state in [State.PATROL, State.INVESTIGATE]:
 			current_state = State.INVESTIGATE
 			_set_nav_target(noise_pos)
-			play_creepy_voice()
 
 func alert_player_cough(cough_pos: Vector3) -> void:
 	if GameManager and GameManager.game_ended:
@@ -1176,7 +1029,6 @@ func alert_player_cough(cough_pos: Vector3) -> void:
 		stakeout_timer = 99.0
 		return
 	_play_sound(sfx_cock, gun_audio, 1.0)
-	play_creepy_voice("laugh")
 	if dist < 20.0:
 		current_state = State.CHASE
 		last_known_player_pos = cough_pos
@@ -1195,92 +1047,40 @@ func _on_door_altered(door: Node3D, is_open_now: bool) -> void:
 		if current_state in [State.PATROL, State.INVESTIGATE]:
 			current_state = State.INVESTIGATE
 			_set_nav_target(door.global_position)
-			_play_sound(sfx_grunt, voice_audio, 0.5)
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  4-ракурсная анимация спрайта (front, back, left, right)
-# ══════════════════════════════════════════════════════════════════════════════
-func _update_directional_sprite() -> void:
-	if not lumberjack_sprite:
-		return
-
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.001:
-		forward = Vector3(0, 0, -1)
-	else:
-		forward = forward.normalized()
-
-	var to_cam: Vector3 = Vector3.ZERO
-	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
-	if cam:
-		to_cam = cam.global_position - global_position
-		to_cam.y = 0.0
-	elif GameManager.player_ref and is_instance_valid(GameManager.player_ref):
-		to_cam = GameManager.player_ref.global_position - global_position
-		to_cam.y = 0.0
-
-	if to_cam.length_squared() < 0.001:
-		return
-	to_cam = to_cam.normalized()
-
-	var dot = forward.dot(to_cam)
-	var cross_y = forward.cross(to_cam).y
-
-	var front_thresh = 0.60 if _current_view == "front" else 0.70
-	var back_thresh  = -0.60 if _current_view == "back" else -0.70
-
-	if dot >= front_thresh:
-		_current_view = "front"
-	elif dot <= back_thresh:
-		_current_view = "back"
-	elif cross_y > 0.0:
-		_current_view = "left"
-	else:
-		_current_view = "right"
-
-func _apply_active_texture(is_moving: bool, step_frame: int) -> void:
-	if not lumberjack_sprite:
-		return
-
-	match _current_view:
-		"front":
-			if is_moving:
-				var t = tex_front_walk_0 if step_frame == 0 else tex_front_walk_1
-				lumberjack_sprite.texture = t if t else tex_front
-			else:
-				lumberjack_sprite.texture = tex_front
-		"back":
-			if is_moving:
-				var t = tex_back_walk_0 if step_frame == 0 else tex_back_walk_1
-				lumberjack_sprite.texture = t if t else tex_back
-			else:
-				lumberjack_sprite.texture = tex_back
-		"left":
-			if is_moving:
-				var t = tex_left_walk_0 if step_frame == 0 else tex_left_walk_1
-				lumberjack_sprite.texture = t if t else tex_left
-			else:
-				lumberjack_sprite.texture = tex_left
-		"right":
-			if is_moving:
-				var t = tex_right_walk_0 if step_frame == 0 else tex_right_walk_1
-				lumberjack_sprite.texture = t if t else tex_right
-			else:
-				lumberjack_sprite.texture = tex_right
 
 func _animate(delta: float) -> void:
-	if not lumberjack_sprite:
+	if not model:
 		return
-
-	_update_directional_sprite()
 
 	var move_vel = Vector2(velocity.x, velocity.z).length()
 	var is_moving = move_vel > 0.25
 
+	var mode := "idle"
+	match current_state:
+		State.AIMING, State.SHOOT, State.STAKEOUT_HIDING:
+			mode = "aim"
+		State.RELOAD:
+			mode = "reload"
+		_:
+			if is_moving:
+				mode = "run" if (current_state == State.CHASE and move_vel > 2.6) else "walk"
+	# Далёкий лесоруб анимируется реже
+	var cam_far := get_viewport().get_camera_3d() if is_inside_tree() else null
+	var dist_sq: float = global_position.distance_squared_to(cam_far.global_position) if cam_far else 0.0
+	_anim_accum += delta
+	if dist_sq > 1225.0 and _anim_accum < 0.066:
+		return
+	model.update_motion(_anim_accum, mode, move_vel if is_moving else 0.0)
+	_anim_accum = 0.0
+	# Вблизи лесоруб поворачивает голову к камере
+	var cam = get_viewport().get_camera_3d() if is_inside_tree() else null
+	if cam:
+		var near_cam: bool = global_position.distance_squared_to(cam.global_position) < 144.0
+		model.set_look_target(cam.global_position if near_cam else null)
+
+	# Звук шага на каждый полуоборот цикла походки
 	if is_moving:
-		walk_cycle_t += delta * (move_vel * 3.8)
-		var step_frame = int(walk_cycle_t) % 2
+		var step_frame := int(model.phase / PI)
 		if step_frame != last_step_phase:
 			last_step_phase = step_frame
 			if not lumberjack_step_streams.is_empty():
@@ -1290,18 +1090,14 @@ func _animate(delta: float) -> void:
 			else:
 				_play_sound(sfx_step, step_audio, -15.0, randf_range(0.88, 1.12))
 
-		_apply_active_texture(true, step_frame)
-
-		var step_bob = abs(sin(walk_cycle_t * PI)) * 0.035
-		lumberjack_sprite.position.y = BASE_SPRITE_Y - step_bob
-
-		var step_sway = sin(walk_cycle_t * PI) * 0.025
-		lumberjack_sprite.rotation.z = step_sway
-	else:
-		walk_cycle_t = 0.0
-		_apply_active_texture(false, 0)
-		lumberjack_sprite.position.y = lerp(lumberjack_sprite.position.y, BASE_SPRITE_Y, delta * 6.0)
-		lumberjack_sprite.rotation.z = lerp(lumberjack_sprite.rotation.z, 0.0, delta * 6.0)
+	# Налобный фонарик и вспышка дула следуют за головой и стволом
+	var head_pos := to_local(model.get_head_position())
+	if headlamp and is_instance_valid(headlamp):
+		headlamp.position = head_pos
+	if headlamp_glow and is_instance_valid(headlamp_glow):
+		headlamp_glow.position = head_pos
+	if muzzle_flash_light and is_instance_valid(muzzle_flash_light):
+		muzzle_flash_light.position = to_local(model.get_muzzle_position())
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  Генерация процедурных звуковых эффектов
@@ -1319,7 +1115,6 @@ func _generate_sound_effects() -> void:
 	if ResourceLoader.exists("res://assets/audio/step_2.mp3"):
 		lumberjack_step_streams.append(load("res://assets/audio/step_2.mp3"))
 	sfx_step = _create_procedural_step()
-	sfx_grunt = _create_procedural_grunt()
 	sfx_impact = _create_procedural_bullet_impact()
 
 func _create_procedural_gunshot() -> AudioStreamWAV:
@@ -1417,26 +1212,6 @@ func reset_ai() -> void:
 		GameManager.ui_ref.call("show_flashlight_warning", false, 0.0)
 	_pick_new_patrol_target()
 
-func _create_procedural_grunt() -> AudioStreamWAV:
-	var sample_count = int(44100 * 0.42)
-	var pcm = PackedByteArray()
-	pcm.resize(sample_count * 2)
-	for i in range(sample_count):
-		var t = float(i) / 44100.0
-		var env = sin(clampf(t / 0.42, 0.0, 1.0) * PI)
-		var f = 115.0 - t * 25.0
-		var vocal = sin(t * f * TAU) * 0.5 + sin(t * f * 2.0 * TAU) * 0.3 + (randf() * 2.0 - 1.0) * 0.15
-		var val = clamp(vocal * env * 0.65, -1.0, 1.0)
-		pcm.encode_s16(i * 2, int(val * 32767.0))
-	var wav = AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = 44100
-	wav.data = pcm
-	return wav
-
-# ──────────────────────────────────────────────
-#  Реакция на свет фонарика игрока (справедливый баланс)
-# ──────────────────────────────────────────────
 func _check_flashlight_illumination(delta: float) -> void:
 	if current_state in [State.AIMING, State.SHOOT, State.RELOAD]:
 		_decay_flashlight_suspicion(delta)
@@ -1500,7 +1275,6 @@ func _check_flashlight_illumination(delta: float) -> void:
 	# Звук ворчания при первом попадании света
 	if flashlight_suspicion_timer < 0.2 and not has_warned_light:
 		has_warned_light = true
-		_play_sound(sfx_grunt, voice_audio, 1.0, randf_range(0.9, 1.05))
 
 	# Оповещаем UI с таймером
 	if GameManager.ui_ref and GameManager.ui_ref.has_method("show_flashlight_warning"):

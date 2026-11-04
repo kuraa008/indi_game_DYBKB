@@ -77,7 +77,20 @@ var playtest_initial_lumberjack_spawn: Vector3 = Vector3(-2, 0.5, 1)
 var world_env: Environment = null
 var sun_light: DirectionalLight3D = null
 var cam_light: OmniLight3D = null
-var is_fullbright: bool = false
+var is_fullbright: bool = true
+var _edit_fullbright: bool = true
+var _map_dirty: bool = false
+var _autosave_timer: float = 0.0
+var _status_timer: float = 0.0
+var _status_lbl: Label = null
+var _map_title_lbl: Label = null
+var _clipboard: Dictionary = {}
+var _grab_is_new_copy: bool = false
+var _undo_group_tag: String = ""
+var _undo_group_node: Node = null
+var _undo_group_time: int = 0
+const AUTOSAVE_PATH := "user://autosave_map.json"
+const AUTOSAVE_INTERVAL: float = 120.0
 var btn_fullbright: Button = null
 var moon_clouds: Array[Node3D] = []
 var sky_elements_node: Node3D = null
@@ -1155,6 +1168,8 @@ var PREFABS = {
 #  Инициализация
 # ══════════════════════════════════════════════════════════════════════════════
 func _ready() -> void:
+	# Инструмент разработчика: обычные кнопки Godot вместо оформления игры
+	get_window().theme = ThemeDB.get_default_theme()
 	name = "DebugEditor"
 	_scan_custom_models()
 	_scan_user_prefabs()
@@ -1457,6 +1472,15 @@ func _apply_lighting_mode() -> void:
 	world_env.fog_density = 0.002
 	world_env.fog_light_color = Color(0.035, 0.05, 0.09)
 
+	# В редакторе дорогие эффекты только мешают, а в тесте зависят от качества графики
+	var q: String = GameManager.graphics_quality
+	var editing: bool = current_mode == EditorMode.EDIT
+	world_env.ssao_enabled = not editing and q in ["ultra", "high", "medium"]
+	world_env.ssil_enabled = not editing and q == "ultra"
+	world_env.ssr_enabled = not editing and q == "ultra"
+	world_env.volumetric_fog_enabled = not editing and q == "ultra"
+	world_env.glow_enabled = not editing and q != "low"
+
 	if current_mode == EditorMode.EDIT:
 		# ─── РЕЖИМ РЕДАКТОРА ───
 		if is_fullbright:
@@ -1512,18 +1536,18 @@ func toggle_fullbright() -> void:
 	is_fullbright = not is_fullbright
 	_apply_lighting_mode()
 	if is_fullbright:
-		show_notification("💡 ОСВЕЩЕНИЕ: ЯРКИЙ РЕЖИМ (Всё видно!) [Ё]")
+		show_notification("💡 ОСВЕЩЕНИЕ: ЯРКИЙ РЕЖИМ (Всё видно!) [F4]")
 	else:
-		show_notification("🌑 ОСВЕЩЕНИЕ: " + ("СТУДИЯ (Редактор) [Ё]" if current_mode == EditorMode.EDIT else "ХОРРОР (Тьма) [Ё]"))
+		show_notification("🌑 ОСВЕЩЕНИЕ: " + ("СТУДИЯ (Редактор) [F4]" if current_mode == EditorMode.EDIT else "ХОРРОР (Тьма) [F4]"))
 
 func _update_fullbright_button_ui() -> void:
 	if not btn_fullbright:
 		return
 	if is_fullbright:
-		btn_fullbright.text = "💡 Свет ВКЛ [Ё]"
+		btn_fullbright.text = "💡 Свет ВКЛ [F4]"
 		btn_fullbright.modulate = Color(1.0, 1.0, 0.3)
 	else:
-		btn_fullbright.text = "🌑 Свет [Ё]"
+		btn_fullbright.text = "🌑 Свет [F4]"
 		btn_fullbright.modulate = Color(1.0, 1.0, 1.0)
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1712,6 +1736,8 @@ func _process(delta: float) -> void:
 		preview_pivot.rotate_y(delta * 0.9)
 
 	if current_mode == EditorMode.EDIT:
+		_process_autosave(delta)
+		_process_status_bar(delta)
 		_process_flycam(delta)
 		_process_ghost_preview()
 		_process_object_dragging()
@@ -1825,6 +1851,10 @@ func _process_object_dragging() -> void:
 	if not (is_grabbing_selected or is_mouse_dragging):
 		return
 
+	if is_mouse_dragging and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		is_mouse_dragging = false
+		return
+
 	if selected_node.get_meta("is_locked", false):
 		is_grabbing_selected = false
 		is_mouse_dragging = false
@@ -1935,7 +1965,21 @@ func _capture_scene_state() -> Array:
 			state_data.append(_serialize_single_object(child))
 	return state_data
 
+# Колесо, стрелки и поля ввода шлют десятки шагов подряд: это один шаг отмены
+func _record_undo_grouped(tag: String) -> void:
+	var now := Time.get_ticks_msec()
+	_set_map_dirty(true)
+	if tag == _undo_group_tag and selected_node == _undo_group_node and now - _undo_group_time < 600:
+		_undo_group_time = now
+		return
+	_record_undo()
+	_undo_group_tag = tag
+	_undo_group_node = selected_node
+	_undo_group_time = now
+
 func _record_undo() -> void:
+	_undo_group_tag = ""
+	_set_map_dirty(true)
 	var current_snap = _capture_scene_state()
 	undo_stack.append(current_snap)
 	if undo_stack.size() > MAX_UNDO_STEPS:
@@ -1951,6 +1995,8 @@ func _undo() -> void:
 	redo_stack.append(current_snap)
 	var prev_state = undo_stack.pop_back()
 	_restore_scene_state(prev_state)
+	_undo_group_tag = ""
+	_set_map_dirty(true)
 	_update_undo_redo_buttons()
 	show_notification("↩ Отмена действия [Ctrl+Z]")
 
@@ -1962,6 +2008,8 @@ func _redo() -> void:
 	undo_stack.append(current_snap)
 	var next_state = redo_stack.pop_back()
 	_restore_scene_state(next_state)
+	_undo_group_tag = ""
+	_set_map_dirty(true)
 	_update_undo_redo_buttons()
 	show_notification("↪ Повтор действия [Ctrl+Y]")
 
@@ -1991,13 +2039,22 @@ func _update_undo_redo_buttons() -> void:
 # ══════════════════════════════════════════════════════════════════════════════
 #  Обработка ввода (Хоткеи 1, 2, 3, 7, Tab, Undo/Redo и др.)
 # ══════════════════════════════════════════════════════════════════════════════
+func _notification(what: int) -> void:
+	# Окно потеряло фокус: иначе камера и перетаскивание залипают до следующего клика
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and current_mode == EditorMode.EDIT:
+		if is_rmb_down:
+			is_rmb_down = false
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		is_mouse_dragging = false
+		pending_mouse_drag = false
+
 func _unhandled_input(event: InputEvent) -> void:
-	if active_modal:
+	if active_modal and is_instance_valid(active_modal):
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 			_close_active_modal()
 			get_viewport().set_input_as_handled()
-			return
-
+		# Пока открыто окно, горячие клавиши не должны менять карту за ним
+		return
 	# [7] — Переключение между Редактором и Игрой (Полигон)
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_7:
 		toggle_editor_playtest()
@@ -2044,6 +2101,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	# [Ctrl+Y] или [Ctrl+Shift+Z] — Redo (Повтор)
 	if event is InputEventKey and event.pressed and not event.echo and event.ctrl_pressed and (event.keycode == KEY_Y or (event.shift_pressed and event.keycode == KEY_Z)):
 		_redo()
+		get_viewport().set_input_as_handled()
+		return
+
+	# [Ctrl+C] / [Ctrl+V] — Копировать и вставить объект
+	if event is InputEventKey and event.pressed and not event.echo and event.ctrl_pressed and event.keycode == KEY_C:
+		_copy_selected()
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.ctrl_pressed and event.keycode == KEY_V:
+		_paste_clipboard()
+		get_viewport().set_input_as_handled()
+		return
+
+	# [V] — Вид сверху на выбранный объект или текущую точку
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V and not event.ctrl_pressed:
+		_toggle_top_view()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -2195,25 +2268,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
-	# [Ctrl+D] — Дублировать объект
-	if event is InputEventKey and event.pressed and not event.echo and event.ctrl_pressed and event.keycode == KEY_D:
-		if selected_node and not is_grabbing_selected:
-			_duplicate_selected()
-			get_viewport().set_input_as_handled()
-			return
-
-	# [Delete / Backspace] — Удалить
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_DELETE, KEY_BACKSPACE]:
-		_action_hotkey_2()
-		get_viewport().set_input_as_handled()
-		return
-
 	# [Escape] — Отмена установки или захвата
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		if is_grabbing_selected:
-			selected_node.global_transform = grab_orig_transform
-			is_grabbing_selected = false
-			show_notification("Перемещение отменено")
+			_cancel_grab()
 			get_viewport().set_input_as_handled()
 			return
 		if ghost_node:
@@ -2225,9 +2283,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			if is_grabbing_selected:
-				selected_node.global_transform = grab_orig_transform
-				is_grabbing_selected = false
-				show_notification("Перемещение отменено")
+				_cancel_grab()
 				get_viewport().set_input_as_handled()
 				return
 			if ghost_node:
@@ -2243,12 +2299,20 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+		# Колесо с зажатой ПКМ меняет скорость камеры
+		if event.pressed and is_rmb_down and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			cam_speed = clampf(cam_speed * (1.2 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.2), 2.0, 90.0)
+			show_notification("Скорость камеры: %.0f м/с" % cam_speed)
+			get_viewport().set_input_as_handled()
+			return
+
 		# Колесико мыши: Вращение объекта на 360°
 		# Обычное: Поворот Y (Yaw) | Alt: Наклон X (Pitch) | Ctrl: Крен Z (Roll) | Shift: шаг 5° вместо 15°
 		if event.pressed and not is_rmb_down:
 			var wheel_step: float = 5.0 if event.shift_pressed else 15.0
 			var rot_axis: Vector3 = Vector3(0, 1, 0)
-			if (is_grabbing_selected or is_mouse_dragging) and selected_node and is_instance_valid(selected_node):
+			var is_wheel: bool = event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]
+			if is_wheel and (is_grabbing_selected or is_mouse_dragging) and selected_node and is_instance_valid(selected_node):
 				var dy = (0.10 if not event.shift_pressed else 0.02) * (1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0)
 				selected_node.position.y = snappedf(selected_node.position.y + dy, 0.01)
 				drag_elevation = selected_node.position.y
@@ -2410,6 +2474,7 @@ func _action_hotkey_3() -> void:
 			show_notification("🔒 Объект зафиксирован! Снимите фиксацию в Инспекторе.")
 			return
 		is_grabbing_selected = not is_grabbing_selected
+		_grab_is_new_copy = false
 		if is_grabbing_selected:
 			_record_undo()
 			grab_orig_transform = selected_node.global_transform
@@ -2697,6 +2762,7 @@ func _select_object(node: Node3D) -> void:
 func _deselect_object() -> void:
 	selected_node = null
 	is_grabbing_selected = false
+	_grab_is_new_copy = false
 	is_mouse_dragging = false
 	if inspector_panel:
 		inspector_panel.visible = false
@@ -2712,7 +2778,7 @@ func _rotate_selected(rot_delta: Vector3) -> void:
 	if selected_node.get_meta("is_locked", false):
 		show_notification("🔒 Объект зафиксирован! Вращение заблокировано.")
 		return
-	_record_undo()
+	_record_undo_grouped("rotate")
 	var cur_rot = selected_node.rotation_degrees
 	var new_rot = cur_rot + rot_delta
 	new_rot.x = fposmod(new_rot.x, 360.0)
@@ -2758,7 +2824,7 @@ func _change_selected_height(delta_y: float) -> void:
 	if selected_node.get_meta("is_locked", false):
 		show_notification("🔒 Объект зафиксирован! Высота заблокирована.")
 		return
-	_record_undo()
+	_record_undo_grouped("height")
 	selected_node.position.y = clampf(selected_node.position.y + delta_y, -500.0, 500.0)
 	_update_inspector()
 	_update_selection_box()
@@ -2781,31 +2847,79 @@ func _focus_camera_on_selected() -> void:
 func _duplicate_selected() -> void:
 	if not selected_node:
 		return
+	_spawn_copy(_serialize_single_object(selected_node), Vector3(1.0, 0.0, 1.0))
+	show_notification("Объект скопирован [1 или ЛКМ - поставить, Esc - отмена]")
 
+func _copy_selected() -> void:
+	if not selected_node or not is_instance_valid(selected_node):
+		show_notification("Сначала выберите объект для копирования")
+		return
+	_clipboard = _serialize_single_object(selected_node)
+	show_notification("📋 Скопировано: " + str(_clipboard.get("name", "Объект")))
+
+func _paste_clipboard() -> void:
+	if _clipboard.is_empty():
+		show_notification("Буфер пуст: выберите объект и нажмите [Ctrl+C]")
+		return
+	cancel_placement()
+	_spawn_copy(_clipboard.duplicate(true), Vector3.ZERO)
+	show_notification("📋 Вставлено: поставьте [1 или ЛКМ], Esc - отмена")
+
+# Создаёт копию и сразу берёт её в руки. Отмена захвата удаляет такую копию
+func _spawn_copy(data: Dictionary, offset: Vector3) -> void:
 	_record_undo()
-	var original_data = _serialize_single_object(selected_node)
 	next_obj_id += 1
-	original_data["id"] = next_obj_id
-	original_data["name"] = str(original_data.get("name", "Объект")) + " (Копия)"
-	original_data["is_locked"] = false
-	var pos: Array = original_data.get("position", [0, 0, 0])
-	pos[0] += 1.0
-	pos[2] += 1.0
-	original_data["position"] = pos
-
-	var new_node = _instantiate_object_from_data(original_data)
+	data["id"] = next_obj_id
+	var base_name := str(data.get("name", "Объект"))
+	if not base_name.ends_with("(Копия)"):
+		data["name"] = base_name + " (Копия)"
+	data["is_locked"] = false
+	var pos: Array = data.get("position", [0, 0, 0])
+	pos[0] += offset.x
+	pos[1] += offset.y
+	pos[2] += offset.z
+	data["position"] = pos
+	var new_node = _instantiate_object_from_data(data)
 	if new_node:
 		_select_object(new_node)
 		is_grabbing_selected = true
+		_grab_is_new_copy = true
 		grab_orig_transform = new_node.global_transform
 		drag_elevation = new_node.position.y
 		var hit = _project_mouse_to_plane(get_viewport().get_mouse_position(), drag_elevation)
-		if hit != null:
-			drag_ground_offset = new_node.position - hit
-		else:
-			drag_ground_offset = Vector3.ZERO
+		drag_ground_offset = (new_node.position - hit) if hit != null else Vector3.ZERO
 		drag_last_valid_pos = new_node.position
-		show_notification("Объект скопирован [1 или ЛКМ - поставить]")
+
+func _cancel_grab() -> void:
+	is_grabbing_selected = false
+	if not undo_stack.is_empty():
+		undo_stack.pop_back()
+		_update_undo_redo_buttons()
+	if _grab_is_new_copy:
+		_grab_is_new_copy = false
+		if selected_node and is_instance_valid(selected_node):
+			var copy := selected_node
+			_deselect_object()
+			objects_root.remove_child(copy)
+			copy.queue_free()
+		show_notification("Копирование отменено")
+		return
+	if selected_node and is_instance_valid(selected_node):
+		selected_node.global_transform = grab_orig_transform
+		_update_inspector()
+	show_notification("Перемещение отменено")
+
+func _toggle_top_view() -> void:
+	if not editor_cam:
+		return
+	if cam_pitch < -85.0:
+		cam_pitch = -35.0
+	else:
+		if selected_node and is_instance_valid(selected_node):
+			editor_cam.global_position = selected_node.global_position + Vector3.UP * 18.0
+		cam_pitch = -89.0
+	_update_cam_rotation()
+	show_notification("Вид сверху [V]" if cam_pitch < -85.0 else "Обычный вид [V]")
 
 func _delete_selected() -> void:
 	if not selected_node:
@@ -3675,7 +3789,7 @@ func _set_selected_size(target_sz: Vector3) -> void:
 	if selected_node.get_meta("is_locked", false):
 		show_notification("🔒 Объект зафиксирован! Изменение размера заблокировано.")
 		return
-	_record_undo()
+	_record_undo_grouped("size")
 	var new_sz = target_sz
 	new_sz.x = max(0.05, new_sz.x)
 	new_sz.y = max(0.05, new_sz.y)
@@ -3752,7 +3866,7 @@ func _nudge_selected_pos(offset: Vector3) -> void:
 	if selected_node.get_meta("is_locked", false):
 		show_notification("🔒 Объект зафиксирован! Смещение заблокировано.")
 		return
-	_record_undo()
+	_record_undo_grouped("nudge")
 	selected_node.position += offset
 	_update_inspector()
 	_update_selection_box()
@@ -4079,10 +4193,51 @@ func _normalize_loaded_object(data: Dictionary, is_legacy_prototype: bool = fals
 	return data
 
 func quick_save_map() -> void:
-	if active_map_file_path != "":
+	if active_map_file_path != "" and _is_path_writable(active_map_file_path):
 		save_map_to_json(active_map_file_path)
 	else:
 		_open_save_modal()
+
+func _is_path_writable(path: String) -> bool:
+	return OS.has_feature("editor") or not path.begins_with("res://")
+
+func _set_map_dirty(dirty: bool) -> void:
+	_map_dirty = dirty
+	if not dirty:
+		_undo_group_tag = ""
+	_update_map_title()
+
+func _update_map_title() -> void:
+	if _map_title_lbl:
+		var map_name := active_map_file_path.get_file().get_basename() if active_map_file_path != "" else "без имени"
+		_map_title_lbl.text = " 🛠 MapForge · %s%s " % [map_name, " *" if _map_dirty else ""]
+
+func _process_autosave(delta: float) -> void:
+	_autosave_timer += delta
+	if _autosave_timer < AUTOSAVE_INTERVAL:
+		return
+	_autosave_timer = 0.0
+	if _map_dirty and _write_map_file(AUTOSAVE_PATH):
+		show_notification("⏱ Автосохранение", 1.5)
+
+func _restore_autosave() -> void:
+	if not FileAccess.file_exists(AUTOSAVE_PATH):
+		show_notification("Автосохранения пока нет")
+		return
+	_record_undo()
+	var keep_path := active_map_file_path
+	if load_map_from_json(AUTOSAVE_PATH):
+		active_map_file_path = keep_path
+		_set_map_dirty(true)
+		show_notification("⏱ Автосохранение восстановлено. Сохраните карту [Ctrl+S]")
+
+func _process_status_bar(delta: float) -> void:
+	_status_timer -= delta
+	if _status_timer > 0.0 or not _status_lbl or not editor_cam:
+		return
+	_status_timer = 0.25
+	var p := editor_cam.global_position
+	_status_lbl.text = "Объектов: %d  |  Камера: %.0f, %.0f, %.0f  |  Скорость: %.0f м/с  |  FPS: %d" % [objects_root.get_child_count(), p.x, p.y, p.z, cam_speed, Engine.get_frames_per_second()]
 
 func save_map_to_json(path: String) -> bool:
 	if path == "":
@@ -4095,6 +4250,21 @@ func save_map_to_json(path: String) -> bool:
 		if not DirAccess.dir_exists_absolute(glob_dir):
 			DirAccess.make_dir_recursive_absolute(glob_dir)
 
+	if not _write_map_file(path):
+		var err = FileAccess.get_open_error()
+		show_notification("❌ Ошибка сохранения (код %d): %s" % [err, path])
+		return false
+
+	active_map_file_path = path
+	var gm_save = _get_gm()
+	if gm_save:
+		gm_save.set("active_map_path", path)
+	_set_map_dirty(false)
+	show_notification("💾 Карта сохранена: " + path.get_file())
+	return true
+
+# Запись идёт во временный файл и затем заменяет старый: сбой не портит карту
+func _write_map_file(path: String) -> bool:
 	var objects_array: Array = []
 	for child in objects_root.get_children():
 		if child is Node3D and is_instance_valid(child) and not child.is_queued_for_deletion():
@@ -4114,25 +4284,14 @@ func save_map_to_json(path: String) -> bool:
 		"objects": objects_array
 	}
 
-	var json_text = JSON.stringify(map_data, "  ")
-	var file = FileAccess.open(path, FileAccess.WRITE)
+	var tmp_path := path + ".tmp"
+	var file = FileAccess.open(tmp_path, FileAccess.WRITE)
 	if not file:
-		var global_p = ProjectSettings.globalize_path(path)
-		file = FileAccess.open(global_p, FileAccess.WRITE)
-
-	if not file:
-		var err = FileAccess.get_open_error()
-		show_notification("❌ Ошибка сохранения (код %d): %s" % [err, path])
 		return false
-
-	file.store_string(json_text)
+	file.store_string(JSON.stringify(map_data, "  "))
 	file.close()
-
-	active_map_file_path = path
-	var gm_save = _get_gm()
-	if gm_save:
-		gm_save.set("active_map_path", path)
-	show_notification("💾 Карта сохранена: " + path.get_file())
+	if DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp_path), ProjectSettings.globalize_path(path)) != OK:
+		return false
 	return true
 
 func load_map_from_json(path: String) -> bool:
@@ -4175,6 +4334,7 @@ func load_map_from_json(path: String) -> bool:
 
 	next_obj_id = max(max_id + 1, 100)
 	active_map_file_path = path
+	_set_map_dirty(false)
 	var gm_load = _get_gm()
 	if gm_load:
 		gm_load.set("active_map_path", path)
@@ -4254,6 +4414,10 @@ func _open_help_modal() -> void:
 
 	var shortcuts = [
 		["ЛКМ", "Выбрать объект / Подтвердить установку"],
+		["Ctrl+C / Ctrl+V", "Копировать и вставить объект"],
+		["V", "Вид сверху"],
+		["ПКМ + колесо", "Скорость камеры"],
+		["Esc при захвате", "Отменить перемещение или копию"],
 		["ПКМ (зажать)", "Свободный круговой осмотр камеры"],
 		["W, A, S, D", "Полёт камеры в пространстве"],
 		["1", "Ставить объект / Зафиксировать точку"],
@@ -4842,7 +5006,9 @@ func start_playtest() -> void:
 				child.visible = false
 				child.process_mode = Node.PROCESS_MODE_DISABLED
 
-	# Применяем освещение для полигона (хоррор или fullbright)
+	# Яркий свет редактора не должен попадать в тест: там настоящая темнота
+	_edit_fullbright = is_fullbright
+	is_fullbright = false
 	_apply_lighting_mode()
 
 	var gm = _get_gm()
@@ -5261,6 +5427,7 @@ func stop_playtest() -> void:
 				child.process_mode = Node.PROCESS_MODE_INHERIT
 
 	# Восстанавливаем комфортный студийный свет редактора
+	is_fullbright = _edit_fullbright
 	_apply_lighting_mode()
 
 	# Возвращаем камеру редактора в исходное положение
@@ -5353,6 +5520,7 @@ func _build_editor_ui() -> void:
 	_build_bottom_drawer()
 	_build_inspector()
 	_build_hotkeys_hint()
+	_build_status_bar()
 	_build_notification()
 
 func _build_top_bar() -> void:
@@ -5385,11 +5553,11 @@ func _build_top_bar() -> void:
 	top_scroll.add_child(hb)
 
 	# Logo
-	var title = Label.new()
-	title.text = " 🛠 MapForge "
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(0.3, 0.85, 1.0))
-	hb.add_child(title)
+	_map_title_lbl = Label.new()
+	_map_title_lbl.add_theme_font_size_override("font_size", 12)
+	_map_title_lbl.add_theme_color_override("font_color", Color(0.3, 0.85, 1.0))
+	hb.add_child(_map_title_lbl)
+	_update_map_title()
 
 	# Undo / Redo
 	btn_undo = _create_top_btn("↩", "Отменить [Ctrl+Z]", _undo)
@@ -5411,6 +5579,7 @@ func _build_top_bar() -> void:
 
 	# Сетка
 	btn_grid_mode = Button.new()
+	btn_grid_mode.add_theme_font_size_override("font_size", 11)
 	btn_grid_mode.pressed.connect(_toggle_grid_mode)
 	_update_grid_button_ui()
 	hb.add_child(btn_grid_mode)
@@ -5435,43 +5604,26 @@ func _build_top_bar() -> void:
 	var btn_save_quick = _create_top_btn("💾 Сохранить", "Быстро сохранить карту [Ctrl+S]", quick_save_map)
 	hb.add_child(btn_save_quick)
 
-	var btn_save_as = _create_top_btn("💾 Как...", "Сохранить как новую карту [Ctrl+Shift+S]", _open_save_modal)
-	hb.add_child(btn_save_as)
-
-	var btn_home = _create_top_btn("🏠 Исходное", "Вернуть камеру в исходное положение [Home]", reset_editor_camera_to_initial)
-	hb.add_child(btn_home)
+	hb.add_child(_build_file_menu())
 
 	var btn_play_campaign = _create_top_btn("🚀 В игру", "Запустить прохождение на этой карте", func():
-		save_map_to_json(active_map_file_path)
+		var play_path := active_map_file_path if _is_path_writable(active_map_file_path) and active_map_file_path != "" else "user://custom_map.json"
+		if not save_map_to_json(play_path):
+			return
 		var gm = _get_gm()
 		if gm:
-			gm.active_map_path = active_map_file_path
+			gm.active_map_path = play_path
 		get_tree().change_scene_to_file("res://scenes/Main.tscn")
 	)
 	hb.add_child(btn_play_campaign)
 
-	var btn_load_custom = _create_top_btn("📂 Загрузить", "Выбрать и загрузить сохраненную карту", _open_load_modal)
-	hb.add_child(btn_load_custom)
-
-	var btn_load_orig = _create_top_btn("🏛 Прототип", "Загрузить оригинальную карту прототипа", func():
-		_record_undo()
-		load_map_from_json("res://assets/prototype map.json")
-	)
-	hb.add_child(btn_load_orig)
-
-	var btn_clean = _create_top_btn("✨ Чистить", "Очистить и создать тестовый полигон", func():
-		_record_undo()
-		create_clean_polygon()
-	)
-	hb.add_child(btn_clean)
-
-	var btn_help = _create_top_btn("❓ Справка [H]", "Показать список всех горячих клавиш и подсказок [H / F1]", _toggle_help_modal)
+	var btn_help = _create_top_btn("❓ [H]", "Показать список всех горячих клавиш и подсказок [H / F1]", _toggle_help_modal)
 	btn_help.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	hb.add_child(btn_help)
 
 	hb.add_child(_create_vsep())
 
-	# Свет [Ё] (Fullbright)
+	# Свет [F4] (Fullbright)
 	btn_fullbright = Button.new()
 	btn_fullbright.custom_minimum_size = Vector2(0, 26)
 	btn_fullbright.add_theme_font_size_override("font_size", 11)
@@ -5486,10 +5638,6 @@ func _build_top_bar() -> void:
 	btn_fullbright.pressed.connect(toggle_fullbright)
 	_update_fullbright_button_ui()
 	hb.add_child(btn_fullbright)
-
-	# Импорт 3D
-	var btn_import_3d = _create_top_btn("📥 3D", "Импортировать 3D-модель (.glb, .gltf, .obj, .tscn)", _open_import_model_dialog)
-	hb.add_child(btn_import_3d)
 
 	# Фиксированная правая панель: ТЕСТ и Выход всегда на экране
 	var right_hb = HBoxContainer.new()
@@ -5513,8 +5661,45 @@ func _build_top_bar() -> void:
 	right_hb.add_child(btn_play)
 
 	# Выход
-	var btn_menu = _create_top_btn("✖ В Меню", "Выйти в главное меню", func(): get_tree().change_scene_to_file("res://scenes/Menu.tscn"))
+	var btn_menu = _create_top_btn("✖ В Меню", "Выйти в главное меню", func():
+		# Несохранённые правки не теряются: их можно вернуть через Файл → Автосохранение
+		if _map_dirty:
+			_write_map_file(AUTOSAVE_PATH)
+		get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+	)
 	right_hb.add_child(btn_menu)
+
+func _build_file_menu() -> MenuButton:
+	var mb := MenuButton.new()
+	mb.text = "📁 Файл"
+	mb.add_theme_font_size_override("font_size", 11)
+	mb.flat = false
+	var pm := mb.get_popup()
+	pm.add_theme_font_size_override("font_size", 12)
+	pm.add_item("💾 Сохранить как... [Ctrl+Shift+S]", 0)
+	pm.add_item("📂 Загрузить карту", 1)
+	pm.add_item("⏱ Восстановить автосохранение", 2)
+	pm.add_separator()
+	pm.add_item("🏛 Карта-прототип", 3)
+	pm.add_item("✨ Очистить: тестовый полигон", 4)
+	pm.add_separator()
+	pm.add_item("📥 Импорт 3D-модели", 5)
+	pm.add_item("🏠 Камера в исходное [Home]", 6)
+	pm.id_pressed.connect(func(id: int):
+		match id:
+			0: _open_save_modal()
+			1: _open_load_modal()
+			2: _restore_autosave()
+			3:
+				_record_undo()
+				load_map_from_json("res://assets/prototype map.json")
+			4:
+				_record_undo()
+				create_clean_polygon()
+			5: _open_import_model_dialog()
+			6: reset_editor_camera_to_initial()
+	)
+	return mb
 
 func _create_top_btn(txt: String, tooltip: String, cb: Callable) -> Button:
 	var b = Button.new()
@@ -5995,9 +6180,9 @@ var insp_light_target_lbl: Label
 func _build_inspector() -> void:
 	inspector_panel = PanelContainer.new()
 	inspector_panel.set_anchor_and_offset(SIDE_RIGHT, 1, -8)
-	inspector_panel.set_anchor_and_offset(SIDE_LEFT, 1, -240)
+	inspector_panel.set_anchor_and_offset(SIDE_LEFT, 1, -330)
 	inspector_panel.set_anchor_and_offset(SIDE_TOP, 0, 42)
-	inspector_panel.set_anchor_and_offset(SIDE_BOTTOM, 1, -225)
+	inspector_panel.set_anchor_and_offset(SIDE_BOTTOM, 1, -258)
 
 
 	var style = StyleBoxFlat.new()
@@ -7298,7 +7483,7 @@ func _set_selected_coord_x(val: float) -> void:
 		show_notification("🔒 Объект зафиксирован!")
 		_update_inspector()
 		return
-	_record_undo()
+	_record_undo_grouped("coord")
 	selected_node.position.x = val
 	_update_selection_box()
 	if insp_pos_lbl:
@@ -7311,7 +7496,7 @@ func _set_selected_coord_y(val: float) -> void:
 		show_notification("🔒 Объект зафиксирован!")
 		_update_inspector()
 		return
-	_record_undo()
+	_record_undo_grouped("coord")
 	selected_node.position.y = val
 	_update_selection_box()
 	if insp_pos_lbl:
@@ -7324,7 +7509,7 @@ func _set_selected_coord_z(val: float) -> void:
 		show_notification("🔒 Объект зафиксирован!")
 		_update_inspector()
 		return
-	_record_undo()
+	_record_undo_grouped("coord")
 	selected_node.position.z = val
 	_update_selection_box()
 	if insp_pos_lbl:
@@ -7390,7 +7575,7 @@ func _reset_selected_rotation() -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 func _build_hotkeys_hint() -> void:
 	hotkeys_hint = Label.new()
-	hotkeys_hint.text = "[1] Ставить | [2] Удалить | [3] Взять | [R/Q] Поворот Y | [T] Наклон X | [Y] Крен Z | [Стрелки/PgUp/PgDn] X/Y/Z | [End] На пол | [Tab] Каталог | [7] ТЕСТ"
+	hotkeys_hint.text = "[1] Ставить | [2] Удалить | [3] Взять | [R/Q] Поворот Y | [T] Наклон X | [Y] Крен Z | [Стрелки/PgUp/PgDn] X/Y/Z | [End] На пол | [Ctrl+C/V] Копия | [V] Сверху | [Tab] Каталог | [7] ТЕСТ"
 	hotkeys_hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	hotkeys_hint.set_anchor_and_offset(SIDE_BOTTOM, 1, -3)
 	hotkeys_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -7401,6 +7586,16 @@ func _build_hotkeys_hint() -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 #  Всплывающее уведомление
 # ──────────────────────────────────────────────────────────────────────────────
+func _build_status_bar() -> void:
+	_status_lbl = Label.new()
+	_status_lbl.add_theme_font_size_override("font_size", 10)
+	_status_lbl.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85))
+	_status_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_status_lbl.set_anchor_and_offset(SIDE_LEFT, 0, 10)
+	_status_lbl.set_anchor_and_offset(SIDE_TOP, 0, 44)
+	_status_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_layer.add_child(_status_lbl)
+
 func _build_notification() -> void:
 	notification_label = Label.new()
 	notification_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -7417,3 +7612,6 @@ func show_notification(text: String, duration: float = 3.5) -> void:
 	notification_label.text = text
 	notification_label.visible = true
 	notif_timer = duration
+
+func _exit_tree() -> void:
+	get_window().theme = null

@@ -48,6 +48,9 @@ var _black_started := false
 var _heart_done := false
 var _done := false
 var _flashes := true
+# Откуда и за сколько секунд он летит на камеру
+var approach_from := 1.0
+var approach_time := 0.08
 
 
 func _ready() -> void:
@@ -164,8 +167,8 @@ func _update(_delta: float) -> void:
 	if _t < CLOSE_T:
 		var q := int(_t * 20.0)
 		model.apply_scare_pose(_t)
-		var d := lerpf(1.0, 0.43, minf(1.0, _t / 0.08)) * SkinwalkerModel.MODEL_SCALE
-		cam.fov = lerpf(36.0, 56.0, minf(1.0, _t / 0.1))
+		var d := lerpf(approach_from, 0.43, pow(minf(1.0, _t / approach_time), 2.2)) * SkinwalkerModel.MODEL_SCALE
+		cam.fov = lerpf(36.0, 56.0, minf(1.0, _t / maxf(0.1, approach_time)))
 		var face := model.get_face_center()
 		cam.position = face + Vector3(randf_range(-0.014, 0.014), randf_range(-0.014, 0.014) - 0.012, d)
 		cam.look_at(face, Vector3.UP)
