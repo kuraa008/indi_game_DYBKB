@@ -2455,11 +2455,26 @@ func _apply_highlight(node: Node) -> void:
 	if highlight_material:
 		highlight_material.albedo_color = hl_color
 
-	if current_highlighted_node == node:
+	var glow_target := _highlight_target(node)
+	if current_highlighted_node == glow_target:
 		return
 	_remove_highlight()
-	current_highlighted_node = node
-	_set_overlay_recursive(node, highlight_material)
+	current_highlighted_node = glow_target
+	_set_overlay_recursive(glow_target, highlight_material)
+
+# У подвала светятся только створки, без цоколя, земли и травы
+func _highlight_target(node: Node) -> Node:
+	var n: Node = node
+	for _p in range(5):
+		if n == null:
+			break
+		var doors := n.get_node_or_null("DoorAssembly")
+		if doors:
+			return doors
+		if n.name == "DoorAssembly":
+			return n
+		n = n.get_parent()
+	return node
 
 func _remove_highlight() -> void:
 	if current_highlighted_node and is_instance_valid(current_highlighted_node):

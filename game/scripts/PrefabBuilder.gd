@@ -4350,7 +4350,8 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			if not is_ghost:
 				var col = CollisionShape3D.new()
 				var shape = CylinderShape3D.new()
-				shape.radius = sz.x * 0.18
+				# У больших елей стенка чуть шире ствола, под лапами можно ходить
+				shape.radius = 0.6 if sz.y > 10.0 else sz.x * 0.18
 				shape.height = sz.y * 0.5
 				col.shape = shape
 				col.position = Vector3(0, sz.y * 0.25, 0)
@@ -4675,13 +4676,7 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 				twig.rotation_degrees.z = (i - 2) * 12.0
 				sb.add_child(twig)
 
-			if not is_ghost:
-				var col = CollisionShape3D.new()
-				var shape = BoxShape3D.new()
-				shape.size = sz
-				col.shape = shape
-				col.position = Vector3(0, sz.y * 0.45, 0)
-				sb.add_child(col)
+			# Сквозь куст можно пройти, поэтому коллизии нет
 
 			root.add_child(sb)
 
@@ -4727,13 +4722,7 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 
 			NatureKit.add_bush(sb, sz)
 
-			if not is_ghost:
-				var col = CollisionShape3D.new()
-				var shape = BoxShape3D.new()
-				shape.size = sz * 0.85
-				col.shape = shape
-				col.position = Vector3(0, sz.y * 0.45, 0)
-				sb.add_child(col)
+			# Сквозь куст можно пройти, поэтому коллизии нет
 
 			root.add_child(sb)
 
@@ -6709,7 +6698,8 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 				shape.size = sz
 				col.shape = shape
 				sb.add_child(col)
-	if sz != Vector3.ZERO and type != "cube" and not type.begins_with("floor") and not type.begins_with("ceiling") and not type.begins_with("door") and not type.begins_with("custom_door"):
+	# Ель сама строится в размере sz, второй масштаб сделал бы её гигантской
+	if sz != Vector3.ZERO and type != "prop_tree_pine" and type != "custom_prop_tree_pine" and type != "cube" and not type.begins_with("floor") and not type.begins_with("ceiling") and not type.begins_with("door") and not type.begins_with("custom_door"):
 		var base_sz = get_prefab_base_size(type)
 		if base_sz.x > 0.01 and base_sz.y > 0.01 and base_sz.z > 0.01:
 			root.scale = Vector3(sz.x / base_sz.x, sz.y / base_sz.y, sz.z / base_sz.z)

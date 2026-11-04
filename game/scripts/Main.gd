@@ -781,7 +781,8 @@ func _load_map() -> void:
 					door_configured_rot = rot
 					continue
 				var is_door = ("door" in o_type and not ("hatch" in o_type))
-				var is_prim = (o_type == "cube" or o_type.begins_with("wall") or is_door)
+				# Ель строится сразу в нужном размере: своя модель и узкая коллизия у больших
+				var is_prim = (o_type == "cube" or o_type.begins_with("wall") or is_door or o_type == "prop_tree_pine")
 				var base_sz = PrefabBuilder.get_prefab_base_size(o_type)
 				if base_sz.x <= 0.01: base_sz.x = 1.0
 				if base_sz.y <= 0.01: base_sz.y = 1.0
