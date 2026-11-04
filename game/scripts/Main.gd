@@ -773,6 +773,8 @@ func _load_map() -> void:
 				var w_node = _box(pos, sz, col, "wall_%d" % obj_id, true, rot)
 				if obj.has("wall_texture") and str(obj["wall_texture"]) != "":
 					TextureHelper.apply_wall_texture_to_node(w_node, str(obj["wall_texture"]), col)
+					if str(obj["wall_texture"]) == "brick_red" and abs(rot.x) < 0.5 and abs(rot.z) < 0.5:
+						NatureKit.add_protruding_bricks(w_node, sz, col, TextureHelper.WALL_TEXTURES["brick_red"]["triplanar_scale"].x)
 			_:
 				if is_legacy_map and obj_id == 82:
 					GameManager.door_position = pos
@@ -993,6 +995,8 @@ func _spawn_player() -> void:
 		rock.position = Vector3(-49.5, 0.0, 88.0)
 		rock.rotation_degrees = Vector3(5.0, 42.0, -8.0)
 		nav_region.add_child(rock)
+
+		add_child(ActDressing.new())
 
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"

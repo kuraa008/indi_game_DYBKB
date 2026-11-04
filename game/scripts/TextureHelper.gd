@@ -7,12 +7,15 @@ extends RefCounted
 # ══════════════════════════════════════════════════════════════════════════════
 
 static var _cache: Dictionary = {}
+static var _wall_mats: Dictionary = {}
 
 const WALL_TEXTURES = {
 	"brick_red": {
 		"name": "Красный кирпич",
 		"icon": "🧱",
-		"path": "res://assets/textures/brick_red.png",
+		"path": "res://assets/textures/nature/brick_red_v2.png",
+		"normal": "res://assets/textures/nature/brick_red_v2_n.png",
+		"normal_scale": 1.25,
 		"roughness": 0.85,
 		"metallic": 0.05,
 		"triplanar_scale": Vector3(0.5, 0.5, 0.5)
@@ -21,6 +24,7 @@ const WALL_TEXTURES = {
 		"name": "Темный камень",
 		"icon": "🪨",
 		"path": "res://assets/textures/brick_dark.png",
+		"normal": "res://assets/textures/nature/brick_dark_n.png",
 		"roughness": 0.90,
 		"metallic": 0.05,
 		"triplanar_scale": Vector3(0.45, 0.45, 0.45)
@@ -37,6 +41,7 @@ const WALL_TEXTURES = {
 		"name": "Деревянные доски",
 		"icon": "🪵",
 		"path": "res://assets/textures/wood_planks.png",
+		"normal": "res://assets/textures/nature/wood_planks_n.png",
 		"roughness": 0.75,
 		"metallic": 0.0,
 		"triplanar_scale": Vector3(0.5, 0.5, 0.5)
@@ -45,6 +50,7 @@ const WALL_TEXTURES = {
 		"name": "Бетон и штукатурка",
 		"icon": "🏛",
 		"path": "res://assets/textures/concrete_grunge.png",
+		"normal": "res://assets/textures/nature/concrete_grunge_n.png",
 		"roughness": 0.95,
 		"metallic": 0.02,
 		"triplanar_scale": Vector3(0.4, 0.4, 0.4)
@@ -68,7 +74,8 @@ const WALL_TEXTURES = {
 	"rusted_metal": {
 		"name": "Ржавый металл",
 		"icon": "🔩",
-		"path": "res://assets/textures/rusted_metal.png",
+		"path": "res://assets/textures/nature/car_rust.png",
+		"normal": "res://assets/textures/nature/car_rust_n.png",
 		"roughness": 0.65,
 		"metallic": 0.55,
 		"triplanar_scale": Vector3(0.4, 0.4, 0.4)
@@ -168,6 +175,13 @@ static func create_wall_material(texture_key: String, tint_color: Color = Color.
 			var sc = t_info.get("triplanar_scale", Vector3(0.5, 0.5, 0.5)) if t_info else Vector3(0.5, 0.5, 0.5)
 			mat.uv1_scale = sc
 			mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			var nrm_path: String = t_info.get("normal", "") if t_info else ""
+			if nrm_path != "":
+				var nrm_tex = get_texture(nrm_path)
+				if nrm_tex:
+					mat.normal_enabled = true
+					mat.normal_texture = nrm_tex
+					mat.normal_scale = t_info.get("normal_scale", 1.0)
 			return mat
 
 	mat.albedo_color = tint_color
@@ -176,7 +190,12 @@ static func create_wall_material(texture_key: String, tint_color: Color = Color.
 static func apply_wall_texture_to_node(node: Node, texture_key: String, tint_color: Color = Color.WHITE) -> void:
 	if node == null:
 		return
-	var mat = create_wall_material(texture_key, tint_color)
+	# Один материал на текстуру и оттенок: одинаковые стены рисуются инстансингом
+	var mat_key := "wall|%s|%s" % [texture_key, tint_color.to_html()]
+	var mat = _wall_mats.get(mat_key)
+	if mat == null:
+		mat = create_wall_material(texture_key, tint_color)
+		_wall_mats[mat_key] = mat
 	_apply_mat_recursive(node, mat)
 	if node is Node3D:
 		node.set_meta("wall_texture", texture_key)

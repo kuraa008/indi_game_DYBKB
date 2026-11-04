@@ -927,6 +927,13 @@ static func _build_realistic_dresser(sb: StaticBody3D, is_ghost: bool) -> void:
 	sb.add_child(drawer_root)
 
 static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool, custom_model_path: String = "") -> Node3D:
+	var built := _build_prefab_raw(type, sz, color, is_ghost, custom_model_path)
+	if built != null:
+		NatureKit.simplify_primitives(built)
+	return built
+
+
+static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost: bool, custom_model_path: String = "") -> Node3D:
 	var root = Node3D.new()
 	# Preserve the catalogue identity without changing interaction item_type values.
 	root.set_meta("prefab_type", type.trim_prefix("custom_"))
@@ -3345,34 +3352,7 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			sb.collision_layer = 1
 			sb.collision_mask = 0
 
-			# Природный многогранный массивный валун (оптимизировано под дальность и батчинг)
-			var rock_mat = StandardMaterial3D.new()
-			rock_mat.albedo_color = Color(0.28, 0.29, 0.32) if color == Color.WHITE else color
-			rock_mat.roughness = 0.95
-
-			var main_rock = MeshInstance3D.new()
-			var m_box = BoxMesh.new()
-			m_box.size = sz
-			m_box.material = rock_mat
-			main_rock.mesh = m_box
-			main_rock.position = Vector3(0, sz.y * 0.45, 0)
-			main_rock.rotation_degrees = Vector3(8, 25, -6)
-			main_rock.visibility_range_end = 95.0
-			main_rock.visibility_range_end_margin = 15.0
-			sb.add_child(main_rock)
-
-			# Дополнительный скальный скол сбоку
-			var sub_rock = MeshInstance3D.new()
-			var s_box = BoxMesh.new()
-			s_box.size = sz * 0.65
-			s_box.material = rock_mat
-			sub_rock.mesh = s_box
-			sub_rock.position = Vector3(sz.x * 0.35, sz.y * 0.30, -sz.z * 0.20)
-			sub_rock.rotation_degrees = Vector3(-15, 45, 12)
-			sub_rock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			sub_rock.visibility_range_end = 75.0
-			sub_rock.visibility_range_end_margin = 12.0
-			sb.add_child(sub_rock)
+			NatureKit.add_rock(sb, sz, color)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()
@@ -4365,34 +4345,7 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			sb.collision_layer = 1
 			sb.collision_mask = 0
 
-			var t_mat = StandardMaterial3D.new()
-			t_mat.albedo_color = Color(0.30, 0.18, 0.10)
-			var trunk = MeshInstance3D.new()
-			var tm = CylinderMesh.new()
-			tm.top_radius = sz.x * 0.06
-			tm.bottom_radius = sz.x * 0.10
-			tm.height = sz.y * 0.4
-			tm.material = t_mat
-			trunk.mesh = tm
-			trunk.position = Vector3(0, sz.y * 0.20, 0)
-			trunk.visibility_range_end = 95.0
-			trunk.visibility_range_end_margin = 15.0
-			sb.add_child(trunk)
-
-			var p_mat = StandardMaterial3D.new()
-			p_mat.albedo_color = Color(0.12, 0.30, 0.14) if color == Color.WHITE else color
-			for i in range(3):
-				var cone = MeshInstance3D.new()
-				var cm = PrismMesh.new()
-				var c_w = sz.x * (0.85 - i * 0.22)
-				cm.size = Vector3(c_w, sz.y * 0.35, c_w)
-				cm.material = p_mat
-				cone.mesh = cm
-				cone.position = Vector3(0, sz.y * (0.45 + i * 0.22), 0)
-				cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				cone.visibility_range_end = 95.0
-				cone.visibility_range_end_margin = 15.0
-				sb.add_child(cone)
+			NatureKit.add_spruce(sb, sz, color)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()
@@ -4689,45 +4642,7 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			sb.collision_layer = 1
 			sb.collision_mask = 0
 
-			var rust_mat = StandardMaterial3D.new()
-			rust_mat.albedo_color = Color(0.38, 0.22, 0.14)
-			rust_mat.roughness = 0.95
-
-			# Разбитый остов кузова
-			var body = MeshInstance3D.new()
-			var bm = BoxMesh.new()
-			bm.size = Vector3(sz.x * 0.9, sz.y * 0.45, sz.z * 0.9)
-			bm.material = rust_mat
-			body.mesh = bm
-			body.position = Vector3(0, sz.y * 0.32, 0)
-			body.rotation_degrees = Vector3(4.0, 0, -3.0) # Перекошенная
-			sb.add_child(body)
-
-			# Вмятая крыша
-			var roof = MeshInstance3D.new()
-			var rm = BoxMesh.new()
-			rm.size = Vector3(sz.x * 0.75, sz.y * 0.35, sz.z * 0.5)
-			rm.material = rust_mat
-			roof.mesh = rm
-			roof.position = Vector3(0, sz.y * 0.65, -sz.z * 0.08)
-			roof.rotation_degrees.x = -8.0
-			sb.add_child(roof)
-
-			# Ржавые колеса / спущенные покрышки
-			var w_mat = StandardMaterial3D.new()
-			w_mat.albedo_color = Color(0.12, 0.12, 0.13)
-			for wx in [-sz.x * 0.45, sz.x * 0.45]:
-				for wz in [-sz.z * 0.32, sz.z * 0.32]:
-					var wh = MeshInstance3D.new()
-					var whm = CylinderMesh.new()
-					whm.top_radius = sz.y * 0.22
-					whm.bottom_radius = sz.y * 0.22
-					whm.height = 0.2
-					whm.material = w_mat
-					wh.mesh = whm
-					wh.position = Vector3(wx, sz.y * 0.20, wz)
-					wh.rotation_degrees = Vector3(0, 0, 90)
-					sb.add_child(wh)
+			NatureKit.add_car_wreck(sb, sz)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()
@@ -4810,45 +4725,7 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			sb.collision_layer = 1
 			sb.collision_mask = 0
 
-			# ── Куст с сочной густой листвой ──────────────────────────
-			var branch_mat = StandardMaterial3D.new()
-			branch_mat.albedo_color = Color(0.22, 0.17, 0.12)
-			branch_mat.roughness = 0.9
-
-			# Стебли в основании
-			for i in range(3):
-				var stem = MeshInstance3D.new()
-				var sm = CylinderMesh.new()
-				sm.top_radius = 0.03
-				sm.bottom_radius = 0.05
-				sm.height = sz.y * 0.5
-				sm.material = branch_mat
-				stem.mesh = sm
-				stem.position = Vector3((i - 1) * 0.12, sz.y * 0.25, 0)
-				stem.rotation_degrees.z = (i - 1) * 15.0
-				sb.add_child(stem)
-
-			# Пышные сферические кластеры листвы
-			var foliage_colors = [
-				Color(0.18, 0.34, 0.16),
-				Color(0.22, 0.40, 0.18),
-				Color(0.15, 0.28, 0.14)
-			]
-			for i in range(6):
-				var leaf_clump = MeshInstance3D.new()
-				var lm = SphereMesh.new()
-				var cr = sz.x * (0.28 + (i % 3) * 0.08)
-				lm.radius = cr
-				lm.height = cr * 1.6
-				var fmat = StandardMaterial3D.new()
-				fmat.albedo_color = foliage_colors[i % foliage_colors.size()]
-				fmat.roughness = 0.88
-				lm.material = fmat
-				leaf_clump.mesh = lm
-				var a = i * 60.0
-				var rad = sz.x * 0.24
-				leaf_clump.position = Vector3(cos(deg_to_rad(a)) * rad, sz.y * (0.45 + (i % 2) * 0.15), sin(deg_to_rad(a)) * rad)
-				sb.add_child(leaf_clump)
+			NatureKit.add_bush(sb, sz)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()
@@ -4996,39 +4873,17 @@ static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool
 			sb.collision_layer = 1
 			sb.collision_mask = 0
 
-			var m_mat = StandardMaterial3D.new()
-			m_mat.albedo_color = Color(0.22, 0.24, 0.26)
-			m_mat.metallic = 0.7
-
-			var pole = MeshInstance3D.new()
-			var pm = CylinderMesh.new()
-			pm.top_radius = 0.08
-			pm.bottom_radius = 0.12
-			pm.height = sz.y
-			pm.material = m_mat
-			pole.mesh = pm
-			pole.position = Vector3(0, sz.y * 0.5, 0)
-			sb.add_child(pole)
-
-			var lamp = MeshInstance3D.new()
-			var lm = BoxMesh.new()
-			lm.size = Vector3(0.35, 0.18, 0.5)
-			var lmat = StandardMaterial3D.new()
-			lmat.albedo_color = Color(1.0, 0.95, 0.8)
-			lmat.emission_enabled = true
-			lmat.emission = Color(1.0, 0.9, 0.6)
-			lmat.emission_energy_multiplier = 2.0
-			lm.material = lmat
-			lamp.mesh = lm
-			lamp.position = Vector3(0, sz.y + 0.05, 0.25)
-			sb.add_child(lamp)
+			NatureKit.add_streetlight(sb, sz.y)
 
 			if not is_ghost:
 				var light = OmniLight3D.new()
 				light.light_color = Color(1.0, 0.92, 0.75)
 				light.light_energy = 2.5
 				light.omni_range = 14.0
-				light.position = Vector3(0, sz.y - 0.2, 0.25)
+				light.position = Vector3(0, sz.y + 0.1, 0.98)
+				light.distance_fade_enabled = true
+				light.distance_fade_begin = 55.0
+				light.distance_fade_length = 12.0
 				sb.add_child(light)
 
 				var col = CollisionShape3D.new()

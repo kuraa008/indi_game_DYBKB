@@ -535,6 +535,7 @@ func start_level_transition(map_path: String) -> void:
 	reset_state(true)
 	active_map_path = map_path
 	intro_cutscene_played = true
+	ActDressing.wake_shown = false
 	var old_scene := tree.current_scene
 	tree.change_scene_to_file("res://scenes/Main.tscn")
 	while tree.current_scene == null or tree.current_scene == old_scene or not is_instance_valid(player_ref):
