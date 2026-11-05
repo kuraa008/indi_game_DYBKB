@@ -1027,6 +1027,15 @@ var PREFABS = {
 		"color": Color(0.38, 0.22, 0.14),
 		"comment": "Ржавый разбитый автомобиль с вмятой крышей"
 	},
+	"prop_ethan_car": {
+		"category": "Улица",
+		"icon": "🚗",
+		"name": "Машина Итана (разбитая)",
+		"type": "prop_ethan_car",
+		"size": Vector3(1.62, 1.35, 3.71),
+		"color": Color(0.5, 0.045, 0.035),
+		"comment": "Красный хэтчбек Итана после удара о валун (scripts/EthanCar.gd)"
+	},
 	"prop_rock_large": {
 		"category": "Природа",
 		"icon": "🪨",

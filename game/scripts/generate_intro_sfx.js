@@ -284,13 +284,13 @@ function speak(tokens, o = {}) {
     const i0 = N(s.t0), i1 = Math.min(len, N(s.t1));
     for (let i = i0; i < i1; i++) {
       const u = (i - i0) / Math.max(1, i1 - i0);
-      for (let k = 0; k < 3; k++) F[k][i] = tf[k];
+      for (let k = 0; k < 3; k++) F[k][i] = tf[k] * (o.fscale || 1);
       A[i] = a * (c && c.trill ? 0.35 + 0.65 * Math.abs(Math.sin(Math.PI * 27 * (i - i0) / SR)) : 1);
       f0[i] = s.fa ? lerp(s.fa, s.fb ?? s.fa, u) : lastF0;
     }
     if (s.fa) lastF0 = s.fb ?? s.fa;
   }
-  for (let i = N(t); i < len; i++) { for (let k = 0; k < 3; k++) F[k][i] = F[k][i - 1] || lastF[k]; f0[i] = f0[i - 1] || lastF0; }
+  for (let i = N(t); i < len; i++) { for (let k = 0; k < 3; k++) F[k][i] = F[k][i - 1] || lastF[k] * (o.fscale || 1); f0[i] = f0[i - 1] || lastF0; }
   for (let k = 0; k < 3; k++) smooth2(F[k], 0.022);
   smooth2(A, 0.01); smooth2(f0, 0.04);
   const out = formantSynth(f0, F, A, o);
@@ -514,31 +514,42 @@ sound('radio_cut', 212, () => {
   return { chs: [x], peak: -2 };
 });
 
-// ── Пикап: V8 снаружи и в кабине ──
-function engineLoop(interior) {
-  const fF = 146, L = 4, X = 0.5, pre = 0.6, T = pre + L + X, n = N(T), per = SR / fF;
-  // Восемь вспышек на два оборота с неровным рисунком — «бульканье» V8; рисунок строго
-  // повторяется, поэтому петля бесшовная
-  const pat = [1.0, 0.78, 0.92, 0.7, 0.97, 0.82, 0.88, 0.74], off = [0, 0.03, -0.02, 0.04, -0.01, 0.025, -0.03, 0.015];
-  const pulses = new Float32Array(n);
-  for (let p = 0; ; p++) {
-    const pos = (p + off[p % 8]) * per;
-    if (pos >= n - 400) break;
-    const a = pat[p % 8];
-    for (let i = 0; i < 300; i++) {
-      const t = i / SR;
-      const j = Math.floor(pos) + i;
-      if (j < n) pulses[j] += a * (1 - Math.exp(-t / 0.0003)) * Math.exp(-t / 0.0022) * (1 + 0.5 * Math.sin(TAU * 420 * t));
+// ── Гольф: рядная «четвёрка» 1.6, снаружи и в кабине ──
+// Вспышки в цилиндрах: fFn(t) — частота вспышек (две на оборот). Позиции считаются
+// по набегу фазы, поэтому при постоянной частоте и целом числе вспышек на петлю
+// рисунок строго повторяется и петля бесшовная.
+function i4Pulses(n, fFn, pat, off, decay, ringHz, ampFn = () => 1) {
+  const y = new Float32Array(n);
+  let ph = 0, p = 0;
+  for (let i = 0; i < n; i++) {
+    const f = fFn(i / SR);
+    if (f <= 0) continue;
+    ph += f / SR;
+    if (ph < 1) continue;
+    ph -= 1;
+    const k = p % pat.length, pos = i + off[k] * SR / f, a = pat[k] * ampFn(i / SR);
+    p++;
+    for (let j = 0; j < 520; j++) {
+      const t = j / SR, q = Math.floor(pos) + j;
+      if (q >= 0 && q < n) y[q] += a * (1 - Math.exp(-t / 0.0003)) * Math.exp(-t / decay) * (1 + 0.45 * Math.sin(TAU * ringHz * t));
     }
   }
-  bq(pulses, 'lp', 900, 0.7); bq(pulses, 'pk', 95, 1.2, 9); bq(pulses, 'pk', 290, 1.5, 4);
-  norm([pulses], 0); sat(pulses, 2.2);
-  if (interior) { bq(pulses, 'lp', 520, 0.8); bq(pulses, 'pk', 55, 1, 6); } else bq(pulses, 'lp', 2600, 0.7);
+  return y;
+}
+function engineLoop(interior) {
+  // ~2700 об/мин: 90 вспышек в секунду, 360 на петлю — кратно рисунку из четырёх
+  const fF = 90, L = 4, X = 0.5, pre = 0.6, T = pre + L + X, n = N(T);
+  const pat = [1.0, 0.86, 0.95, 0.82], off = [0, 0.025, -0.02, 0.012];
+  const pulses = i4Pulses(n, () => fF, pat, off, interior ? 0.0024 : 0.0017, 560);
+  // Маленький мотор звучит выше и суше V8: гул на двойной частоте вспышек и «рашпиль» выхлопа
+  bq(pulses, 'lp', interior ? 900 : 3400, 0.7); bq(pulses, 'pk', 180, 1.3, interior ? 8 : 6); bq(pulses, 'pk', 430, 1.6, interior ? 2 : 6);
+  norm([pulses], 0); sat(pulses, interior ? 1.8 : 2.8);
+  if (interior) { bq(pulses, 'lp', 600, 0.8); bq(pulses, 'pk', 90, 1, 5); } else bq(pulses, 'lp', 3600, 0.7);
   const eng = pulses.slice(N(pre), N(pre) + N(L));
   norm([eng], 0);
   // Шумовая часть: впуск, шины по асфальту, ветер / дребезг салона
   const y = new Float32Array(n);
-  const intake = white(n); bq(intake, 'bp', 1100, 1.2);
+  const intake = white(n); bq(intake, 'bp', 1400, 1.2);
   for (let i = 0; i < n; i++) intake[i] *= 0.4 + 0.6 * Math.abs(Math.sin(Math.PI * fF * i / SR));
   const road = pink(n); bq(road, 'lp', interior ? 500 : 1000, 0.7); bq(road, 'pk', 125, 2, 5);
   const rumble = brown(n); bq(rumble, 'lp', 180, 0.7);
@@ -558,10 +569,10 @@ function engineLoop(interior) {
 sound('engine_ext', 213, () => engineLoop(false));
 sound('engine_int', 214, () => engineLoop(true));
 
-// ── Сигнал: два рожка 415 и 494 Гц, хриплые, с горловым резонансом ──
+// ── Сигнал «Гольфа»: один дисковый сигнал ~430 Гц, гнусавый; мембрана чуть «двоит» ──
 function hornWave(len, fFn, aFn) {
   const y = new Float32Array(len);
-  for (const [base, g] of [[415, 1], [494, 0.9]]) {
+  for (const [base, g] of [[430, 1], [433.5, 0.35]]) {
     let ph = rnd(0, TAU);
     for (let i = 0; i < len; i++) {
       const t = i / SR, f = base * fFn(t);
@@ -1005,6 +1016,262 @@ sound('whisper_behind', 316, () => {
   bq(x, 'pk', 240, 0.8, 4); bq(x, 'hp', 90, 0.7);
   return { chs: [x], peak: -1 };
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Заправка, 21:40: машина Итана, магазин, кассирша
+// ══════════════════════════════════════════════════════════════════════════════
+// Холостые ~900 об/мин: 30 вспышек в секунду, неровно; стучат клапаны
+sound('engine_idle', 221, () => {
+  const fF = 30, L = 4, X = 0.4, pre = 0.4, T = pre + L + X, n = N(T);
+  const p = i4Pulses(n, () => fF, [1.0, 0.8, 0.93, 0.74], [0, 0.04, -0.03, 0.02], 0.004, 330);
+  bq(p, 'lp', 1400, 0.7); bq(p, 'pk', 75, 1.2, 7); bq(p, 'pk', 260, 1.5, 4);
+  norm([p], 0); sat(p, 2.2);
+  const eng = p.slice(N(pre), N(pre) + N(L)); norm([eng], 0);
+  const tick = new Float32Array(N(L));
+  for (let k = 0; k < L * fF / 2; k++) {
+    const t = k * 2 / fF + 0.004;
+    ring(tick, t, 4200 * rnd(0.97, 1.03), 0.0015, 0.25); ring(tick, t + 0.0007, 6100, 0.001, 0.15);
+  }
+  const nz = pink(n); bq(nz, 'lp', 700, 0.7); norm([nz], 0);
+  const hiss = white(n); bq(hiss, 'bp', 1800, 0.8); norm([hiss], 0);
+  for (let i = 0; i < n; i++) nz[i] = nz[i] * 0.1 + hiss[i] * 0.03 * (0.5 + 0.5 * Math.abs(Math.sin(Math.PI * fF * i / SR)));
+  const nl = loopXf(nz.subarray(N(pre)), L, X);
+  const out = new Float32Array(N(L));
+  for (let i = 0; i < out.length; i++) out[i] = eng[i] * 0.85 + tick[i] * 0.5 + nl[i];
+  return { chs: [out], loop: true, peak: -2 };
+});
+// Стартер крутит, мотор схватывает, подгазовка — и холостые
+sound('engine_start', 222, () => {
+  const T = 2.8, x = buf(T), catchT = 0.95;
+  // Стартер: вой мотора и сжатия в цилиндрах ~9 раз в секунду
+  osc(x, 0, catchT + 0.12, t => (t < catchT ? 200 + 25 * Math.min(1, t / 0.3) : lerp(225, 120, (t - catchT) / 0.12)),
+    t => 0.16 * sstep(0, 0.04, t) * (t < catchT ? 0.55 + 0.45 * Math.pow(Math.abs(Math.sin(Math.PI * 9 * t)), 4) : 1 - (t - catchT) / 0.12), [1, 0.6, 0.45, 0.3, 0.2]);
+  for (let t = 0.05; t < catchT; t += 1 / 9) { ring(x, t, 70, 0.03, 0.35); ring(x, t + 0.002, 180, 0.015, 0.15); }
+  click(x, 0, 0.3, 1800); ring(x, 0.002, 1500, 0.01, 0.2);
+  const fFn = t => { if (t < catchT) return 0; const u = t - catchT; if (u < 0.35) return lerp(10, 48, sstep(0, 0.35, u)); return lerp(48, 30, sstep(0.35, 0.9, u)); };
+  const p = i4Pulses(N(T), fFn, [1.0, 0.8, 0.93, 0.74], [0, 0.04, -0.03, 0.02], 0.0035, 360,
+    t => (t < catchT ? 0 : 1.25 - 0.35 * sstep(catchT + 0.35, catchT + 1.0, t)));
+  bq(p, 'lp', 1800, 0.7); bq(p, 'pk', 80, 1.2, 7); bq(p, 'pk', 300, 1.5, 4);
+  norm([p], 0); sat(p, 2.2);
+  add(x, p, 0, 0.9);
+  return { chs: [x], peak: -1 };
+});
+// Ключ повёрнут: мотор спотыкается, дёргается на опорах и замолкает
+sound('engine_off', 223, () => {
+  const T = 1.3;
+  const p = i4Pulses(N(T), t => (t < 0.55 ? lerp(30, 9, Math.pow(t / 0.55, 0.8)) : 0), [1.0, 0.75, 0.9, 0.6], [0, 0.06, -0.05, 0.03], 0.004, 330,
+    t => (1 - sstep(0.3, 0.6, t)) * (0.7 + 0.3 * R()));
+  bq(p, 'lp', 1400, 0.7); bq(p, 'pk', 75, 1.2, 7); norm([p], 0); sat(p, 2.0);
+  const x = buf(T); add(x, p, 0, 0.8);
+  ring(x, 0.58, 42, 0.12, 0.6); ring(x, 0.58, 95, 0.06, 0.4); burst(x, 0.58, 0.04, 0.25, 'lp', 600);
+  ring(x, 0.62, 640, 0.03, 0.12); ring(x, 0.63, 1900, 0.01, 0.08);
+  return { chs: [x], peak: -2 };
+});
+// Шины медленно катятся по бетону, крошка щёлкает, машина встаёт
+sound('tyres_roll', 224, () => {
+  const T = 2.8, x = buf(T), stop = 2.2;
+  const r = pink(N(T)); bq(r, 'lp', 900, 0.7); bq(r, 'pk', 140, 1.5, 4); norm([r], 0);
+  env(r, t => 0.35 * sstep(0, 0.3, t) * (1 - sstep(stop - 0.6, stop, t)));
+  add(x, r);
+  particles(x, 0, stop, t => 60 * (1 - t / stop) + 8, 1200, 5200, 0.001, 0.004, t => 0.18 * (1 - t / stop));
+  const sq = new Float32Array(N(0.4));
+  osc(sq, 0, 0.4, t => 1650 + 60 * Math.sin(TAU * 13 * t), t => 0.05 * Math.sin(Math.PI * t / 0.4), [1, 0.3]);
+  add(x, sq, stop - 0.5);
+  ring(x, stop, 60, 0.08, 0.35); ring(x, stop + 0.01, 210, 0.03, 0.12);
+  return { chs: [x], peak: -2 };
+});
+// Итан выходит у колонки: щелчок замка, дверь, хлопок
+sound('car_door', 225, () => {
+  const x = buf(1.6);
+  click(x, 0, 0.5, 2200); ring(x, 0.002, 1750, 0.012, 0.3); ring(x, 0.004, 3100, 0.006, 0.2);
+  creak(x, 0.08, 0.25, () => 70, [[620, 0.006, 1], [1450, 0.004, 0.5]], 0.05);
+  ring(x, 1.05, 85, 0.08, 0.9); ring(x, 1.05, 160, 0.05, 0.5); ring(x, 1.05, 420, 0.03, 0.35); burst(x, 1.05, 0.03, 0.4, 'lp', 900);
+  click(x, 1.06, 0.4, 2600); ring(x, 1.065, 2600, 0.01, 0.25);
+  particles(x, 1.07, 1.2, () => 220, 2500, 7000, 0.001, 0.003, () => 0.06);
+  return { chs: [x], peak: -2 };
+});
+// Шаги по бетону к магазину: каблук, шорох подошвы, песок
+sound('steps_concrete', 226, () => {
+  const x = buf(2.9);
+  for (let k = 0; k < 5; k++) {
+    const t = 0.1 + k * 0.52 + rnd(-0.03, 0.03), a = 0.55 + 0.45 * k / 4;
+    ring(x, t, logU(95, 130), 0.025, 0.7 * a); burst(x, t, 0.025, 0.35 * a, 'lp', 700);
+    burst(x, t + 0.012, 0.07, 0.22 * a, 'bp', 2600, 0.6, 0.03);
+    particles(x, t, t + 0.09, () => 300, 2500, 8000, 0.0007, 0.002, () => 0.08 * a);
+  }
+  return { chs: [x], peak: -2 };
+});
+// Дверь магазина: ручка, петли, колокольчик на пружине, доводчик
+sound('door_bell', 227, () => {
+  const x = buf(2.0);
+  click(x, 0, 0.35, 2000); ring(x, 0.003, 1300, 0.01, 0.2);
+  creak(x, 0.04, 0.42, u => 40 + 50 * u, [[540, 0.008, 1], [1180, 0.005, 0.6], [2300, 0.003, 0.3]], 0.05, 0.3, u => Math.sin(Math.PI * u));
+  const strikes = [[0.08, 1], [0.17, 0.72], [0.3, 0.55], [0.49, 0.36], [0.73, 0.22], [1.0, 0.1]];
+  for (const [t, a] of strikes) {
+    modes(x, t, 0.5 * a, [[2350, 0.9, 1], [3910, 0.55, 0.6], [5530, 0.35, 0.4], [7340, 0.2, 0.25]], 0.006);
+    click(x, t, 0.12 * a, 4000);
+  }
+  ring(x, 0.08, 9, 0.6, 0.0);
+  ring(x, 1.42, 110, 0.05, 0.45); ring(x, 1.42, 260, 0.03, 0.25); burst(x, 1.42, 0.02, 0.2, 'lp', 1200);
+  particles(x, 1.43, 1.6, () => 260, 3000, 8000, 0.001, 0.004, () => 0.05);
+  return { chs: [x], peak: -2 };
+});
+// Три стеклянные бутылки на деревянный прилавок; третья звякает о вторую
+sound('bottles_clink', 228, () => {
+  const x = buf(1.4);
+  for (const [t, a] of [[0.0, 1], [0.26, 0.9], [0.5, 0.95]]) {
+    ring(x, t, 170 * rnd(0.95, 1.05), 0.04, 0.5 * a); ring(x, t, 430 * rnd(0.95, 1.05), 0.02, 0.3 * a);
+    modes(x, t + 0.001, 0.22 * a, [[1180, 0.12, 1], [2840, 0.09, 0.75], [4630, 0.05, 0.45]], 0.04);
+    const s = white(N(0.18)); bq(s, 'bp', 650, 1.4); env(s, tt => sstep(0.01, 0.05, tt) * Math.exp(-tt / 0.06)); add(x, s, t, 0.05 * a);
+  }
+  modes(x, 0.53, 0.2, [[3900, 0.25, 1], [6150, 0.18, 0.6], [8800, 0.08, 0.3]], 0.01);
+  return { chs: [x], peak: -2 };
+});
+// Сложенная карта ложится на прилавок
+sound('map_paper', 229, () => {
+  const x = buf(1.1);
+  particles(x, 0, 0.38, t => 380 * (1 - t / 0.5), 1500, 7000, 0.0006, 0.002, () => 0.2);
+  const s = white(N(0.55)); bq(s, 'bp', 1800, 0.6); env(s, t => Math.sin(Math.PI * t / 0.55) * 0.3); add(x, s, 0.35);
+  particles(x, 0.4, 0.85, () => 90, 2000, 6000, 0.0006, 0.002, () => 0.1);
+  ring(x, 0.88, 210, 0.02, 0.15);
+  return { chs: [x], peak: -3 };
+});
+// Касса: четыре писка клавиш, щелчок механизма, звонок, ящик выезжает, мелочь
+sound('cash_register', 230, () => {
+  const x = buf(1.9);
+  for (const t of [0, 0.13, 0.26, 0.42]) {
+    click(x, t, 0.25, 2500);
+    osc(x, t + 0.004, 0.05, () => 2900, tt => 0.18 * sstep(0, 0.003, tt) * (1 - sstep(0.044, 0.05, tt)), [1, 0, 0.33, 0, 0.2]);
+  }
+  ring(x, 0.62, 120, 0.03, 0.5); burst(x, 0.62, 0.02, 0.35, 'lp', 1500); click(x, 0.62, 0.3, 1800);
+  modes(x, 0.66, 0.4, [[2650, 0.6, 1], [4120, 0.4, 0.6], [6700, 0.25, 0.3]], 0.004);
+  const sl = white(N(0.26)); bqv(sl, 'bp', t => lerp(900, 1600, t / 0.26), 0.8); env(sl, t => 0.25 * Math.sin(Math.PI * t / 0.26)); add(x, sl, 0.67);
+  ring(x, 0.93, 95, 0.04, 0.45); ring(x, 0.93, 380, 0.02, 0.25); click(x, 0.93, 0.2, 1500);
+  for (let k = 0; k < 7; k++) modes(x, rnd(1.0, 1.45), 0.12, [[logU(3000, 7000), rnd(0.02, 0.06), 1], [logU(8000, 11000), 0.015, 0.4]]);
+  return { chs: [x], peak: -2 };
+});
+// Бутылки уходят в рюкзак: звяк, плеск, молния
+sound('bottles_take', 231, () => {
+  const x = buf(1.6);
+  for (const [t, a] of [[0.0, 0.8], [0.13, 1], [0.31, 0.7]]) modes(x, t, 0.22 * a, [[3600, 0.2, 1], [5800, 0.14, 0.6], [1250, 0.08, 0.5]], 0.03);
+  const s = white(N(0.3)); bq(s, 'bp', 700, 1.2); env(s, t => Math.sin(Math.PI * t / 0.3) * 0.08); add(x, s, 0.1);
+  const cl = pink(N(0.5)); bq(cl, 'bp', 1200, 0.7); norm([cl], 0); env(cl, t => 0.12 * Math.sin(Math.PI * t / 0.5)); add(x, cl, 0.45);
+  let t = 0.72;
+  while (t < 1.32) { const u = (t - 0.72) / 0.6; click(x, t, 0.1 * (0.6 + 0.4 * Math.sin(Math.PI * u)), 2500); t += 1 / lerp(140, 85, u); }
+  return { chs: [x], peak: -3 };
+});
+// Внутри магазина: гудит холодильник, дроссели ламп, вентиляция (стерео-петля)
+sound('shop_room', 232, () => {
+  const L = 6, X = 0.5, pre = 0.3, T = pre + L + X;
+  const chs = [0, 1].map(c => {
+    const n = N(T), y = new Float32Array(n);
+    const air = pink(n); bq(air, 'lp', 700, 0.7); norm([air], 0);
+    for (let i = 0; i < n; i++) y[i] = air[i] * 0.12;
+    for (let k = 0; k < 5; k++) burst(y, rnd(0, T), 0.002, rnd(0.03, 0.08), 'hp', 3000);
+    return loopXf(y.subarray(N(pre)), L, X);
+  });
+  // Гул сети: целые герцы — петля на 6 с совпадает сама
+  const hum = [[50, 0.2], [100, 1], [150, 0.3], [200, 0.45], [300, 0.2], [400, 0.12], [330, 0.05]];
+  for (let c = 0; c < 2; c++) {
+    const ph = hum.map(() => rnd(0, TAU));
+    for (let i = 0; i < chs[c].length; i++) {
+      const t = i / SR;
+      let v = 0;
+      for (let k = 0; k < hum.length; k++) v += hum[k][1] * Math.sin(TAU * hum[k][0] * t + ph[k]);
+      chs[c][i] += v * 0.05 * (1 + 0.1 * Math.sin(TAU * t / 3));
+    }
+  }
+  return { chs, loop: true, peak: -6 };
+});
+// Радио на полке: тихая песня через маленький динамик (Am–F–C–G, 80 ударов в минуту)
+sound('shop_radio', 233, () => {
+  const beat = 0.75, L = 16 * beat, X = 1.2, T = L + X + 0.5, x = buf(T);
+  const chords = [[220.0, 261.63, 329.63], [174.61, 220.0, 261.63], [261.63, 329.63, 392.0], [196.0, 246.94, 293.66]];
+  const ep = (t0, f, a) => osc(x, t0, 2.2, () => f, t => a * (1 - Math.exp(-t / 0.004)) * Math.exp(-t / 0.9) * (1 + 0.08 * Math.sin(TAU * 5 * t)), [1, 0.38, 0.12, 0.05]);
+  for (let pass = 0; pass < 2; pass++) {
+    for (let b = 0; b < 4; b++) {
+      const t0 = (pass * 4 + b) * 4 * beat;
+      if (t0 >= T) break;
+      const ch = chords[b];
+      for (const f of ch) ep(t0, f, 0.22);
+      ep(t0 + beat, ch[1] * 2, 0.12); ep(t0 + 1.5 * beat, ch[2], 0.1); ep(t0 + 2 * beat, ch[0] * 2, 0.12); ep(t0 + 3 * beat, ch[2] * 2, 0.1);
+      for (const k of [0, 2]) osc(x, t0 + k * beat, 1.2, () => ch[0] / 2, t => 0.3 * (1 - Math.exp(-t / 0.006)) * Math.exp(-t / 0.45), [1, 0.5, 0.15]);
+      for (const k of [1, 3]) burst(x, t0 + k * beat, 0.12, 0.05, 'bp', 6000, 0.8, 0.04);
+    }
+  }
+  bq(x, 'hp', 280, 0.7); bq(x, 'lp', 3300, 0.7); bq(x, 'pk', 1200, 0.8, 3);
+  norm([x], 0); sat(x, 1.4);
+  const st = white(x.length); bq(st, 'bp', 2500, 0.5); norm([st], 0);
+  for (let i = 0; i < x.length; i++) x[i] = x[i] * 0.8 + st[i] * 0.025;
+  return { chs: [loopXf(x, L, X)], loop: true, peak: -3 };
+});
+
+// ── Голос кассирши: пожилая, уставшая, говорит вполголоса — «оно слышит звук» ──
+// Фонетическая запись по-русски, «+» после ударной гласной. Получаем фонемы для speak().
+function ru2tok(text, o = {}) {
+  const V = { 'а': 'a', 'о': 'o', 'у': 'u', 'ы': 'y', 'и': 'i', 'э': 'E', 'е': 'e', 'ё': 'o', 'ю': 'u', 'я': 'a' };
+  const IOT = { 'е': 1, 'ё': 1, 'ю': 1, 'я': 1 };
+  const C = { 'б': ['b'], 'в': ['v'], 'г': ['g'], 'д': ['d'], 'ж': ['zh'], 'з': ['z'], 'й': ['j'], 'к': ['k'], 'л': ['l'], 'м': ['m'], 'н': ['n'], 'п': ['p'], 'р': ['r'],
+    'с': ['s'], 'т': ['t'], 'ф': ['f'], 'х': ['h'], 'ц': ['t', 's'], 'ч': ['t', 'sh'], 'ш': ['sh'], 'щ': ['sh'] };
+  const units = [];
+  let open = true;
+  const s = text.toLowerCase();
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '+') continue;
+    if (V[ch]) {
+      if (IOT[ch] && open) units.push({ c: 'j' });
+      units.push({ v: V[ch], st: s[i + 1] === '+' });
+      open = true;
+    } else if (C[ch]) { for (const c of C[ch]) units.push({ c }); open = false; }
+    else if (ch === ' ' || ch === '-') open = true;
+    else if (',—–.;:!?…'.includes(ch)) { units.push({ pause: ch === '—' || ch === '–' || ch === '…' ? 230 : 170 }); open = true; }
+  }
+  while (units.length && units[units.length - 1].pause) units.pop();
+  const nv = units.filter(u => u.v).length;
+  const f0a = o.f0a ?? 192, f0b = o.f0b ?? 150, rate = o.rate ?? 1;
+  let lastSt = -1;
+  units.forEach((u, i) => { if (u.v && u.st) lastSt = i; });
+  const toks = [];
+  let vi = 0;
+  units.forEach((u, i) => {
+    if (u.pause) { toks.push(['_', u.pause / rate]); return; }
+    if (u.v) {
+      const base = lerp(f0a, f0b, nv > 1 ? vi / (nv - 1) : 0);
+      vi++;
+      let fa = base, fb = base - 4, ms = 72, g = 0.72;
+      if (u.st) { ms = 150; g = 1; fa = base + 22; fb = base + 4; }
+      if (i === lastSt) {
+        if (o.question) { fa = base + 10; fb = base + 70; ms = 175; }
+        else { fa = base + 16; fb = base - 22; ms = 170; }
+      }
+      if (vi === nv && !u.st) { fb = o.question ? base + 20 : base - 28; ms = 110; }
+      toks.push([u.v, ms * rnd(0.92, 1.08) / rate, g, fa, fb]);
+      return;
+    }
+    const c = CONS[u.c];
+    const ms = u.c === 'j' ? 42 : c.k === 'stop' ? 58 : c.k === 'fric' ? 82 : 58;
+    toks.push([u.c, ms * rnd(0.9, 1.1) / rate, 1]);
+  });
+  return toks;
+}
+function cashierLine(text, o = {}) {
+  const toks = ru2tok(text, o);
+  // Сиплый голос: слабые связки и шёпот поверх; форманты чуть выше, чем у мужского голоса
+  const voiced = speak(toks, { voiced: true, breath: 0.9, fscale: 1.12, f0: o.f0a ?? 192 });
+  const whisper = speak(toks, { fscale: 1.12 });
+  const len = Math.max(voiced.length, whisper.length);
+  let x = new Float32Array(len + N(0.5));
+  add(x, voiced, 0.05, 0.55); add(x, whisper, 0.05, 0.6);
+  bq(x, 'hp', 130, 0.7); bq(x, 'pk', 2900, 1.0, 2); bq(x, 'lp', 5200, 0.7);
+  x = freeverb(x, { room: 0.3, damp: 0.7, wet: 0.1, dry: 1, pre: 0.008 });
+  return { chs: [x], peak: -1 };
+}
+sound('cashier_ask', 234, () => cashierLine('сив+одня н+очью — ф блэк п+айн?', { question: true, f0a: 188, f0b: 176 }));
+sound('cashier_three', 235, () => cashierLine('тагд+а зап+омни тр+и в+ещи.', { f0a: 186, f0b: 148 }));
+sound('cashier_rule_1', 236, () => cashierLine('ув+идишь на дар+оге ал+еня — ни астан+авливайся.', { f0a: 192, f0b: 146 }));
+sound('cashier_rule_2', 237, () => cashierLine('пазав+ут па +имени из л+еса — ни адзыв+айся.', { f0a: 190, f0b: 146 }));
+sound('cashier_rule_3', 238, () => cashierLine('пач+уствуешь, што кт+ота ид+ёт сл+едам — ни абар+ачивайся.', { f0a: 188, f0b: 140, rate: 1.04 }));
 
 // ══════════════════════════════════════════════════════════════════════════════
 fs.mkdirSync(OUT_DIR, { recursive: true });

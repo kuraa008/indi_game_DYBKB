@@ -995,7 +995,7 @@ func _spawn_player() -> void:
 	var map_lower = map_json_path.to_lower()
 	if "карта_6" in map_lower or "karta_6" in map_lower:
 		# Создаем разбитую машину на месте аварии в лесу на Карте 6
-		var wreck = PrefabBuilder.build_prefab("prop_car_wreck", Vector3(2.0, 1.4, 4.4), Color(0.18, 0.22, 0.30), false, "")
+		var wreck = PrefabBuilder.build_prefab("prop_ethan_car", EthanCar.SIZE, Color(0.5, 0.045, 0.035), false, "")
 		wreck.name = "CrashSiteWreck"
 		wreck.position = Vector3(-48.5, 0.25, 86.5)
 		wreck.rotation_degrees = Vector3(-12.0, -38.0, -10.0)

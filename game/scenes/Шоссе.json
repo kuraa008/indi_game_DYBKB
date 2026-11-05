@@ -6661,11 +6661,11 @@
    "visible": true
   },
   {
-   "color": "1b2638ff",
+   "color": "800b09ff",
    "comment": "",
    "id": 1270,
    "lock_id": 0,
-   "name": "Пикап Итана",
+   "name": "Машина Итана",
    "position": [
     -7.2,
     0.05,
@@ -6677,11 +6677,11 @@
     3.0
    ],
    "scale": [
-    2.1,
-    1.4,
-    4.4
+    1.62,
+    1.35,
+    3.71
    ],
-   "type": "prop_car_wreck",
+   "type": "prop_ethan_car",
    "visible": true
   },
   {

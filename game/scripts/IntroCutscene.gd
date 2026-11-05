@@ -1,11 +1,14 @@
 extends Node3D
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  IntroCutscene.gd — Вступление (~85 с): от кассеты Сэма до кошмара Итана
+#  IntroCutscene.gd — Вступление: от кассеты Сэма до кошмара Итана
 #  1. Запись «ЛЕСНАЯ КАМЕРА 04», 14.10.1994: олень на шоссе встаёт на дыбы,
 #     глаза горят красным, белый шум и шёпот Сэма «…не приезжай. Это не олень»
-#  2. 31.10.1994, 23:06: пикап Итана в лесу Блэк-Пайн, радио тонет в помехах,
-#     в памяти три правила кассирши с заправки
+#  2. 31.10.1994, 21:40, последняя заправка перед лесом (scripts/GasStation.gd):
+#     «Гольф» Итана встаёт у колонки, на витрине среди старых объявлений —
+#     свежее «ПРОПАЛ: СЭМ КОУЛ»; три бутылки и карта на прилавке, кассирша
+#     видит круг посреди леса и вполголоса называет три правила; уезжает —
+#     она смотрит вслед. 23:06: шоссе через Блэк-Пайн, радио тонет в помехах
 #  3. Фонари впереди гаснут один за другим, олень в свете фар: сигнал, тормоза
 #     (нарушено первое правило), хруст суставов, крик, занос, удар о валун
 #  4. Звон в ушах, мир глохнет; Итан приходит в себя в разбитой кабине,
@@ -39,50 +42,61 @@ const T_JUMP_TAPE: float = 8.0      # сбой кадра: олень вдруг
 const T_STATIC: float = 8.6
 const T_TAPE_VOICE: float = 8.7     # tape_whisper.wav: фраза А с 0.05 с, фраза Б с 3.35 с
 const T_EJECT: float = 13.3
-# 2. Шоссе
+# 2. Заправка, 21:40 (фразы кассирши: cashier_*.wav, речь 1.7 / 1.4 / 2.7 / 2.4 / 3.35 с)
 const T_TITLE: float = 13.8
-const T_DRIVE: float = 16.6
-const T_RULE_1: float = 17.8
-const T_RULE_2: float = 20.8
-const T_RULE_3: float = 23.8
-const T_RADIO_CUT: float = 26.6
+const T_GS_ARRIVE: float = 16.4     # «Гольф» сворачивает с шоссе к колонке
+const T_GS_PARKED: float = 20.3     # встал у колонки, мотор глохнет
+const T_GS_WINDOW: float = 21.0     # снаружи у витрины: объявление о Сэме, за стеклом кассирша
+const T_GS_COUNTER: float = 23.6    # у прилавка: бутылки, карта, касса
+const T_GS_ASK: float = 26.1        # «Сегодня ночью — в Блэк-Пайн?»
+const T_GS_THREE: float = 28.1      # «Тогда запомни три вещи»
+const T_GS_RULE_1: float = 29.85
+const T_GS_RULE_2: float = 32.9
+const T_GS_RULE_3: float = 35.65
+const T_GS_TAKE: float = 39.3       # бутылки в рюкзак, она смотрит в окно, на лес
+const T_GS_LEAVE: float = 40.3      # через дорогу: «Гольф» выезжает на шоссе, в окне — кассирша
+const T_GS_END: float = 44.3
+# Всё, что дальше, сдвинуто на длину заправки (раньше шоссе начиналось сразу после кассеты)
+const GS_SHIFT: float = 23.3
+const T_DRIVE: float = 44.9         # 23:06, шоссе через Блэк-Пайн
+const T_RADIO_CUT: float = 26.6 + GS_SHIFT
 # 3. Олень
-const T_POV: float = 27.2
-const T_DEER_SEEN: float = 28.8
-const T_HORN: float = 30.6
-const T_BRAKE: float = 30.75
-const T_REAR: float = 31.1
-const T_DEER_EYES: float = 31.7
-const T_SWERVE: float = 32.3
-const T_GRAVEL: float = 32.95
-const T_CRASH: float = 33.6
+const T_POV: float = 27.2 + GS_SHIFT
+const T_DEER_SEEN: float = 28.8 + GS_SHIFT
+const T_HORN: float = 30.6 + GS_SHIFT
+const T_BRAKE: float = 30.75 + GS_SHIFT
+const T_REAR: float = 31.1 + GS_SHIFT
+const T_DEER_EYES: float = 31.7 + GS_SHIFT
+const T_SWERVE: float = 32.3 + GS_SHIFT
+const T_GRAVEL: float = 32.95 + GS_SHIFT
+const T_CRASH: float = 33.6 + GS_SHIFT
 # 4. После удара
-const T_EARS: float = 37.0
-const T_WAKE: float = 38.2
-const T_BELT: float = 40.7
-const T_GLOVEBOX: float = 41.3
-const T_DOOR: float = 42.2
-const T_OUT: float = 43.9
-const T_ROAD_LOOK: float = 45.8
-const T_TORCH_ON: float = 47.0
+const T_EARS: float = 37.0 + GS_SHIFT
+const T_WAKE: float = 38.2 + GS_SHIFT
+const T_BELT: float = 40.7 + GS_SHIFT
+const T_GLOVEBOX: float = 41.3 + GS_SHIFT
+const T_DOOR: float = 42.2 + GS_SHIFT
+const T_OUT: float = 43.9 + GS_SHIFT
+const T_ROAD_LOOK: float = 45.8 + GS_SHIFT
+const T_TORCH_ON: float = 47.0 + GS_SHIFT
 # 5. Голос из леса
-const T_HORN_STOP: float = 48.4
-const T_VOICE: float = 49.8
-const T_ANSWER: float = 52.7
+const T_HORN_STOP: float = 48.4 + GS_SHIFT
+const T_VOICE: float = 49.8 + GS_SHIFT
+const T_ANSWER: float = 52.7 + GS_SHIFT
 # 6. Камера 04 и шёпот
-const T_WALK: float = 54.0
-const T_CAM04: float = 57.0
-const T_FLASHBACK: float = 58.4
+const T_WALK: float = 54.0 + GS_SHIFT
+const T_CAM04: float = 57.0 + GS_SHIFT
+const T_FLASHBACK: float = 58.4 + GS_SHIFT
 const FLASHBACK_LEN: float = 0.4
-const T_FALL: float = 59.4
-const T_EYES: float = 60.5
-const T_LAUGH: float = 61.5
-const T_WHISPER: float = 63.2
-const T_DONT_LOOK: float = 67.4
-const T_TURN: float = 68.6
-const T_SCARE: float = 69.45        # полсекунды мёртвой тишины после поворота
+const T_FALL: float = 59.4 + GS_SHIFT
+const T_EYES: float = 60.5 + GS_SHIFT
+const T_LAUGH: float = 61.5 + GS_SHIFT
+const T_WHISPER: float = 63.2 + GS_SHIFT
+const T_DONT_LOOK: float = 67.4 + GS_SHIFT
+const T_TURN: float = 68.6 + GS_SHIFT
+const T_SCARE: float = 69.45 + GS_SHIFT   # полсекунды мёртвой тишины после поворота
 # Итан выбрался из машины: дальше игрок идёт сам по карте «Шоссе»
-const T_TO_MAP: float = 46.8
+const T_TO_MAP: float = 46.8 + GS_SHIFT
 # 7–8. Эпилог: секунды от конца скримера. Его показывает карта «Шоссе» после своего скримера
 const E_FOOTAGE: float = 0.5
 const E_STOP: float = 3.4
@@ -97,26 +111,28 @@ const E_FADE: float = 13.6
 const E_END: float = 14.9
 const DRAG_PERIOD: float = 1.3
 
-# Фонари, которые гаснут перед оленем: номер → время; последний — прямо над пикапом
-const LAMP_DIE := {12: 27.7, 11: 28.15, 10: 28.6, 9: 29.05, 8: 29.5, 7: 30.0}
+# Фонари, которые гаснут перед оленем: номер → время; последний — прямо над машиной
+const LAMP_DIE := {12: 27.7 + GS_SHIFT, 11: 28.15 + GS_SHIFT, 10: 28.6 + GS_SHIFT, 9: 29.05 + GS_SHIFT, 8: 29.5 + GS_SHIFT, 7: 30.0 + GS_SHIFT}
 const LAMP_FLICKER: int = 8         # после аварии мигает один фонарь через дорогу
 const LAMP_ON := Color(1.0, 0.78, 0.52)
 const LAMP_OFF := Color(0.16, 0.13, 0.1)
 
-# ── Движение пикапа ──
-const CAR_START_Z: float = 68.0
+# ── Движение машины ──
+# На шоссе машина в кадре 5.6 с (а не 10.6, как без заправки) — стартует ближе,
+# чтобы к T_POV оказаться там же, у z = -144
+const CAR_START_Z: float = -32.0
 const CAR_SPEED: float = 20.0          # ~72 км/ч
 const CAR_BRAKE_SPEED: float = 9.0
 const BRAKE_TIME: float = 1.4
 const SWERVE_X: float = -7.2           # уход влево с дороги
 const SWERVE_YAW_DEG: float = 34.0
 
-# ── Точки сцены (пикап врезается в валун у z ≈ -247) ──
+# ── Точки сцены (машина врезается в валун у z ≈ -247) ──
 const ROAD_START_Z: float = 100.0
 const ROAD_END_Z: float = -540.0
 const DEER_POS := Vector3(0.4, 0.0, -244.5)
 const DEER_JUMP_POS := Vector3(-1.6, 0.0, -239.8)
-const DEER_SIGN_POS := Vector3(4.4, 0.0, 14.0)
+const DEER_SIGN_POS := Vector3(4.4, 0.0, -84.0)
 const ROCK_POS := Vector3(-9.6, 0.0, -250.8)
 const CAM04_PINE_POS := Vector3(-6.3, 0.0, -231.55)
 const CAM04_POS := Vector3(-6.3, 1.45, -231.95)
@@ -136,8 +152,25 @@ const DRAG_FROM := Vector3(-19.5, 0.32, -239.0)
 const DEER_HEIGHT: float = 2.3
 const DEER_EYES_PX = [Vector2(82, 178), Vector2(116, 178)]   # глаза на Olen.png
 
-const CASHIER := "КАССИРША НА ЗАПРАВКЕ · 21:40"
+const CASHIER := "КАССИРША"
 const SAM_TAPE := "СЭМ · ЗАПИСЬ КАМЕРЫ 04"
+
+# ── Заправка (scripts/GasStation.gd): стоит далеко от шоссе с оленем, в своём лесу.
+#    Координаты ниже — в осях заправки: её шоссе идёт вдоль Z при x = 0, магазин справа ──
+const GS_ORIGIN := Vector3(0.0, 0.0, 1000.0)
+const GS_CAM_ARRIVE := Vector3(-7.5, 1.6, 9.0)      # через дорогу: видно навес, магазин и вывеску
+const GS_CAM_WINDOW := Vector3(21.1, 1.5, 2.66)     # снаружи у витрины: её лицо — в просвете между листами
+const GS_POSTER := Vector3(21.955, 1.5, 2.84)       # свежее объявление о Сэме на стекле
+const GS_CAM_COUNTER := Vector3(24.05, 1.6, 1.3)    # Итан у прилавка
+const GS_CAM_LEAVE := Vector3(-6.0, 1.5, -8.0)      # через дорогу: машина уходит влево, магазин светится
+const GS_DOOR := Vector3(21.96, 1.6, -3.3)
+const GS_MAGAZINE := Vector3(24.86, 0.95, 2.9)      # журнал на прилавке: в него она смотрит, пока никого нет
+const GS_WINDOW_DARK := Vector3(21.0, 1.7, -1.8)    # за окном — тёмный лес
+const GS_BOTTLES := [Vector3(24.79, 0.98, 1.06), Vector3(24.74, 0.98, 1.19), Vector3(24.81, 0.98, 1.32)]
+const GS_BOTTLE_CLINK := [0.15, 0.41, 0.65]         # когда каждая встаёт на прилавок (bottles_clink.wav)
+const GS_MAP_POS := Vector3(24.84, 0.982, 1.8)
+const GS_CAR_ACCEL: float = 4.0
+const GS_CAR_GO: float = 0.4                         # через сколько после T_GS_LEAVE трогается
 
 # Запись камеры 04: зеленовато-серая ИК-картинка, где выживает только красный
 const FOOTAGE_SHADER := """
@@ -172,9 +205,8 @@ void fragment() {
 var cam: Camera3D
 var cam_attr: CameraAttributesPractical
 var car: Node3D
-var car_body: Node3D
-var cockpit: Node3D
-var hood: MeshInstance3D
+var car_body: EthanCar             # кузов и настоящий салон: вид от лица — изнутри него
+var hood: Node3D
 var wheel_spin: Node3D
 var speed_needle: Node3D
 var freshener: Node3D
@@ -241,6 +273,21 @@ var wheeze_player: AudioStreamPlayer
 var static_player: AudioStreamPlayer
 var tape_players: Array[AudioStreamPlayer] = []
 
+# Заправка
+var station: GasStation
+var gs_bottles: Array[Node3D] = []
+var gs_map: MeshInstance3D
+var gs_attr: CameraAttributesPractical
+var gs_arrive_path: Dictionary = {}
+var gs_leave_path: Dictionary = {}
+var gs_players: Array[AudioStreamPlayer] = []
+var gs_room: AudioStreamPlayer
+var gs_radio: AudioStreamPlayer
+var gs_engine: AudioStreamPlayer
+var gs_idle: AudioStreamPlayer
+var title_place: Label
+var time_card: Label
+
 var _t: float = 0.0
 var _fired: Dictionary = {}
 var _trauma: float = 0.0
@@ -269,6 +316,9 @@ func _ready() -> void:
 	_build_forest()
 	_build_crash_site()
 	_build_car()
+	# Финал после карты «Шоссе» начинается с аварии — заправка ему не нужна
+	if not (GameManager and GameManager.intro_epilogue):
+		_build_station()
 	_build_deer()
 	_build_walk_props()
 	_build_epilogue_props()
@@ -303,7 +353,7 @@ func _process(delta: float) -> void:
 		_update_scene(delta)
 
 func _update_scene(delta: float) -> void:
-	_update_car()
+	_update_car(delta)
 	_update_deer()
 	_update_props(delta)
 	_update_camera(delta)
@@ -369,22 +419,107 @@ func _run_timeline() -> void:
 		_set_black(1.0)
 		car.visible = true
 
-	# ─ 2. Шоссе: радио тонет в помехах, в памяти — три правила ─
+	# ─ 2. Заправка, 21:40: последний свет перед лесом ─
 	if _once("title", T_TITLE):
 		create_tween().tween_property(title_box, "modulate:a", 1.0, 0.9)
-		engine_player = _sfx("engine_ext", -40.0, 1.0, true)
-		_fade_to(engine_player, -9.0, 2.4)
-		radio_player = _sfx("radio_static", -27.0, 1.0, true)
-	if _once("title_out", T_DRIVE - 0.8):
+		if station:
+			# Пока на экране дата, из темноты слышно: сверчки, гудит вывеска, едет машина
+			gs_players.append(_sfx("crickets", -30.0, 1.0, true))
+			gs_players.append(_sfx("forest_wind", -31.0, 1.0, true))
+			gs_players.append(_sfx("lamp_buzz", -29.0, 1.12, true))
+			gs_room = _sfx("shop_room", -44.0, 1.0, true, BUS_MASTER)
+			gs_radio = _sfx("shop_radio", -42.0, 1.0, true, BUS_MASTER)
+			gs_players.append(gs_room)
+			gs_players.append(gs_radio)
+			gs_engine = _sfx("engine_ext", -44.0, 0.86, true)
+			_fade_to(gs_engine, -22.0, 2.6)
+	if _once("title_out", T_GS_ARRIVE - 0.8):
 		create_tween().tween_property(title_box, "modulate:a", 0.0, 0.7)
+	if _once("gs_arrive", T_GS_ARRIVE):
+		_fade_black(0.0, 0.9)
+		_fade_to(gs_engine, -13.0, 1.1)
+	if _once("gs_slow", T_GS_ARRIVE + 1.2):
+		if is_instance_valid(gs_engine):
+			create_tween().tween_property(gs_engine, "pitch_scale", 0.55, 2.3)
+		_fade_to(gs_engine, -17.0, 2.3)
+	if _once("gs_tyres", T_GS_PARKED - 2.2):
+		_sfx("tyres_roll", -15.0)
+	if _once("gs_idle", T_GS_PARKED - 0.45):
+		gs_idle = _sfx("engine_idle", -30.0, 1.0, true)
+		_fade_to(gs_idle, -15.0, 0.35)
+		_fade_out(gs_engine, 0.45)
+		gs_engine = null
+	if _once("gs_engine_off", T_GS_PARKED + 0.3):
+		_stop(gs_idle)
+		gs_idle = null
+		_sfx("engine_off", -13.0)
+		gs_players.append(_sfx("engine_tick", -27.0, 1.0, true))
+	# Снаружи у витрины: хлопает дверца, шаги, колокольчик над дверью магазина
+	if _once("gs_window", T_GS_WINDOW):
+		_sfx("car_door", -16.0)
+		_fade_to(gs_room, -36.0, 0.3)
+		_fade_to(gs_radio, -34.0, 0.3)
+	if _once("gs_steps", T_GS_WINDOW + 0.55):
+		_sfx("steps_concrete", -17.0)
+	if _once("gs_bell", T_GS_WINDOW + 1.9):
+		_sfx("door_bell", -9.0)
+	# У прилавка: всё, что снаружи, слышно через стекло
+	if _once("gs_inside", T_GS_COUNTER):
+		_set_muffle(1300.0, 0.05)
+		_fade_to(gs_room, -20.0, 0.05)
+		_fade_to(gs_radio, -25.0, 0.05)
+	if _once("gs_bottles", T_GS_COUNTER + GS_BOTTLE_CLINK[0]):
+		_sfx("bottles_clink", -9.0, 1.0, false, BUS_MASTER)
+	if _once("gs_map", T_GS_COUNTER + 0.8):
+		_sfx("map_paper", -12.0, 1.0, false, BUS_MASTER)
+	if _once("gs_register", T_GS_COUNTER + 1.25):
+		_sfx("cash_register", -11.0, 1.0, false, BUS_MASTER)
+	if _once("gs_ask", T_GS_ASK):
+		_fade_to(gs_radio, -29.0, 0.6)
+		_cashier_says("cashier_ask", "Сегодня ночью — в Блэк-Пайн?", 1.7)
+	if _once("gs_three", T_GS_THREE):
+		_cashier_says("cashier_three", "Тогда запомни три вещи.", 1.4)
+	if _once("gs_rule_1", T_GS_RULE_1):
+		_cashier_says("cashier_rule_1", "Увидишь на дороге оленя — не останавливайся.", 2.7)
+	if _once("gs_rule_2", T_GS_RULE_2):
+		_cashier_says("cashier_rule_2", "Позовут по имени из леса — не отзывайся.", 2.4)
+	if _once("gs_rule_3", T_GS_RULE_3):
+		_cashier_says("cashier_rule_3", "Почувствуешь, что кто-то идёт следом, — не оборачивайся.", 3.35)
+	if _once("gs_take", T_GS_TAKE):
+		_sfx("bottles_take", -10.0, 1.0, false, BUS_MASTER)
+		_fade_to(gs_radio, -25.0, 1.0)
+	# Через дорогу: «Гольф» трогается от колонки и уходит по шоссе в темноту
+	if _once("gs_leave", T_GS_LEAVE):
+		_set_muffle(20000.0, 0.05)
+		_fade_to(gs_room, -40.0, 0.05)
+		_fade_to(gs_radio, -36.0, 0.05)
+		gs_idle = _sfx("engine_idle", -16.0, 1.0, true)
+	if _once("gs_pull_away", T_GS_LEAVE + GS_CAR_GO):
+		gs_engine = _sfx("engine_ext", -16.0, 0.6, true)
+		if is_instance_valid(gs_engine):
+			create_tween().tween_property(gs_engine, "pitch_scale", 1.0, 2.6)
+		_fade_to(gs_engine, -11.0, 1.6)
+		_fade_out(gs_idle, 0.35)
+		gs_idle = null
+		_sfx("tyres_roll", -19.0, 1.25)
+	if _once("gs_away", T_GS_LEAVE + 2.2):
+		_fade_to(gs_engine, -26.0, 1.8)
+	if _once("gs_end", T_GS_END):
+		_fade_black(1.0, 0.6)
+		for p in gs_players:
+			_fade_out(p, 0.6)
+		gs_players.clear()
+		_fade_out(gs_engine, 0.6)
+		gs_engine = null
+
+	# ─ 2b. 23:06, шоссе через Блэк-Пайн: радио тонет в помехах ─
 	if _once("drive", T_DRIVE):
-		_fade_black(0.0, 1.4)
-	if _once("rule_1", T_RULE_1):
-		_say(CASHIER, "«Увидишь на дороге оленя — не останавливайся».", 2.5)
-	if _once("rule_2", T_RULE_2):
-		_say(CASHIER, "«Позовут по имени из леса — не отзывайся».", 2.5)
-	if _once("rule_3", T_RULE_3):
-		_say(CASHIER, "«Почувствуешь, что кто-то идёт следом, — не оборачивайся».", 2.6)
+		_set_muffle(20000.0, 0.05)
+		_fade_black(0.0, 1.2)
+		engine_player = _sfx("engine_ext", -18.0, 1.0, true)
+		_fade_to(engine_player, -9.0, 1.4)
+		radio_player = _sfx("radio_static", -27.0, 1.0, true)
+		_show_time_card()
 	if _once("radio_swell", T_RADIO_CUT - 0.9):
 		_fade_to(radio_player, -18.0, 0.8)
 	if _once("radio_cut", T_RADIO_CUT):
@@ -607,15 +742,20 @@ func _crash() -> void:
 	flash_rect.color.a = 0.9
 	create_tween().tween_property(flash_rect, "color:a", 0.0, 0.35)
 
-	# Пикап застыл носом в валуне: перекос, правая фара разбита, капот смят
+	_wreck_pose()
+	_trauma = 0.0
+
+# Машина застыла носом в валуне: морда смята, капот вздут, левая фара разбита, правая мигает
+func _wreck_pose() -> void:
 	car.position = Vector3(SWERVE_X, 0.0, CAR_START_Z - _car_distance(T_CRASH))
 	car.rotation = Vector3(deg_to_rad(-4.0), deg_to_rad(SWERVE_YAW_DEG), deg_to_rad(3.0))
-	headlight_r.visible = false
-	hood.rotation_degrees = Vector3(10.0, 0.0, -4.0)
-	hood.position = Vector3(0.05, 1.0, -1.35)
+	car_body.set_wrecked(true)
+	car_body.set_lights(true)
+	headlight_l.visible = false
+	headlight_r.visible = true
+	headlight_r.position = EthanCar.wreck_point(EthanCar.HEAD_R) + Vector3(0.0, 0.0, -0.05)
 	deer_root.visible = false
 	steam.emitting = true
-	_trauma = 0.0
 
 func _fall() -> void:
 	_sfx("body_fall", -7.0, 1.08)
@@ -657,13 +797,7 @@ func _start_epilogue_only() -> void:
 	_epilogue_only = true
 	_t = T_SCARE + 0.5
 	_car_crashed = true
-	car.position = Vector3(SWERVE_X, 0.0, CAR_START_Z - _car_distance(T_CRASH))
-	car.rotation = Vector3(deg_to_rad(-4.0), deg_to_rad(SWERVE_YAW_DEG), deg_to_rad(3.0))
-	headlight_r.visible = false
-	hood.rotation_degrees = Vector3(10.0, 0.0, -4.0)
-	hood.position = Vector3(0.05, 1.0, -1.35)
-	deer_root.visible = false
-	steam.emitting = true
+	_wreck_pose()
 	dropped_light.visible = true
 	_on_scare_finished(null)
 
@@ -679,7 +813,7 @@ func _finish() -> void:
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  Движение пикапа: 20 м/с, торможение после сигнала, занос влево в валун
+#  Движение машины: 20 м/с, торможение после сигнала, занос влево в валун
 # ──────────────────────────────────────────────────────────────────────────────
 func _car_distance(t: float) -> float:
 	if t <= T_DRIVE:
@@ -705,12 +839,28 @@ func _car_speed(t: float) -> float:
 func _car_swerve(t: float) -> float:
 	return smoothstep(0.0, 1.0, clampf((t - T_SWERVE) / (T_CRASH - T_SWERVE), 0.0, 1.0))
 
-func _update_car() -> void:
+func _update_car(delta: float) -> void:
 	if _car_crashed:
 		return
-	var s := _car_swerve(_t)
-	car.position = Vector3(SWERVE_X * s, 0.0, CAR_START_Z - _car_distance(_t))
-	car.rotation = Vector3(0.0, deg_to_rad(SWERVE_YAW_DEG) * s, deg_to_rad(-3.0) * sin(s * PI))
+	var before := car.global_transform
+	if station and _t < T_DRIVE:
+		car.transform = _station_car_xform()
+	else:
+		var s := _car_swerve(_t)
+		car.position = Vector3(SWERVE_X * s, 0.0, CAR_START_Z - _car_distance(_t))
+		car.rotation = Vector3(0.0, deg_to_rad(SWERVE_YAW_DEG) * s, deg_to_rad(-3.0) * sin(s * PI))
+	if delta <= 0.0:
+		return
+	# Колёса катятся по пройденному пути и поворачивают вслед за курсом (в заносе — за рулём)
+	var moved := car.global_position - before.origin
+	var speed := moved.dot(-car.global_transform.basis.z) / delta
+	var yaw_rate := wrapf(car.rotation.y - before.basis.get_euler().y, -PI, PI) / delta
+	var steer := clampf(rad_to_deg(yaw_rate) * 0.35, -28.0, 28.0)
+	if _t >= T_SWERVE and _t < T_CRASH:
+		steer = 10.0 * smoothstep(T_SWERVE, T_SWERVE + 0.3, _t) - 5.0 * smoothstep(T_SWERVE + 0.45, T_CRASH, _t)
+	if moved.length() > 50.0:
+		speed = 0.0       # прыжок между кадрами (заправка → шоссе), а не езда
+	car_body.set_motion(delta, speed, steer)
 
 func _in_flashback() -> bool:
 	return _epi_t0 < 0.0 and _t >= T_FLASHBACK and _t < T_FLASHBACK + FLASHBACK_LEN
@@ -755,14 +905,29 @@ func _update_deer() -> void:
 #  Фонари, кабина, камера 04, тень, старик
 # ──────────────────────────────────────────────────────────────────────────────
 func _update_props(delta: float) -> void:
-	# Вспышка памяти — это запись 14 октября: разбитого пикапа на ней ещё нет
+	# Вспышка памяти — это запись 14 октября: разбитой машины на ней ещё нет
 	car.visible = _epi_t0 >= 0.0 or (_t >= T_EJECT and not _in_flashback())
 	_update_lamps()
 	cam04_led.visible = fmod(_t, 1.0) < 0.5
 	if cam04_flash.light_energy > 0.0:
 		cam04_flash.light_energy = maxf(0.0, cam04_flash.light_energy - delta * 7.0)
 	if _car_crashed:
-		headlight_l.light_energy = 0.8 if sin(_t * 23.0) < -0.85 else 5.0
+		var dim := sin(_t * 23.0) < -0.85
+		headlight_r.light_energy = 0.8 if dim else 5.0
+		car_body.set_right_lamp(0.5 if dim else 2.6)
+	else:
+		# У колонки фары гаснут вместе с мотором и загораются перед отъездом;
+		# стоп-сигналы — когда тормозит к колонке и перед оленем
+		var parked := _t >= T_GS_PARKED + 0.4 and _t < T_GS_LEAVE - 0.2
+		var brake := 0.0
+		if _t >= T_GS_ARRIVE + 1.2 and _t < T_GS_PARKED + 0.4:
+			brake = 0.8
+		elif _t >= T_BRAKE:
+			brake = 1.0
+		headlight_l.visible = not parked
+		headlight_r.visible = not parked
+		car_body.set_lights(not parked, brake)
+	_update_station()
 	hand_light.visible = _epi_t0 < 0.0 and _t >= T_TORCH_ON and _t < T_FALL and not _in_flashback()
 	_update_cockpit(delta)
 	_update_walker(delta)
@@ -799,7 +964,8 @@ func _update_cockpit(delta: float) -> void:
 	var speed := _car_speed(_t)
 	var accel := (speed - _prev_speed) / delta if delta > 0.0 else 0.0
 	_prev_speed = speed
-	if not cockpit.visible or delta <= 0.0:
+	var shot := _shot()
+	if (shot != "pov" and shot != "wake") or delta <= 0.0:
 		return
 	speed_needle.rotation.y = deg_to_rad(lerpf(120.0, -120.0, clampf(speed * 3.6 / 200.0, 0.0, 1.0)))
 	var steer := 0.0
@@ -856,6 +1022,14 @@ func _shot() -> String:
 		return "footage" if _t - _epi_t0 < E_DRAG else "drag"
 	if _t < T_EJECT:
 		return "footage"
+	if station and _t < T_DRIVE:
+		if _t < T_GS_WINDOW:
+			return "gs_arrive"
+		if _t < T_GS_COUNTER:
+			return "gs_window"
+		if _t < T_GS_LEAVE:
+			return "gs_counter"
+		return "gs_leave"
 	if _t < T_POV:
 		return "chase"
 	if _t < T_CRASH:
@@ -874,12 +1048,18 @@ func _update_camera(delta: float) -> void:
 	_trauma = maxf(0.0, _trauma - delta * 1.2)
 	cam.attributes = null
 	var shot := _shot()
-	cockpit.visible = shot == "pov" or shot == "wake"
-	car_body.visible = not cockpit.visible
 	ir_light.visible = shot == "footage" or shot == "flash"
 	match shot:
 		"footage", "flash":
 			_camera_footage()
+		"gs_arrive":
+			_camera_gs_arrive()
+		"gs_window":
+			_camera_gs_window()
+		"gs_counter":
+			_camera_gs_counter()
+		"gs_leave":
+			_camera_gs_leave()
 		"chase":
 			_camera_chase()
 		"pov":
@@ -906,14 +1086,14 @@ func _camera_footage() -> void:
 func _camera_chase() -> void:
 	cam.fov = 62.0
 	var sway := Vector3(sin(_t * 0.7) * 0.25, sin(_t * 1.1) * 0.08, 0.0)
-	cam.global_position = car.global_position + Vector3(-0.9, 2.2, 6.6) + sway
-	cam.look_at(car.global_position + Vector3(0.0, 1.0, -10.0), Vector3.UP)
+	cam.global_position = car.global_position + Vector3(-0.8, 1.85, 5.6) + sway
+	cam.look_at(car.global_position + Vector3(0.0, 0.8, -10.0), Vector3.UP)
 
 func _camera_pov() -> void:
 	cam.fov = 70.0
 	var b := car.global_transform.basis
-	cam.global_position = car.global_transform * Vector3(-0.38, 1.3, 0.05)
-	cam.look_at(cam.global_position - b.z * 20.0 + Vector3(0.0, -0.9, 0.0), Vector3.UP)
+	cam.global_position = car.global_transform * EthanCar.EYE
+	cam.look_at(cam.global_position - b.z * 20.0 + Vector3(0.0, -1.1, 0.0), Vector3.UP)
 	var s := _car_swerve(_t)
 	if s > 0.0:
 		cam.rotate_object_local(Vector3.BACK, deg_to_rad(9.0) * sin(s * PI))
@@ -927,11 +1107,12 @@ func _camera_wake() -> void:
 	var lift := smoothstep(T_WAKE, T_WAKE + 2.6, _t)
 	var belt := smoothstep(T_BELT - 0.3, T_BELT + 0.3, _t) * (1.0 - smoothstep(T_GLOVEBOX - 0.2, T_GLOVEBOX + 0.3, _t))
 	var glove := smoothstep(T_GLOVEBOX - 0.2, T_GLOVEBOX + 0.3, _t)
-	cam.global_position = xf * Vector3(-0.38 + 0.1 * glove, lerpf(1.08, 1.25, lift), lerpf(-0.14, 0.05, lift))
+	var eye := EthanCar.EYE
+	cam.global_position = xf * Vector3(eye.x + 0.1 * glove, lerpf(eye.y - 0.16, eye.y, lift), lerpf(eye.z - 0.14, eye.z, lift))
 	# Голова поднимается от руля к капоту в пару, потом — к замку ремня и бардачку
-	var target := Vector3(-0.15, lerpf(0.55, 0.95, lift), -3.2)
-	target = target.lerp(Vector3(0.05, 0.62, -0.15), belt)
-	target = target.lerp(Vector3(0.75, 0.78, -0.8), glove)
+	var target := Vector3(-0.15, lerpf(0.45, 0.85, lift), -3.2)
+	target = target.lerp(EthanCar.BUCKLE, belt)
+	target = target.lerp(EthanCar.GLOVEBOX, glove)
 	cam.look_at(xf * target, xf.basis.y)
 	cam.rotate_object_local(Vector3.BACK, deg_to_rad(lerpf(14.0, 3.0, lift) + sin(_t * 0.8) * 1.5))
 	# Сознание возвращается: картинка понемногу обретает резкость
@@ -946,7 +1127,7 @@ func _camera_outside() -> void:
 	var rise := smoothstep(T_OUT + 0.2, T_OUT + 1.8, _t)
 	var pos := OUT_LOW.lerp(OUT_STAND, rise)
 	pos += Vector3(sin(_t * 1.3) * 0.04, sin(_t * 2.1) * 0.02, 0.0) * (1.0 - 0.5 * rise)
-	var target := Vector3(-8.4, 0.9, -249.0)                                            # нос пикапа в валуне
+	var target := Vector3(-8.1, 0.7, -248.0)                                            # смятая морда в валуне
 	target = target.lerp(Vector3(1.5, 0.9, -240.0), smoothstep(T_ROAD_LOOK, T_ROAD_LOOK + 1.3, _t))   # пустая дорога
 	target = target.lerp(Vector3(0.6, 0.15, -245.0), smoothstep(T_TORCH_ON + 0.2, T_TORCH_ON + 1.4, _t) * 0.6)
 	target = target.lerp(Vector3(-17.0, 1.7, -236.0), smoothstep(T_VOICE + 0.2, T_VOICE + 1.3, _t))   # голос из леса
@@ -1131,7 +1312,7 @@ func _build_ground_and_road() -> void:
 		z -= 9.0
 
 func _build_deer_sign() -> void:
-	# Жёлтый ромб с оленем — его пикап проезжает, пока звучит первое правило
+	# Жёлтый ромб с оленем: машина проезжает его в первом кадре шоссе — сразу после правил
 	var root := Node3D.new()
 	root.name = "DeerCrossingSign"
 	root.position = DEER_SIGN_POS
@@ -1257,7 +1438,7 @@ func _in_clearing(x: float, z: float) -> bool:
 	return x < -17.0 and x > -24.5 and z < -237.3 and z > -240.7
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  Место аварии и пикап Итана (тёмно-синий, как машина на 2-м уровне)
+#  Место аварии и машина Итана (красный хэтчбек, она же разбита на картах «Шоссе» и 6)
 # ──────────────────────────────────────────────────────────────────────────────
 func _build_crash_site() -> void:
 	# Валун у обочины — как CrashSiteRock на 2-м уровне
@@ -1268,24 +1449,26 @@ func _build_crash_site() -> void:
 
 func _build_car() -> void:
 	car = Node3D.new()
-	car.name = "EthanPickup"
+	car.name = "EthanCarRoot"
 	add_child(car)
 
-	car_body = PrefabBuilder.build_prefab("prop_car", Vector3(2.0, 1.5, 4.4), Color(0.15, 0.22, 0.35), false)
+	# Красный хэтчбек Итана (scripts/EthanCar.gd): снаружи и изнутри — одна и та же машина,
+	# вид от лица снимается из её настоящего салона
+	car_body = EthanCar.new()
 	car.add_child(car_body)
+	hood = car_body.hood
+	wheel_spin = car_body.wheel_spin
+	speed_needle = car_body.speed_needle
+	freshener = car_body.freshener
 
-	headlight_l = _make_headlight(-0.62, true)
-	headlight_r = _make_headlight(0.62, false)
-
-	cockpit = _build_cockpit()
-	cockpit.visible = false
-	car.add_child(cockpit)
+	headlight_l = _make_headlight(EthanCar.HEAD_L, true)
+	headlight_r = _make_headlight(EthanCar.HEAD_R, false)
 
 	steam = _build_steam()
-	steam.position = Vector3(0.0, 0.95, -1.85)
+	steam.position = EthanCar.STEAM_POINT
 	car.add_child(steam)
 
-func _make_headlight(x: float, shadows: bool) -> SpotLight3D:
+func _make_headlight(at: Vector3, shadows: bool) -> SpotLight3D:
 	var hl := SpotLight3D.new()
 	hl.light_color = Color(1.0, 0.95, 0.82)
 	hl.light_energy = 10.0
@@ -1294,101 +1477,10 @@ func _make_headlight(x: float, shadows: bool) -> SpotLight3D:
 	hl.spot_attenuation = 0.6
 	hl.shadow_enabled = shadows
 	hl.light_volumetric_fog_energy = 2.5
-	hl.position = Vector3(x, 0.66, -2.25)
+	hl.position = at + Vector3(0.0, 0.0, -0.06)
 	hl.rotation_degrees.x = -4.0
 	car.add_child(hl)
 	return hl
-
-func _build_cockpit() -> Node3D:
-	# Вид от лица водителя: капот, торпедо, руль, приборы, стойки и ёлочка под зеркалом
-	var root := Node3D.new()
-	root.name = "Cockpit"
-	var dark := _mat(Color(0.03, 0.035, 0.045), 0.6)
-	var trim := _mat(Color(0.07, 0.075, 0.085), 0.5)
-	var paint := _mat(Color(0.15, 0.22, 0.35), 0.35)
-	paint.metallic = 0.65
-	hood = _box(Vector3(1.8, 0.06, 1.65), Vector3(0.0, 0.93, -1.42), paint)
-	root.add_child(hood)
-	root.add_child(_box(Vector3(1.9, 0.22, 0.42), Vector3(0.0, 0.9, -0.55), dark))
-	root.add_child(_box(Vector3(0.55, 0.14, 0.14), Vector3(-0.38, 1.05, -0.67), dark))
-
-	# Приборы: тусклая зелёная подсветка, стрелка спидометра идёт за скоростью
-	var glow := StandardMaterial3D.new()
-	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glow.albedo_color = Color(0.04, 0.14, 0.11)
-	var needle_mat := StandardMaterial3D.new()
-	needle_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	needle_mat.albedo_color = Color(1.0, 0.45, 0.12)
-	for i in 2:
-		var dial_pivot := Node3D.new()
-		dial_pivot.position = Vector3(-0.5 + 0.24 * i, 1.04, -0.6)
-		dial_pivot.rotation_degrees.x = 78.0
-		root.add_child(dial_pivot)
-		var dial := MeshInstance3D.new()
-		var dm := CylinderMesh.new()
-		dm.top_radius = 0.055
-		dm.bottom_radius = 0.055
-		dm.height = 0.004
-		dm.material = glow
-		dial.mesh = dm
-		dial_pivot.add_child(dial)
-		var needle := Node3D.new()
-		dial_pivot.add_child(needle)
-		needle.add_child(_box(Vector3(0.004, 0.003, 0.045), Vector3(0.0, 0.004, -0.02), needle_mat))
-		if i == 0:
-			speed_needle = needle
-		else:
-			needle.rotation.y = deg_to_rad(10.0)
-	var cluster_light := OmniLight3D.new()
-	cluster_light.light_color = Color(0.3, 0.85, 0.7)
-	cluster_light.light_energy = 0.05
-	cluster_light.omni_range = 0.4
-	cluster_light.position = Vector3(-0.38, 1.05, -0.5)
-	root.add_child(cluster_light)
-
-	# Руль: ступица, две спицы и обод; во время заноса крутится влево
-	var wheel_pivot := Node3D.new()
-	wheel_pivot.position = Vector3(-0.38, 1.0, -0.42)
-	wheel_pivot.rotation_degrees.x = 65.0
-	root.add_child(wheel_pivot)
-	wheel_pivot.add_child(_box(Vector3(0.05, 0.3, 0.05), Vector3(0.0, -0.16, 0.0), dark))
-	wheel_spin = Node3D.new()
-	wheel_pivot.add_child(wheel_spin)
-	var rim := MeshInstance3D.new()
-	var tm := TorusMesh.new()
-	tm.inner_radius = 0.17
-	tm.outer_radius = 0.2
-	tm.rings = 24
-	tm.ring_segments = 8
-	tm.material = trim
-	rim.mesh = tm
-	wheel_spin.add_child(rim)
-	wheel_spin.add_child(_box(Vector3(0.34, 0.02, 0.03), Vector3.ZERO, trim))
-	wheel_spin.add_child(_box(Vector3(0.03, 0.02, 0.17), Vector3(0.0, 0.0, 0.09), trim))
-	wheel_spin.add_child(_box(Vector3(0.08, 0.04, 0.08), Vector3.ZERO, dark))
-
-	# Стойки, крыша, зеркало
-	root.add_child(_beam(Vector3(-0.84, 0.98, -0.8), Vector3(-0.74, 1.58, -0.2), 0.09, dark))
-	root.add_child(_beam(Vector3(0.84, 0.98, -0.8), Vector3(0.74, 1.58, -0.2), 0.09, dark))
-	root.add_child(_beam(Vector3(-0.74, 1.6, -0.2), Vector3(0.74, 1.6, -0.2), 0.1, dark))
-	root.add_child(_beam(Vector3(0.0, 1.6, -0.25), Vector3(0.0, 1.53, -0.47), 0.02, dark))
-	root.add_child(_box(Vector3(0.24, 0.07, 0.025), Vector3(0.0, 1.52, -0.49), dark))
-	freshener = Node3D.new()
-	freshener.position = Vector3(0.02, 1.485, -0.49)
-	root.add_child(freshener)
-	freshener.add_child(_box(Vector3(0.003, 0.11, 0.003), Vector3(0.0, -0.055, 0.0), _mat(Color(0.8, 0.8, 0.75), 0.9)))
-	var tree := MeshInstance3D.new()
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.0
-	cone.bottom_radius = 0.032
-	cone.height = 0.085
-	cone.radial_segments = 3
-	cone.material = _mat(Color(0.12, 0.45, 0.16), 0.8)
-	tree.mesh = cone
-	tree.position = Vector3(0.0, -0.15, 0.0)
-	tree.scale = Vector3(1.0, 1.0, 0.15)
-	freshener.add_child(tree)
-	return root
 
 func _build_steam() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
@@ -1432,6 +1524,275 @@ func _build_steam() -> CPUParticles3D:
 	quad.material = mat
 	p.mesh = quad
 	return p
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Заправка, 21:40: магазин и кассирша из scripts/GasStation.gd, объявление о Сэме,
+#  бутылки и карта на прилавке, путь «Гольфа» к колонке и обратно на шоссе
+# ──────────────────────────────────────────────────────────────────────────────
+func _build_station() -> void:
+	station = GasStation.new()
+	station.name = "GasStation"
+	station.build_environment = false     # небо, туман и луна — общие с шоссе
+	station.position = GS_ORIGIN
+	add_child(station)
+	_build_sam_poster()
+	_build_counter_props()
+	# К колонке: по своей полосе, плавно вправо через съезд, вдоль островка
+	var arrive: Array = [Vector2(1.75, 36.0)]
+	arrive.append_array(_bezier(Vector2(1.75, 18.0), Vector2(1.75, 9.0), Vector2(11.6, 8.0), Vector2(11.6, -3.4), 28))
+	gs_arrive_path = _make_path(arrive)
+	# Обратно: вперёд вдоль островка, через дальний съезд — на шоссе и в лес
+	var leave: Array = _bezier(Vector2(11.6, -3.4), Vector2(11.6, -9.5), Vector2(1.75, -9.0), Vector2(1.75, -21.0), 28)
+	leave.append(Vector2(1.75, -320.0))
+	gs_leave_path = _make_path(leave)
+	gs_attr = CameraAttributesPractical.new()
+	gs_attr.dof_blur_amount = 0.09
+
+# Свежее объявление среди старых пожелтевших «ПРОПАЛ»: Итан видит брата на стекле
+func _build_sam_poster() -> void:
+	var root := Node3D.new()
+	root.name = "SamPoster"
+	root.position = GS_POSTER
+	root.rotation.x = 0.025
+	station.add_child(root)
+	root.add_child(_box(Vector3(0.006, 0.46, 0.34), Vector3.ZERO, _mat(Color(0.84, 0.84, 0.8), 0.9)))
+	var tape_mat := _mat(Color(0.7, 0.68, 0.55), 0.5)
+	for c in [Vector2(0.21, 0.15), Vector2(0.21, -0.15), Vector2(-0.21, 0.15), Vector2(-0.21, -0.15)]:
+		root.add_child(_box(Vector3(0.007, 0.035, 0.06), Vector3(-0.0005, c.x, c.y), tape_mat))
+	# Фото — ксерокопия: тёмный квадрат, светлая голова и плечи
+	root.add_child(_box(Vector3(0.007, 0.17, 0.15), Vector3(-0.001, 0.03, 0.0), _mat(Color(0.07, 0.07, 0.07), 0.9)))
+	var face := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.5
+	sm.height = 1.0
+	face.mesh = sm
+	face.material_override = _mat(Color(0.38, 0.37, 0.34), 0.9)
+	face.scale = Vector3(0.002, 0.07, 0.052)
+	face.position = Vector3(-0.0045, 0.05, 0.0)
+	root.add_child(face)
+	root.add_child(_box(Vector3(0.002, 0.045, 0.12), Vector3(-0.0045, -0.025, 0.0), _mat(Color(0.3, 0.29, 0.27), 0.9)))
+	var ink := Color(0.06, 0.04, 0.035)
+	var at := GS_POSTER + Vector3(-0.006, 0.0, 0.0)
+	station._text("ПРОПАЛ", at + Vector3(0.0, 0.175, 0.0), -PI * 0.5, 0.055, ink, 4)
+	station._text("СЭМ КОУЛ", at + Vector3(0.0, -0.085, 0.0), -PI * 0.5, 0.034, ink, 2)
+	station._text("с 14 октября 1994", at + Vector3(0.0, -0.125, 0.0), -PI * 0.5, 0.022, ink)
+	station._text("шоссе через Блэк-Пайн", at + Vector3(0.0, -0.155, 0.0), -PI * 0.5, 0.019, ink)
+	station._text("Видели его? Сообщите шерифу", at + Vector3(0.0, -0.19, 0.0), -PI * 0.5, 0.017, Color(0.35, 0.05, 0.04))
+
+# Три бутылки газировки (из них потом и будут броски в игре) и карта с кругом посреди леса
+func _build_counter_props() -> void:
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.2, 0.46, 0.26, 0.6)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.06
+	glass.metallic_specular = 0.9
+	var soda := _mat(Color(0.12, 0.05, 0.02), 0.3)
+	var cap := _mat(Color(0.62, 0.6, 0.52), 0.35)
+	cap.metallic = 0.8
+	var paper := _mat(Color(0.78, 0.7, 0.46), 0.7)
+	for i in 3:
+		var b := Node3D.new()
+		b.name = "Bottle%d" % i
+		b.position = GS_BOTTLES[i]
+		b.visible = false
+		station.add_child(b)
+		b.add_child(_cyl(0.026, 0.026, 0.12, Vector3(0.0, 0.07, 0.0), soda))
+		b.add_child(_cyl(0.0305, 0.0305, 0.055, Vector3(0.0, 0.08, 0.0), paper))
+		b.add_child(_cyl(0.03, 0.03, 0.17, Vector3(0.0, 0.085, 0.0), glass))
+		b.add_child(_cyl(0.012, 0.03, 0.05, Vector3(0.0, 0.195, 0.0), glass))
+		b.add_child(_cyl(0.012, 0.012, 0.045, Vector3(0.0, 0.24, 0.0), glass))
+		b.add_child(_cyl(0.0135, 0.0135, 0.012, Vector3(0.0, 0.266, 0.0), cap))
+		gs_bottles.append(b)
+	gs_map = MeshInstance3D.new()
+	gs_map.name = "EthanMap"
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(0.3, 0.42)
+	var mm := StandardMaterial3D.new()
+	mm.albedo_texture = _map_texture()
+	mm.roughness = 0.95
+	pm.material = mm
+	gs_map.mesh = pm
+	gs_map.position = GS_MAP_POS
+	gs_map.rotation.y = 0.32
+	gs_map.visible = false
+	station.add_child(gs_map)
+
+# Дорожная карта: бумага со сгибами, лес, шоссе через него и круг красной ручкой
+func _map_texture() -> ImageTexture:
+	var w := 192
+	var h := 272
+	var img := Image.create(w, h, false, Image.FORMAT_RGB8)
+	var grain := FastNoiseLite.new()
+	grain.frequency = 0.05
+	var edge := FastNoiseLite.new()
+	edge.seed = 7
+	edge.frequency = 0.03
+	var center := Vector2(w * 0.56, h * 0.47)
+	for y in h:
+		for x in w:
+			var col := Color(0.8, 0.75, 0.6).darkened(0.07 * (grain.get_noise_2d(x, y) * 0.5 + 0.5))
+			if Vector2(x, y).distance_to(center) + edge.get_noise_2d(x, y) * 26.0 < 78.0:
+				col = col.lerp(Color(0.36, 0.5, 0.33), 0.72)
+			img.set_pixel(x, y, col)
+	for y in h:
+		img.set_pixel(w / 2, y, img.get_pixel(w / 2, y).darkened(0.25))
+	for x in w:
+		for yy in [h / 3, h * 2 / 3]:
+			img.set_pixel(x, yy, img.get_pixel(x, yy).darkened(0.22))
+	# Шоссе снизу вверх через лес, просёлки в стороны
+	for y in h:
+		var rx := int(w * 0.43 + sin(y * 0.02) * 16.0)
+		for k in range(-1, 2):
+			img.set_pixel(clampi(rx + k, 0, w - 1), y, Color(0.6, 0.16, 0.1))
+	for x in range(0, int(w * 0.43)):
+		var ry := int(h * 0.8 + x * 0.12)
+		img.set_pixel(x, clampi(ry, 0, h - 1), Color(0.35, 0.33, 0.3))
+	# Круг ручкой посреди леса — туда, где Сэм ставил камеры
+	for i in 360:
+		var a := TAU * float(i) / 360.0
+		var r := 22.0 + sin(a * 3.0) * 1.5
+		for k in 2:
+			var p := center + Vector2(cos(a), sin(a)) * (r + float(k))
+			img.set_pixel(clampi(int(p.x), 0, w - 1), clampi(int(p.y), 0, h - 1), Color(0.72, 0.05, 0.04))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+func _bezier(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, n: int) -> Array:
+	var pts := []
+	for i in n + 1:
+		var u := float(i) / float(n)
+		var v := 1.0 - u
+		pts.append(p0 * v * v * v + p1 * 3.0 * v * v * u + p2 * 3.0 * v * u * u + p3 * u * u * u)
+	return pts
+
+func _make_path(pts: Array) -> Dictionary:
+	var acc := PackedFloat32Array([0.0])
+	for i in range(1, pts.size()):
+		acc.append(acc[i - 1] + (pts[i] as Vector2).distance_to(pts[i - 1]))
+	return {"pts": pts, "acc": acc, "len": acc[acc.size() - 1]}
+
+func _path_pos(path: Dictionary, s: float) -> Vector2:
+	var pts: Array = path["pts"]
+	var acc: PackedFloat32Array = path["acc"]
+	s = clampf(s, 0.0, path["len"])
+	var i := acc.bsearch(s)
+	if i <= 0:
+		return pts[0]
+	if i >= pts.size():
+		return pts[pts.size() - 1]
+	var seg := acc[i] - acc[i - 1]
+	var u := (s - acc[i - 1]) / seg if seg > 0.0001 else 0.0
+	return (pts[i - 1] as Vector2).lerp(pts[i], u)
+
+# Машина смотрит вдоль -Z при повороте 0; курс — по соседним точкам пути
+func _path_xform(path: Dictionary, s: float) -> Transform3D:
+	var p := _path_pos(path, s)
+	var d := _path_pos(path, s + 1.0) - _path_pos(path, s - 1.0)
+	return Transform3D(Basis(Vector3.UP, atan2(-d.x, -d.y)), GS_ORIGIN + Vector3(p.x, 0.0, p.y))
+
+func _station_car_xform() -> Transform3D:
+	if _t < T_GS_LEAVE + GS_CAR_GO:
+		# Тормозит всю дорогу от шоссе до колонки
+		var u := clampf((_t - T_GS_ARRIVE + 0.5) / (T_GS_PARKED - T_GS_ARRIVE + 0.5), 0.0, 1.0)
+		return _path_xform(gs_arrive_path, float(gs_arrive_path["len"]) * (1.0 - pow(1.0 - u, 2.0)))
+	var e := _t - T_GS_LEAVE - GS_CAR_GO
+	return _path_xform(gs_leave_path, 0.5 * GS_CAR_ACCEL * e * e)
+
+func _update_station() -> void:
+	if not station:
+		return
+	if _t >= T_DRIVE:
+		if station.visible:
+			station.visible = false
+			station.process_mode = Node.PROCESS_MODE_DISABLED
+		return
+	# Куда смотрит кассирша: в журнал → на дверь (колокольчик) → на Итана и его карту → в окно → вслед машине
+	var look: Vector3 = car.global_position + Vector3(0.0, 1.0, 0.0)
+	if _t < T_GS_WINDOW + 1.95:
+		look = GS_ORIGIN + GS_MAGAZINE
+	elif _t < T_GS_COUNTER:
+		look = GS_ORIGIN + GS_DOOR
+	elif _t < T_GS_COUNTER + 0.9 or (_t >= T_GS_COUNTER + 2.0 and _t < T_GS_TAKE + 0.2):
+		look = cam.global_position
+	elif _t < T_GS_COUNTER + 2.0:
+		look = GS_ORIGIN + GS_MAP_POS
+	elif _t < T_GS_LEAVE:
+		look = GS_ORIGIN + GS_WINDOW_DARK
+	station.cashier.set_look_target(look)
+	# Бутылки встают на прилавок по одной и уходят в рюкзак; карта выезжает из-под руки
+	for i in gs_bottles.size():
+		var put: float = T_GS_COUNTER + GS_BOTTLE_CLINK[i]
+		gs_bottles[i].visible = _t >= put - 0.12 and _t < T_GS_TAKE + 0.08 + 0.12 * i
+		gs_bottles[i].position = GS_BOTTLES[i] + Vector3(0.0, 0.06 * (1.0 - smoothstep(put - 0.12, put, _t)), 0.0)
+	gs_map.visible = _t >= T_GS_COUNTER + 0.75 and _t < T_GS_TAKE + 0.55
+	var slide := smoothstep(T_GS_COUNTER + 0.75, T_GS_COUNTER + 1.05, _t)
+	gs_map.position = GS_MAP_POS + Vector3(-0.26, 0.0, 0.05) * (1.0 - slide)
+
+# Кассирша говорит вполголоса: губы по буквам, звук фразы и субтитр
+func _cashier_says(sound_name: String, line: String, speech: float) -> void:
+	_sfx(sound_name, -6.0, 1.0, false, BUS_MASTER)
+	if station:
+		station.cashier.say(line, speech)
+	_say(CASHIER, "«%s»" % line, speech + 0.25)
+
+func _show_time_card() -> void:
+	var tw := create_tween()
+	tw.tween_interval(0.5)
+	tw.tween_property(time_card, "modulate:a", 1.0, 0.6)
+	tw.tween_interval(2.4)
+	tw.tween_property(time_card, "modulate:a", 0.0, 0.6)
+
+func _camera_gs_arrive() -> void:
+	cam.fov = 50.0
+	var u := smoothstep(T_GS_ARRIVE, T_GS_WINDOW, _t)
+	cam.global_position = GS_ORIGIN + GS_CAM_ARRIVE + Vector3(0.25 * u, sin(_t * 0.6) * 0.02, -0.5 * u)
+	var follow := car.global_position + Vector3(0.0, 0.8, 0.0)
+	cam.look_at(follow.lerp(GS_ORIGIN + Vector3(16.0, 2.0, -1.0), 0.35), Vector3.UP)
+
+func _camera_gs_window() -> void:
+	var e := _t - T_GS_WINDOW
+	var pull := smoothstep(1.4, 2.3, e)
+	cam.fov = 44.0
+	cam.global_position = GS_ORIGIN + GS_CAM_WINDOW + Vector3(0.05 * e, 0.0, 0.0)
+	cam.look_at((GS_ORIGIN + GS_POSTER).lerp(station.cashier.get_head_position(), pull), Vector3.UP)
+	# Фокус: сначала лист на стекле, потом — кассирша за ним
+	gs_attr.dof_blur_far_enabled = true
+	gs_attr.dof_blur_far_distance = lerpf(1.3, 7.0, pull)
+	gs_attr.dof_blur_far_transition = lerpf(1.2, 3.0, pull)
+	gs_attr.dof_blur_near_enabled = pull > 0.02
+	gs_attr.dof_blur_near_distance = lerpf(0.2, 2.4, pull)
+	gs_attr.dof_blur_near_transition = 1.0
+	cam.attributes = gs_attr
+
+func _camera_gs_counter() -> void:
+	var e := _t - T_GS_COUNTER
+	var counter := GS_ORIGIN + Vector3(24.75, 1.0, 1.25)
+	var look := counter.lerp(GS_ORIGIN + GS_MAP_POS, smoothstep(0.7, 1.3, e)).lerp(station.cashier.get_head_position(), smoothstep(1.8, 2.7, e))
+	cam.global_position = GS_ORIGIN + GS_CAM_COUNTER + Vector3(sin(_t * 0.9) * 0.01, sin(_t * 1.3) * 0.008, sin(_t * 0.7) * 0.01)
+	cam.look_at(look, Vector3.UP)
+	cam.fov = lerpf(52.0, 40.0, smoothstep(T_GS_ASK, T_GS_TAKE, _t))
+
+func _camera_gs_leave() -> void:
+	# Камера почти стоит: машина проходит перед ней влево и тает на шоссе, а в светлом окне остаётся кассирша
+	var e := _t - T_GS_LEAVE
+	cam.fov = 46.0
+	cam.global_position = GS_ORIGIN + GS_CAM_LEAVE + Vector3(0.0, sin(_t * 0.5) * 0.02, -0.12 * e)
+	var store := GS_ORIGIN + Vector3(17.0, 1.6, -1.5)
+	var follow := car.global_position + Vector3(0.0, 0.8, 0.0)
+	cam.look_at(store.lerp(follow, 0.45 * smoothstep(0.3, 2.6, e)), Vector3.UP)
+
+func _cyl(top_r: float, bottom_r: float, h: float, pos: Vector3, mat: StandardMaterial3D) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = top_r
+	cm.bottom_radius = bottom_r
+	cm.height = h
+	cm.radial_segments = 16
+	cm.rings = 1
+	cm.material = mat
+	mi.mesh = cm
+	mi.position = pos
+	return mi
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  «Олень» на дороге (силуэт Olen.png), глаза загораются, когда он встаёт
@@ -1839,8 +2200,20 @@ func _build_overlay() -> void:
 	var date_title := _make_label("31 ОКТЯБРЯ 1994", 42, Color(0.92, 0.93, 0.95))
 	date_title.add_theme_font_override("font", VHSOverlay.tracked_font(6))
 	title_box.add_child(date_title)
-	title_box.add_child(_make_label("Шоссе через лес Блэк-Пайн · 23:06", 18, Color(0.62, 0.66, 0.74)))
+	title_place = _make_label("Последняя заправка перед лесом Блэк-Пайн · 21:40", 18, Color(0.62, 0.66, 0.74))
+	title_box.add_child(title_place)
 	layer.add_child(title_box)
+
+	# Подпись времени поверх кадра шоссе: прошло полтора часа
+	time_card = _make_label("23:06 · Шоссе через лес Блэк-Пайн", 18, Color(0.74, 0.77, 0.84))
+	time_card.add_theme_font_override("font", VHSOverlay.tracked_font(3))
+	time_card.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	time_card.anchor_left = 0.06
+	time_card.anchor_right = 0.7
+	time_card.anchor_top = 0.11
+	time_card.anchor_bottom = 0.17
+	time_card.modulate.a = 0.0
+	layer.add_child(time_card)
 
 	# Тёмная подложка: шёпот Сэма должен читаться поверх белого шума
 	sub_back = ColorRect.new()

@@ -6,6 +6,7 @@ extends Node3D
 # у камеры падает и оборачивается. После скримера начинается 1-й уровень.
 
 const WRECK_POS := Vector3(-7.2, 0.0, -247.1)
+const WRECK_ROT := Vector3(-4.0, 34.0, 3.0)    # поворот «Машины Итана» на карте — та же поза, что во вступлении
 const HOUSE_DIR_POS := Vector3(-60.0, 2.0, -225.0)
 const CAMERA_POS := Vector3(-7.4, 0.0, -312.0)
 const NEXT_MAP := "res://scenes/1level.json"
@@ -30,6 +31,7 @@ var _steam_audio: AudioStreamPlayer3D
 var _heart: AudioStreamPlayer
 var _steam: CPUParticles3D
 var _car_light: SpotLight3D
+var _ethan_car: Node
 var _cam_led: MeshInstance3D
 var _led_light: OmniLight3D
 var _flicker_lights: Array[Light3D] = []
@@ -93,6 +95,10 @@ func _sound(path: String, db: float = 0.0, pitch: float = 1.0) -> AudioStreamPla
 	p.finished.connect(p.queue_free)
 	p.play()
 	return p
+
+
+func _wreck_xform() -> Transform3D:
+	return Transform3D(Basis.from_euler(WRECK_ROT * (PI / 180.0)), WRECK_POS + Vector3(0.0, 0.05, 0.0))
 
 
 func _sound_at(path: String, at: Vector3, db: float = 0.0, pitch: float = 1.0, loop: bool = false) -> AudioStreamPlayer3D:
@@ -566,17 +572,20 @@ func _build_crash_effects() -> void:
 	quad.material = mat
 	_steam.mesh = quad
 	add_child(_steam)
-	_steam.global_position = WRECK_POS + Vector3(-1.2, 1.0, -1.7)
+	# Точки берутся у самой машины (EthanCar): пар — из-под смятого капота
+	var wreck := _wreck_xform()
+	_steam.global_position = wreck * EthanCar.STEAM_POINT
 
-	# Уцелевшая фара упирается в валун и мигает
+	# Уцелевшая правая фара упирается в валун и мигает (левая разбита ударом)
 	_car_light = SpotLight3D.new()
 	_car_light.light_color = Color(1.0, 0.92, 0.72)
 	_car_light.light_energy = 5.0
 	_car_light.spot_range = 13.0
 	_car_light.spot_angle = 32.0
 	add_child(_car_light)
-	_car_light.global_position = WRECK_POS + Vector3(-0.2, 0.75, -2.0)
-	_car_light.look_at(WRECK_POS + Vector3(-3.5, 0.5, -8.0), Vector3.UP)
+	var lamp := wreck * (EthanCar.wreck_point(EthanCar.HEAD_R) + Vector3(0.0, 0.0, -0.06))
+	_car_light.global_position = lamp
+	_car_light.look_at(lamp + wreck.basis * Vector3(0.0, -0.08, -1.0), Vector3.UP)
 
 	# Фонарь через дорогу от аварии мигает, как в кат-сцене
 	var flick := SpotLight3D.new()
@@ -875,12 +884,13 @@ func _run_start() -> void:
 	_player = GameManager.player_ref
 	_head = _player.get("head")
 	_player.set("is_in_cutscene", true)
-	# Итан смотрит на разбитый пикап, голова кружится
+	# Итан смотрит на разбитую машину, голова кружится
 	_player.rotation.y = atan2(_player.global_position.x - WRECK_POS.x, _player.global_position.z - WRECK_POS.z)
 	_head.position.y = 0.7
 	_head.rotation.z = 0.25
-	_horn = _sound_at("res://assets/audio/car_horn.wav", WRECK_POS + Vector3.UP, -3.0, 0.96, true)
-	_steam_audio = _sound_at("res://assets/audio/car_steam.wav", WRECK_POS + Vector3.UP, -6.0, 1.0, true)
+	# Тот же заклинивший сигнал и тот же пар, что в конце вступления: кадр сменился, звук — нет
+	_horn = _sound_at("res://assets/audio/intro/horn_stuck.wav", WRECK_POS + Vector3.UP, -3.0, 1.0, true)
+	_steam_audio = _sound_at("res://assets/audio/intro/steam_loop.wav", WRECK_POS + Vector3.UP, -6.0, 1.0, true)
 	var amb := _sound("res://assets/ambient_night.mp3", -18.0)
 	if amb:
 		amb.finished.disconnect(amb.queue_free)
@@ -912,7 +922,13 @@ func _process(delta: float) -> void:
 func _update_flicker() -> void:
 	var off := sin(_t * 13.0) * cos(_t * 7.3) > 0.55
 	if is_instance_valid(_car_light):
-		_car_light.light_energy = 0.8 if sin(_t * 23.0) < -0.85 else 5.0
+		var dim := sin(_t * 23.0) < -0.85
+		_car_light.light_energy = 0.8 if dim else 5.0
+		# Стекло той же фары на машине мигает вместе со светом
+		if not is_instance_valid(_ethan_car):
+			_ethan_car = get_tree().get_first_node_in_group("ethan_car")
+		if is_instance_valid(_ethan_car):
+			_ethan_car.call("set_right_lamp", 0.5 if dim else 2.6)
 	if _flicker_lights.size() > 0 and is_instance_valid(_flicker_lights[0]):
 		_flicker_lights[0].light_energy = 0.15 if off else 2.2
 	if is_instance_valid(_tv_light) and _tv_light.visible:
@@ -935,7 +951,9 @@ func _update_story(pos: Vector3) -> void:
 			_horn.finished.disconnect(_horn.play)
 			_horn.stop()
 			_horn.queue_free()
+			_sound_at("res://assets/audio/intro/horn_die.wav", WRECK_POS + Vector3.UP, -3.0)
 	if _t > 10.0 and _once("voice_1"):
+		_sound_at("res://assets/audio/intro/voice_call.wav", HOUSE_DIR_POS, 0.0)
 		_say("ГОЛОС ИЗ ЛЕСА", "«Итан!.. Итан, я здесь!»", 3.0)
 	if _t > 16.0 and _once("thought_1"):
 		_say("ИТАН", "Это голос Сэма. Вон там тропа и свет в окне.", 3.2)

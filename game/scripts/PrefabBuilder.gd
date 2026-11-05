@@ -44,6 +44,7 @@ static func get_prefab_base_size(type: String) -> Vector3:
 		"prop_mirror_broken": return Vector3(0.80, 1.20, 0.08)
 		"prop_car": return Vector3(2.00, 1.50, 4.40)
 		"prop_car_wreck": return Vector3(2.10, 1.40, 4.40)
+		"prop_ethan_car": return EthanCar.SIZE
 		"prop_bench": return Vector3(1.60, 0.85, 0.65)
 		"prop_streetlight": return Vector3(0.60, 4.20, 0.90)
 		"prop_fence_section": return Vector3(2.50, 1.40, 0.12)
@@ -4547,6 +4548,25 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 				col.position = Vector3(0, sz.y * 0.5, 0)
 				sb.add_child(col)
 
+			root.add_child(sb)
+
+		"prop_ethan_car":
+			# Машина Итана после удара о валун — тот же красный хэтчбек, что во вступлении.
+			# Строится в настоящем размере: масштаб из карты сюда не передаётся
+			var sb = StaticBody3D.new()
+			sb.collision_layer = 1
+			sb.collision_mask = 0
+			var ethan_car := EthanCar.new()
+			ethan_car.set_wrecked(true)
+			ethan_car.set_lights(true)
+			sb.add_child(ethan_car)
+			if not is_ghost:
+				var col = CollisionShape3D.new()
+				var shape = BoxShape3D.new()
+				shape.size = Vector3(EthanCar.SIZE.x, 1.3, EthanCar.SIZE.z - 0.3)
+				col.shape = shape
+				col.position = Vector3(0, 0.65, 0.15)
+				sb.add_child(col)
 			root.add_child(sb)
 
 		"prop_car_wreck", "custom_prop_car_wreck":
