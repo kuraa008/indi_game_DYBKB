@@ -152,6 +152,7 @@ var is_reading_note:   bool   = false
 #  Map data (filled by Main.gd from JSON)
 # ──────────────────────────────────────────────
 var active_map_path: String = "res://scenes/1level.json"
+var intro_epilogue: bool = false
 var door_position: Vector3 = Vector3(-0.9, 0.5, 10.5)
 
 func is_level_2() -> bool:

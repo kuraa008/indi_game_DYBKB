@@ -1142,5 +1142,7 @@ func _start_scare() -> void:
 	scare.finished.connect(_finish)
 
 
+# После скримера финал из кат-сцены: Итана волокут за ворота, затем 1-й уровень
 func _finish() -> void:
-	GameManager.start_level_transition(NEXT_MAP, false)
+	GameManager.intro_epilogue = true
+	get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
