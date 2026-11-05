@@ -927,9 +927,21 @@ static func _build_realistic_dresser(sb: StaticBody3D, is_ghost: bool) -> void:
 	sb.add_child(drawer_root)
 
 static func build_prefab(type: String, sz: Vector3, color: Color, is_ghost: bool, custom_model_path: String = "") -> Node3D:
-	var built := _build_prefab_raw(type, sz, color, is_ghost, custom_model_path)
+	var build_sz := sz
+	var final_scale := Vector3.ZERO
+	var plain := type.trim_prefix("custom_")
+	if custom_model_path == "" and sz != Vector3.ZERO and plain != "prop_tree_pine" and plain != "cube" and not plain.begins_with("floor") and not plain.begins_with("ceiling") and not plain.begins_with("door"):
+		var base_sz := get_prefab_base_size(type)
+		if base_sz.x > 0.01 and base_sz.y > 0.01 and base_sz.z > 0.01 and not sz.is_equal_approx(base_sz):
+			build_sz = base_sz
+			final_scale = Vector3(sz.x / base_sz.x, sz.y / base_sz.y, sz.z / base_sz.z)
+	var built := _build_prefab_raw(type, build_sz, color, is_ghost, custom_model_path)
 	if built != null:
+		if final_scale != Vector3.ZERO:
+			built.scale = final_scale
 		NatureKit.simplify_primitives(built)
+		if not is_ghost:
+			HouseKit.dress_prefab(built, type)
 	return built
 
 
@@ -1144,120 +1156,16 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 		#  ДЕКОР ХОРРОРА: ЛУЖА КРОВИ (Плоская, сквозная)
 		# ─────────────────────────────────────────────────────────────
 		"prop_blood_puddle":
-			var holder = Area3D.new()
-			holder.collision_layer = 1
-			holder.collision_mask = 0
-
-			var bmat = StandardMaterial3D.new()
-			bmat.albedo_color = Color(0.38, 0.015, 0.02)
-			bmat.roughness = 0.15 # мокрая отражающая кровь
-			bmat.metallic = 0.05
-			if is_ghost:
-				bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				bmat.albedo_color.a = 0.60
-
-			# Центральное пятно
-			var p1 = MeshInstance3D.new()
-			var cyl1 = CylinderMesh.new()
-			cyl1.top_radius = 0.85
-			cyl1.bottom_radius = 0.90
-			cyl1.height = 0.02
-			cyl1.material = bmat
-			p1.mesh = cyl1
-			p1.position = Vector3(0, 0.01, 0)
-			holder.add_child(p1)
-
-			# Второй овал
-			var p2 = MeshInstance3D.new()
-			var cyl2 = CylinderMesh.new()
-			cyl2.top_radius = 0.55
-			cyl2.bottom_radius = 0.60
-			cyl2.height = 0.022
-			cyl2.material = bmat
-			p2.mesh = cyl2
-			p2.position = Vector3(0.45, 0.011, 0.35)
-			holder.add_child(p2)
-
-			# Третий овал
-			var p3 = MeshInstance3D.new()
-			var cyl3 = CylinderMesh.new()
-			cyl3.top_radius = 0.40
-			cyl3.bottom_radius = 0.45
-			cyl3.height = 0.024
-			cyl3.material = bmat
-			p3.mesh = cyl3
-			p3.position = Vector3(-0.40, 0.012, -0.30)
-			holder.add_child(p3)
-
-			# Брызги-капли вокруг
-			var drop_coords = [Vector3(0.95, 0.01, -0.4), Vector3(-0.85, 0.01, 0.6), Vector3(0.1, 0.01, -0.9)]
-			for coord in drop_coords:
-				var drop = MeshInstance3D.new()
-				var dcyl = CylinderMesh.new()
-				dcyl.top_radius = 0.08
-				dcyl.bottom_radius = 0.10
-				dcyl.height = 0.02
-				dcyl.material = bmat
-				drop.mesh = dcyl
-				drop.position = coord
-				holder.add_child(drop)
-
-			if not is_ghost:
-				var col = CollisionShape3D.new()
-				var box = BoxShape3D.new()
-				box.size = Vector3(2.2, 0.2, 2.2)
-				col.shape = box
-				holder.add_child(col)
-
+			var holder = Node3D.new()
+			HouseKit.add_blood_pool(holder, Vector3(2.0, 0.04, 2.0))
 			root.add_child(holder)
 
 		# ─────────────────────────────────────────────────────────────
 		#  ДЕКОР ХОРРОРА: КРОВЬ НА СТЕНЕ (Подтеки)
 		# ─────────────────────────────────────────────────────────────
 		"prop_blood_wall":
-			var holder = Area3D.new()
-			holder.collision_layer = 1
-			holder.collision_mask = 0
-
-			var bmat = StandardMaterial3D.new()
-			bmat.albedo_color = Color(0.36, 0.012, 0.02)
-			bmat.roughness = 0.25
-			if is_ghost:
-				bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				bmat.albedo_color.a = 0.60
-
-			# Главное пятно на стене
-			var main_splash = MeshInstance3D.new()
-			var smesh = BoxMesh.new()
-			smesh.size = Vector3(0.70, 0.75, 0.03)
-			smesh.material = bmat
-			main_splash.mesh = smesh
-			main_splash.position = Vector3(0, 0.2, 0)
-			holder.add_child(main_splash)
-
-			# 3 ручейка крови, стекающих вниз
-			var drips = [
-				Vector3(-0.18, -0.35, 0.005),
-				Vector3(0.06, -0.50, 0.005),
-				Vector3(0.22, -0.30, 0.005)
-			]
-			var drip_heights = [0.50, 0.80, 0.40]
-			for i in range(3):
-				var d_mesh = MeshInstance3D.new()
-				var bm = BoxMesh.new()
-				bm.size = Vector3(0.06, drip_heights[i], 0.032)
-				bm.material = bmat
-				d_mesh.mesh = bm
-				d_mesh.position = drips[i]
-				holder.add_child(d_mesh)
-
-			if not is_ghost:
-				var col = CollisionShape3D.new()
-				var box = BoxShape3D.new()
-				box.size = Vector3(0.9, 1.4, 0.2)
-				col.shape = box
-				holder.add_child(col)
-
+			var holder = Node3D.new()
+			HouseKit.add_blood_wall(holder, Vector3(0.8, 1.2, 0.1))
 			root.add_child(holder)
 
 		# ─────────────────────────────────────────────────────────────
@@ -3407,14 +3315,14 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			var r_box = BoxMesh.new()
 			r_box.size = Vector3(w + 0.5, thickness * 1.1, 0.35)
 			var rmat = StandardMaterial3D.new()
-			rmat.albedo_color = Color(0.28, 0.10, 0.10)
+			rmat.albedo_color = Color(0.28, 0.10, 0.10) if color == Color.WHITE else color.darkened(0.15)
 			r_box.material = rmat
 			ridge.mesh = r_box
 			ridge.position = Vector3(0, h + 0.05, 0)
 			sb.add_child(ridge)
 
 			var gable_mat = StandardMaterial3D.new()
-			gable_mat.albedo_color = Color(0.48, 0.46, 0.42)
+			gable_mat.albedo_color = Color(0.48, 0.46, 0.42) if color == Color.WHITE else color.lightened(0.06)
 			var g_front = MeshInstance3D.new()
 			var gm = PrismMesh.new()
 			gm.size = Vector3(d, h, 0.2)
@@ -4199,6 +4107,9 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 				sb.add_child(col)
 
 			root.add_child(sb)
+
+		"prop_window_v0", "prop_window_v1", "prop_window_v2", "prop_window_v3":
+			HouseKit.add_window(root, int(type.right(1)))
 
 		"prop_window_boarded", "custom_prop_window_boarded":
 			var sb = StaticBody3D.new()
@@ -5275,45 +5186,18 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			var d_root = Node3D.new()
 			d_root.set_meta("item_type", "door_simple")
 			d_root.set_meta("door_type", "simple")
+			d_root.set_meta("keep_door_look", true)
+			root.set_meta("keep_door_look", true)
 
-			# Контрастная темная рама (черненый орех), чтобы дверь четко выделялась на любой стене
-			var f_mat = StandardMaterial3D.new()
-			f_mat.albedo_color = Color(0.12, 0.08, 0.06)
-			f_mat.roughness = 0.90
-			f_mat.metallic = 0.05
-			f_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-
-			var frame_th = 0.075
+			var frame_th = 0.05
 			var eff_w: float = sz.x if sz.x > 0.3 else 1.02
 			var eff_h: float = sz.y if sz.y > 0.5 else 2.12
 			var eff_th: float = sz.z if sz.z > 0.04 else 0.14
 
-			var fl = MeshInstance3D.new()
-			fl.name = "fl"
-			var fl_m = BoxMesh.new()
-			fl_m.size = Vector3(frame_th, eff_h, eff_th * 1.15)
-			fl_m.material = f_mat
-			fl.mesh = fl_m
-			fl.position = Vector3(-eff_w * 0.5 + frame_th * 0.5, eff_h * 0.5, 0)
-			fl.extra_cull_margin = 16.0
-			d_root.add_child(fl)
-
-			var fr = MeshInstance3D.new()
-			fr.name = "fr"
-			fr.mesh = fl_m
-			fr.position = Vector3(eff_w * 0.5 - frame_th * 0.5, eff_h * 0.5, 0)
-			fr.extra_cull_margin = 16.0
-			d_root.add_child(fr)
-
-			var ft = MeshInstance3D.new()
-			ft.name = "ft"
-			var ft_m = BoxMesh.new()
-			ft_m.size = Vector3(eff_w, frame_th, eff_th * 1.15)
-			ft_m.material = f_mat
-			ft.mesh = ft_m
-			ft.position = Vector3(0, eff_h - frame_th * 0.5, 0)
-			ft.extra_cull_margin = 16.0
-			d_root.add_child(ft)
+			var frame_mi = MeshInstance3D.new()
+			frame_mi.name = "DoorFrame"
+			frame_mi.mesh = HouseKit.door_frame_mesh(eff_w, eff_h, maxf(eff_th, 0.16))
+			d_root.add_child(frame_mi)
 
 			var hinge = Node3D.new()
 			hinge.name = "Hinge"
@@ -5326,16 +5210,18 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			panel.collision_mask = 0
 			panel.set_meta("item_type", "door_simple")
 			panel.set_meta("door_type", "simple")
+			panel.set_meta("keep_door_look", true)
 
-			var p_w = max(0.4, eff_w - (frame_th * 2.0))
-			var p_h = max(0.5, eff_h - frame_th)
-			var p_th = 0.048
+			var p_w = max(0.4, eff_w - (frame_th * 2.0) - 0.006)
+			var p_h = max(0.5, eff_h - frame_th - 0.012)
+			var p_th = 0.05
 
-			var p_mat = StandardMaterial3D.new()
-			p_mat.albedo_color = Color(0.40, 0.24, 0.14)
-			p_mat.roughness = 0.8
-
-			var pm = build_realistic_door_leaf(panel, p_w, p_h, p_th, p_mat)
+			var pm = MeshInstance3D.new()
+			pm.name = "HouseDoorLeaf"
+			pm.mesh = HouseKit.door_leaf_mesh(p_w, p_h)
+			pm.position = Vector3(0, 0.012, 0)
+			pm.extra_cull_margin = 2.0
+			panel.add_child(pm)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()
@@ -5357,7 +5243,6 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 				d_root.set("has_electric_meter", false)
 
 			hinge.add_child(panel)
-			TextureHelper.apply_door_texture_to_node(d_root, "door_classic_panel")
 			root.add_child(d_root)
 
 		"door_electric", "custom_door_electric", "prop_electric_door", "custom_prop_electric_door":

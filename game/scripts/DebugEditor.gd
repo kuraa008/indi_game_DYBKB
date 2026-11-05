@@ -2567,7 +2567,8 @@ func _is_centered_origin_type(t: String) -> bool:
 	return false
 
 func _is_primitive_box_type(t: String) -> bool:
-	if t == "cube" or t == "floor_custom" or t == "ceiling_custom" or t == "roof_gable":
+	# Крыша собрана из нескольких деталей: растягивать каждую как коробку нельзя
+	if t == "cube" or t == "floor_custom" or t == "ceiling_custom":
 		return true
 	if t.begins_with("wall") and not t.begins_with("wall_lamp") and not t.begins_with("wall_clock"):
 		return true
@@ -4239,6 +4240,9 @@ func _process_status_bar(delta: float) -> void:
 	var p := editor_cam.global_position
 	_status_lbl.text = "Объектов: %d  |  Камера: %.0f, %.0f, %.0f  |  Скорость: %.0f м/с  |  FPS: %d" % [objects_root.get_child_count(), p.x, p.y, p.z, cam_speed, Engine.get_frames_per_second()]
 
+var _map_extras: Dictionary = {}
+
+
 func save_map_to_json(path: String) -> bool:
 	if path == "":
 		_open_save_modal()
@@ -4283,6 +4287,8 @@ func _write_map_file(path: String) -> bool:
 		"sceneSize": [40, 4, 40],
 		"objects": objects_array
 	}
+	for extra_key in _map_extras:
+		map_data[extra_key] = _map_extras[extra_key]
 
 	var tmp_path := path + ".tmp"
 	var file = FileAccess.open(tmp_path, FileAccess.WRITE)
@@ -4319,6 +4325,11 @@ func load_map_from_json(path: String) -> bool:
 
 	var data: Dictionary = json.data
 	var objects: Array = data.get("objects", [])
+	# Граница и тропы не являются объектами: редактор их не показывает, но хранит
+	_map_extras.clear()
+	for extra_key in ["boundary", "trails"]:
+		if data.has(extra_key):
+			_map_extras[extra_key] = data[extra_key]
 	var max_id = 0
 	var clean_path = path.replace("\\", "/").to_lower()
 	var is_legacy: bool = (clean_path.ends_with("assets/prototype map.json") or clean_path == "res://assets/prototype map.json") and (data.get("generator") != "MapForge" and not data.has("version"))

@@ -62,18 +62,12 @@ void fragment() {
 	uv.y += (hash(vec2(frame, 1.7)) - 0.5) * (0.0004 + damage * 0.003);
 
 	// Яркость чёткая, цвет размыт и сдвинут вправо
-	float px = 0.0007;
-	vec3 luma_a = to_yiq(texture(screen_texture, uv).rgb);
-	float y_soft = to_yiq(texture(screen_texture, uv - vec2(px, 0.0)).rgb).x * 0.25
-		+ luma_a.x * 0.5
-		+ to_yiq(texture(screen_texture, uv + vec2(px, 0.0)).rgb).x * 0.25;
-	vec2 chroma = vec2(0.0);
+	// Три выборки вместо восьми: разницы почти не видно, а кадр заметно дешевле
+	vec3 center = texture(screen_texture, uv).rgb;
+	float y_soft = dot(center, vec3(0.299, 0.587, 0.114));
 	float shift = 0.0022 + damage * 0.005;
-	for (int i = 0; i < 5; i++) {
-		float o = (float(i) - 2.0) * 0.0018 + shift;
-		chroma += to_yiq(texture(screen_texture, uv + vec2(o, 0.0)).rgb).yz;
-	}
-	chroma *= 0.2;
+	vec2 chroma = to_yiq(texture(screen_texture, uv + vec2(shift - 0.0028, 0.0)).rgb).yz * 0.5
+		+ to_yiq(texture(screen_texture, uv + vec2(shift + 0.0028, 0.0)).rgb).yz * 0.5;
 
 	vec3 col = to_rgb(vec3(y_soft, chroma * 0.82));
 

@@ -19,6 +19,7 @@ const T_REAR: float = 15.9         # олень встаёт на задние �
 const T_SWERVE: float = 16.7       # руль влево, визг шин
 const T_CRASH: float = 18.0        # удар о валун
 const T_AFTER: float = 23.0        # пар из радиатора, заевший сигнал
+const T_TO_MAP: float = 25.0       # переход на играбельную карту «Шоссе»
 const T_HORN_STOP: float = 25.2    # сигнал резко смолкает
 const T_VOICE: float = 25.6        # «Итан!..» из леса
 const T_WALK: float = 29.0         # от первого лица вдоль обочины
@@ -121,6 +122,9 @@ func _process(delta: float) -> void:
 		return
 	_t += delta
 	_run_timeline()
+	# Переход на карту уже убрал сцену из дерева
+	if _finished:
+		return
 	_update_car()
 	_update_deer()
 	_update_props()
@@ -186,6 +190,12 @@ func _run_timeline() -> void:
 	if _once("horn_stop", T_HORN_STOP):
 		_stop(horn_loop_player)
 		horn_loop_player = null
+	# Дальше Итан идёт сам: продолжение на карте «Шоссе»
+	if _once("to_map", T_TO_MAP - 0.7):
+		_fade_black(1.0, 0.7)
+	if _once("to_map_go", T_TO_MAP):
+		_finish()
+		return
 	if _once("voice", T_VOICE):
 		_sfx("res://assets/creepy_mutter.mp3", -18.0, 0.9)
 		_say("ГОЛОС ИЗ ЛЕСА", "«Итан!.. Итан, я здесь!»", 2.8)
@@ -283,7 +293,7 @@ func _finish() -> void:
 	_finished = true
 	if GameManager:
 		GameManager.intro_cutscene_played = true
-		GameManager.active_map_path = "res://scenes/1level.json"
+		GameManager.active_map_path = "res://scenes/Шоссе.json"
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
@@ -597,70 +607,47 @@ func _make_lamp_material() -> StandardMaterial3D:
 	return m
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  Сосновый лес по обеим сторонам шоссе (MultiMesh: стволы и ярусы крон)
+#  Лес по обеим сторонам шоссе: те же ели, что на картах, участками по 30 м
 # ──────────────────────────────────────────────────────────────────────────────
 func _build_forest() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 311994
-	var trunks: Array[Transform3D] = []
-	var crowns: Array[Transform3D] = []
+	var chunks: Dictionary = {}
 	var z := ROAD_START_Z
 	while z > ROAD_END_Z:
 		for side in [-1.0, 1.0]:
 			for row in range(4):
-				var x: float = side * (7.2 + row * 6.0 + rng.randf_range(-1.5, 1.5))
+				var x: float = side * (9.6 + row * 6.0 + rng.randf_range(-1.2, 1.5))
 				var tz := z + rng.randf_range(-1.8, 1.8)
-				var sc := rng.randf_range(0.85, 1.35)
 				if _in_crash_clearing(x, tz):
 					continue
-				_add_pine(trunks, crowns, Vector3(x, 0.0, tz), sc)
+				var h := rng.randf_range(8.5, 13.5)
+				var big := h > 10.0
+				var key := [int(floor(tz / 30.0)), side, big]
+				if not chunks.has(key):
+					chunks[key] = []
+				chunks[key].append([Vector3(x, 0.0, tz), Vector3(h * 0.5, h, h * 0.5), rng.randf() * TAU])
 		z -= 4.5
-	# Сосна у обочины, на которой Сэм закрепил камеру 04
-	_add_pine(trunks, crowns, CAM04_PINE_POS, 1.1)
-
-	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.7
-	trunk_mesh.bottom_radius = 1.0
-	trunk_mesh.height = 1.0
-	trunk_mesh.radial_segments = 8
-	var trunk_mat := StandardMaterial3D.new()
-	trunk_mat.albedo_color = Color(0.18, 0.12, 0.08)
-	trunk_mesh.material = trunk_mat
-	add_child(_make_multimesh(trunk_mesh, trunks))
-
-	var crown_mesh := CylinderMesh.new()
-	crown_mesh.top_radius = 0.0
-	crown_mesh.bottom_radius = 1.0
-	crown_mesh.height = 1.0
-	crown_mesh.radial_segments = 8
-	var crown_mat := StandardMaterial3D.new()
-	crown_mat.albedo_color = Color(0.05, 0.11, 0.06)
-	crown_mesh.material = crown_mat
-	var crowns_node := _make_multimesh(crown_mesh, crowns)
-	crowns_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(crowns_node)
+	for key in chunks:
+		NatureKit.add_spruce_chunk(self, chunks[key], key[2], posmod(key[0], 3), Color.WHITE, 38.0, 220.0)
+	# Ель у обочины, на которой Сэм закрепил камеру 04
+	# Она стоит на голом стволе: лапы начинаются выше головы и не закрывают камеру
+	NatureKit.add_spruce_chunk(self, [[CAM04_PINE_POS + Vector3.UP * 2.6, Vector3(6.5, 13.0, 6.5), 0.6]], true, 0, Color.WHITE, 40.0, 220.0)
+	var bare_mesh := CylinderMesh.new()
+	bare_mesh.top_radius = 0.27
+	bare_mesh.bottom_radius = 0.31
+	bare_mesh.height = 3.4
+	bare_mesh.radial_segments = 10
+	bare_mesh.rings = 1
+	bare_mesh.material = NatureKit._bark_mat()
+	var bare := MeshInstance3D.new()
+	bare.mesh = bare_mesh
+	bare.position = CAM04_PINE_POS + Vector3.UP * 1.7
+	add_child(bare)
 
 func _in_crash_clearing(x: float, z: float) -> bool:
 	# Поляна у места аварии: путь заноса, валун и обочина, по которой идёт Итан
 	return x < 0.0 and x > -14.0 and z < -224.0 and z > -262.0
-
-func _add_pine(trunks: Array[Transform3D], crowns: Array[Transform3D], pos: Vector3, sc: float) -> void:
-	var turn := Basis(Vector3.UP, fmod(pos.x * 1.7 + pos.z * 0.9, TAU))
-	trunks.append(Transform3D(turn.scaled(Vector3(0.26 * sc, 4.4 * sc, 0.26 * sc)), pos + Vector3(0.0, 2.2 * sc, 0.0)))
-	for tier in range(3):
-		var r := (1.85 - tier * 0.42) * sc
-		crowns.append(Transform3D(turn.scaled(Vector3(r, 2.5 * sc, r)), pos + Vector3(0.0, (3.3 + tier * 1.5) * sc, 0.0)))
-
-func _make_multimesh(mesh: Mesh, xforms: Array[Transform3D]) -> MultiMeshInstance3D:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = xforms.size()
-	for i in range(xforms.size()):
-		mm.set_instance_transform(i, xforms[i])
-	var mmi := MultiMeshInstance3D.new()
-	mmi.multimesh = mm
-	return mmi
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Место аварии и пикап Итана (тёмно-синий, как машина на 2-м уровне)

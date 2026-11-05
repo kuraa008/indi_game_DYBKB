@@ -508,16 +508,17 @@ func set_resolution_mode(mode: String) -> void:
 
 # Переход на другую карту. Живёт в автозагрузке, потому что дверь исчезает вместе со старой сценой.
 # Затемнение короткое, а светлеть экран начинает только когда новая карта уже загрузилась.
-func start_level_transition(map_path: String) -> void:
+func start_level_transition(map_path: String, door_sound_on: bool = true) -> void:
 	var tree := get_tree()
-	var door_sound: AudioStream = load("res://assets/audio/monster/basement_door_open.wav")
-	var audio := AudioStreamPlayer.new()
-	audio.name = "LevelTransitionAudio"
-	audio.stream = door_sound
-	audio.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(audio)
-	audio.play()
-	audio.finished.connect(audio.queue_free)
+	if door_sound_on:
+		var door_sound: AudioStream = load("res://assets/audio/monster/basement_door_open.wav")
+		var audio := AudioStreamPlayer.new()
+		audio.name = "LevelTransitionAudio"
+		audio.stream = door_sound
+		audio.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(audio)
+		audio.play()
+		audio.finished.connect(audio.queue_free)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 126

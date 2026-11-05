@@ -60,9 +60,6 @@ func _process(delta: float) -> void:
 		pendulum.rotation_degrees.z = sin(elapsed * 3.14159) * 16.0
 
 	# Периодический бой колоколов
-	if chime_timer >= chime_interval:
-		chime_timer = 0.0
-		_chime_bell()
 
 func _chime_bell() -> void:
 	if bell_audio:

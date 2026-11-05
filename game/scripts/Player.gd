@@ -1795,8 +1795,8 @@ func _update_nearby_interactables(delta: float) -> void:
 			continue
 		var dir: Vector3 = to_obj.normalized()
 		var dot: float = cam_forward.dot(dir)
-		# Конус обзора: ~130 градусов
-		if dot < 0.35:
+		# Только то, на что смотришь: узкий конус около 12 градусов. Большие вещи ловит луч прицела
+		if dot < 0.978 or dist > 2.4:
 			continue
 
 		# Быстрая проверка видимости

@@ -10,6 +10,31 @@ static var _cache: Dictionary = {}
 static var _wall_mats: Dictionary = {}
 
 const WALL_TEXTURES = {
+	"siding": {
+		"path": "res://assets/textures/house/siding.png",
+		"triplanar_scale": Vector3(0.42, 0.42, 0.42),
+		"name": "Старая обшивка",
+	},
+	"plaster": {
+		"path": "res://assets/textures/house/plaster.png",
+		"triplanar_scale": Vector3(0.3, 0.3, 0.3),
+		"name": "Штукатурка",
+	},
+	"tile_clean": {
+		"path": "res://assets/textures/house/tile_clean.png",
+		"triplanar_scale": Vector3(0.45, 0.45, 0.45),
+		"name": "Плитка",
+	},
+	"concrete_floor": {
+		"path": "res://assets/textures/house/concrete.png",
+		"triplanar_scale": Vector3(0.25, 0.25, 0.25),
+		"name": "Бетон",
+	},
+	"board_weathered": {
+		"path": "res://assets/textures/house/board_weathered.png",
+		"triplanar_scale": Vector3(0.5, 0.5, 0.5),
+		"name": "Старые доски",
+	},
 	"brick_red": {
 		"name": "Красный кирпич",
 		"icon": "🧱",
@@ -382,7 +407,7 @@ static func create_door_material(texture_key: String, tint_color: Color = Color.
 	return mat
 
 static func apply_door_texture_to_node(node: Node, texture_key: String, tint_color: Color = Color.WHITE) -> void:
-	if node == null:
+	if node == null or node.has_meta("keep_door_look"):
 		return
 	var mat = create_door_material(texture_key, tint_color)
 	var has_tex = (mat.albedo_texture != null)

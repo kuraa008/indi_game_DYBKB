@@ -547,72 +547,12 @@ func _create_crowbar_mesh() -> void:
 	cb_root.scale = Vector3(0.58, 0.58, 0.58)
 	cb_root.rotation_degrees = Vector3(-16.0, -24.0, -16.0)
 	cb_root.position = Vector3(0.03, -0.05, -0.02)
-
-	var red_mat = StandardMaterial3D.new()
-	red_mat.albedo_color = Color(0.85, 0.12, 0.08)
-	red_mat.metallic = 0.72
-	red_mat.roughness = 0.35
-
-	var steel_mat = StandardMaterial3D.new()
-	steel_mat.albedo_color = Color(0.82, 0.84, 0.88)
-	steel_mat.metallic = 0.95
-	steel_mat.roughness = 0.18
-
-	# Шестигранный красный стержень
-	var bar = MeshInstance3D.new()
-	var bm = CylinderMesh.new()
-	bm.radial_segments = 6
-	bm.top_radius = 0.011
-	bm.bottom_radius = 0.011
-	bm.height = 0.38
-	bm.surface_set_material(0, red_mat)
-	bar.mesh = bm
-	cb_root.add_child(bar)
-
-	# Насечки хвата
-	for ry in [-0.03, 0.03]:
-		var gr = MeshInstance3D.new()
-		var grm = TorusMesh.new()
-		grm.inner_radius = 0.010
-		grm.outer_radius = 0.013
-		grm.surface_set_material(0, steel_mat)
-		gr.mesh = grm
-		gr.position.y = ry
-		cb_root.add_child(gr)
-
-	# Нижняя лопатка
-	var wedge = MeshInstance3D.new()
-	var wm = BoxMesh.new()
-	wm.size = Vector3(0.024, 0.045, 0.009)
-	wm.surface_set_material(0, steel_mat)
-	wedge.mesh = wm
-	wedge.position = Vector3(0, -0.20, 0)
-	cb_root.add_child(wedge)
-
-	# Изогнутый крюк
-	var hook = MeshInstance3D.new()
-	var hm = CylinderMesh.new()
-	hm.radial_segments = 6
-	hm.top_radius = 0.011
-	hm.bottom_radius = 0.011
-	hm.height = 0.11
-	hm.surface_set_material(0, steel_mat)
-	hook.mesh = hm
-	hook.position = Vector3(0.035, 0.21, 0)
-	hook.rotation_degrees.z = -55.0
-	cb_root.add_child(hook)
-
-	# Раздвоенная лапа гвоздодёра
-	for cz in [-0.006, 0.006]:
-		var claw = MeshInstance3D.new()
-		var clm = BoxMesh.new()
-		clm.size = Vector3(0.028, 0.008, 0.008)
-		clm.surface_set_material(0, steel_mat)
-		claw.mesh = clm
-		claw.position = Vector3(0.075, 0.24, cz)
-		claw.rotation_degrees.z = -25.0
-		cb_root.add_child(claw)
-
+	# Модель лежит вдоль X: в руке она стоит лапой вверх
+	var model = MeshInstance3D.new()
+	model.mesh = HouseKit.crowbar_mesh()
+	model.rotation_degrees.z = 90.0
+	model.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	cb_root.add_child(model)
 	right_item_pivot.add_child(cb_root)
 
 func _create_key_mesh(color_key: String, item_data: Dictionary = {}) -> void:

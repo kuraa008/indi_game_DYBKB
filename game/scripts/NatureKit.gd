@@ -309,6 +309,42 @@ static func add_spruce(parent: Node3D, sz: Vector3, tint: Color) -> void:
 	parent.add_child(far)
 
 
+# Участок леса одним вызовом: каждому дереву нужен вид [позиция, размер, угол].
+# Расстояние считается от центра участка, поэтому пороги больше, чем у одной ели.
+static func add_spruce_chunk(parent: Node3D, trees: Array, big: bool, variant: int, tint: Color, near_end: float, far_end: float) -> void:
+	var wide := 0.78 if big else 0.98
+	var xforms: Array[Transform3D] = []
+	for tree in trees:
+		var sz: Vector3 = tree[1]
+		var b := Basis(Vector3.UP, tree[2]) * Basis.from_scale(Vector3(sz.x * wide, sz.y * 1.05, sz.z * wide))
+		xforms.append(Transform3D(b, tree[0]))
+	var near := _multimesh_of(_spruce_near(big, variant, tint), xforms)
+	near.name = "SpruceChunkNear"
+	near.visibility_range_end = near_end
+	near.visibility_range_end_margin = 4.0
+	parent.add_child(near)
+	var far := _multimesh_of(_spruce_far(big, tint), xforms)
+	far.name = "SpruceChunkFar"
+	far.visibility_range_begin = near_end
+	far.visibility_range_begin_margin = 4.0
+	far.visibility_range_end = far_end
+	far.visibility_range_end_margin = 12.0
+	parent.add_child(far)
+
+
+static func _multimesh_of(mesh: Mesh, xforms: Array[Transform3D]) -> MultiMeshInstance3D:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = xforms.size()
+	for i in range(xforms.size()):
+		mm.set_instance_transform(i, xforms[i])
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mmi
+
+
 # ─── ВАЛУН ────────────────────────────────────────────────────────────────────
 
 static func _rock_mat(tint: Color) -> StandardMaterial3D:

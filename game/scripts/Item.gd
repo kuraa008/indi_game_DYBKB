@@ -64,7 +64,7 @@ func _ready() -> void:
 func _build_collision() -> void:
 	var col    = CollisionShape3D.new()
 	var sphere = SphereShape3D.new()
-	sphere.radius = 0.55
+	sphere.radius = 0.36 if item_type == "crowbar" else 0.22
 	col.shape     = sphere
 	add_child(col)
 
@@ -77,91 +77,10 @@ func _build_visual() -> void:
 
 	match item_type:
 		"crowbar":
-			# Классическая реалистичная стальная монтировка-гвоздодёр (Half-Life стиль)
-			# Красный гранёный корпус + полированные стальные наконечники
-			var red_mat = StandardMaterial3D.new()
-			red_mat.albedo_color = Color(0.85, 0.12, 0.08)
-			red_mat.metallic = 0.72
-			red_mat.roughness = 0.35
-			red_mat.emission_enabled = true
-			red_mat.emission = Color(0.4, 0.05, 0.02)
-			red_mat.emission_energy_multiplier = 0.4
-
-			var steel_mat = StandardMaterial3D.new()
-			steel_mat.albedo_color = Color(0.82, 0.84, 0.88)
-			steel_mat.metallic = 0.95
-			steel_mat.roughness = 0.18
-
-			# 1. Основной шестигранный стержень (длина 0.70м)
-			var shaft = MeshInstance3D.new()
-			var sm = CylinderMesh.new()
-			sm.radial_segments = 6
-			sm.top_radius = 0.018
-			sm.bottom_radius = 0.018
-			sm.height = 0.70
-			sm.material = red_mat
-			shaft.mesh = sm
-			add_child(shaft)
-
-			# Насечки под пальцы в зоне хвата
-			for ry in [-0.06, 0.0, 0.06]:
-				var ring = MeshInstance3D.new()
-				var rm = TorusMesh.new()
-				rm.inner_radius = 0.017
-				rm.outer_radius = 0.021
-				rm.material = steel_mat
-				ring.mesh = rm
-				ring.position.y = ry
-				add_child(ring)
-
-			# 2. Нижняя клиновидная лопатка (chisel wedge)
-			var wedge = MeshInstance3D.new()
-			var wm = BoxMesh.new()
-			wm.size = Vector3(0.040, 0.08, 0.014)
-			wm.material = steel_mat
-			wedge.mesh = wm
-			wedge.position = Vector3(0, -0.37, 0)
-			wedge.rotation_degrees = Vector3(12, 0, 0)
-			add_child(wedge)
-
-			# 3. Верхний изогнутый сегмент (Gooseneck)
-			var neck1 = MeshInstance3D.new()
-			var nm1 = CylinderMesh.new()
-			nm1.radial_segments = 6
-			nm1.top_radius = 0.018
-			nm1.bottom_radius = 0.018
-			nm1.height = 0.12
-			nm1.material = red_mat
-			neck1.mesh = nm1
-			neck1.position = Vector3(0.025, 0.38, 0)
-			neck1.rotation_degrees = Vector3(0, 0, -32)
-			add_child(neck1)
-
-			var neck2 = MeshInstance3D.new()
-			var nm2 = CylinderMesh.new()
-			nm2.radial_segments = 6
-			nm2.top_radius = 0.018
-			nm2.bottom_radius = 0.018
-			nm2.height = 0.14
-			nm2.material = steel_mat
-			neck2.mesh = nm2
-			neck2.position = Vector3(0.078, 0.43, 0)
-			neck2.rotation_degrees = Vector3(0, 0, -82)
-			add_child(neck2)
-
-			# 4. Раздвоенная лапа гвоздодёра (Claw fork)
-			for cz in [-0.012, 0.012]:
-				var claw_prong = MeshInstance3D.new()
-				var cpm = BoxMesh.new()
-				cpm.size = Vector3(0.045, 0.012, 0.014)
-				cpm.material = steel_mat
-				claw_prong.mesh = cpm
-				claw_prong.position = Vector3(0.145, 0.445, cz)
-				claw_prong.rotation_degrees = Vector3(0, 0, 18)
-				add_child(claw_prong)
-
-			mi.visible = false
-
+			var crowbar = MeshInstance3D.new()
+			crowbar.name = "CrowbarModel"
+			crowbar.mesh = HouseKit.crowbar_mesh()
+			add_child(crowbar)
 		"key", "key_gold", "key_silver", "key_rusty", "key_emerald", "key_ruby", "key_sapphire", "item_key", "custom_item_key":
 			# Реалистичный благородный ключ с фигурным кольцом, стержнем, зубцами и цветной биркой-брелоком с номером
 			var DoorScript = load("res://scripts/Door.gd")
@@ -689,8 +608,12 @@ func _process(delta: float) -> void:
 		if alarm_timer <= 0.0:
 			stop_alarm()
 
-	if item_type in ["note", "note_safe", "note_safe_code", "light_switch", "alarm_clock", "tv_remote", "prop_alarm_clock", "prop_tv_remote"]:
+	if item_type in ["note", "note_safe", "note_safe_code", "light_switch", "alarm_clock", "tv_remote", "prop_alarm_clock", "prop_tv_remote"] or get_meta("rest_still", false):
 		return # Лежат устойчиво на поверхности
+	# Лом висит горизонтально и крутится, пока его не возьмут
+	if item_type == "crowbar":
+		rotation_degrees.y += delta * 70.0
+		return
 	anim_time     += delta
 	position.y     = base_y + sin(anim_time * 2.4) * 0.1
 	rotation_degrees.y += delta * 55.0

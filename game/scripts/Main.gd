@@ -51,6 +51,8 @@ var door_configured_lock_id: int = 0
 var has_exit_door_spawned: bool = false
 var has_enemy_spawn: bool = false
 var has_lumberjack_spawn: bool = false
+var highway_map: bool = false
+var highway_trees: Array = []
 
 # ══════════════════════════════════════════════
 func _ready() -> void:
@@ -72,6 +74,7 @@ func _ready() -> void:
 	_setup_door()
 	_setup_audio()
 	_setup_ui()
+	_setup_missions()
 	# Выпекаем навмеш с открытыми дверными проёмами
 	await get_tree().physics_frame
 	_bake_nav_mesh()
@@ -542,6 +545,10 @@ func _load_map() -> void:
 	if is_legacy_map:
 		_box(Vector3(-0.5, wall_height + 0.15, -3.5), Vector3(36, 0.3, 36), Color(0.06, 0.05, 0.06), "mansion_ceil")
 	var objects: Array = json.data.get("objects", [])
+	for scan_obj in objects:
+		if str(scan_obj.get("name", "")) == "Пикап Итана":
+			highway_map = true
+			break
 	has_enemy_spawn = false
 	has_lumberjack_spawn = false
 	var _item_candidates: Dictionary = {}
@@ -557,6 +564,10 @@ func _load_map() -> void:
 		var rot = Vector3(float(ra[0]), float(ra[1]), float(ra[2]))
 		var sz  = Vector3(float(sa[0]), float(sa[1]), float(sa[2]))
 		var col = Color.html(color_s)
+		# Стоячие ели шоссе строит глава: участками, так быстрее. Поваленные остаются обычными
+		if highway_map and o_type == "prop_tree_pine" and absf(rot.x) < 1.0:
+			highway_trees.append([pos, sz, deg_to_rad(rot.y), str(obj.get("name", "")) != "Ель за оградой"])
+			continue
 		if o_type in ["cube", "floor_custom", "road_segment", "door", "door_exit", "door_simple", "door_electric", "marker_player", "marker_enemy", "marker_lumberjack"]:
 			var radius := Vector3(maxf(sz.x, sz.z) * 0.72, maxf(sz.y * 0.5, 1.0), maxf(sz.x, sz.z) * 0.72)
 			if not navigation_bounds_valid:
@@ -999,6 +1010,9 @@ func _spawn_player() -> void:
 
 		add_child(ActDressing.new())
 
+	if _is_highway():
+		add_child(HighwayChapter.new())
+
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"
 	p.position = player_spawn
@@ -1081,7 +1095,8 @@ func _make_item(pos: Vector3, type: String, key_id: int = 0) -> void:
 #  Дверь
 # ══════════════════════════════════════════════
 func _setup_door() -> void:
-	if has_exit_door_spawned:
+	# С карты шоссе уходят через сюжетную сцену, а не через дверь
+	if has_exit_door_spawned or _is_highway():
 		return
 
 	var door_pos = GameManager.door_position
@@ -1363,6 +1378,9 @@ func _is_level_1() -> bool:
 			return true
 	return false
 
+func _is_highway() -> bool:
+	return highway_map or "шоссе" in map_json_path.to_lower()
+
 func _is_level_2() -> bool:
 	if GameManager and GameManager.has_method("is_level_2"):
 		if GameManager.is_level_2():
@@ -1379,6 +1397,26 @@ func _is_level_2() -> bool:
 # ══════════════════════════════════════════════
 #  UI
 # ══════════════════════════════════════════════
+func _setup_missions() -> void:
+	var tracker: MissionTracker = null
+	if _is_level_1():
+		tracker = MissionTracker.new()
+		tracker.setup([
+			{"text": "Найди лом", "done": func(): return GameManager.has_crowbar},
+			{"text": "Сорви доски с двери", "done": func(): return GameManager.door_boards_broken},
+			{"text": "Найди ключ от двери", "done": func(): return GameManager.has_key or GameManager.has_key_id(1)},
+			{"text": "Открой дверь и выберись"},
+		])
+	elif _is_level_2():
+		tracker = MissionTracker.new()
+		tracker.setup([
+			{"text": "Найди три предохранителя", "done": func(): return GameManager.has_fuse_red and GameManager.has_fuse_blue and GameManager.has_fuse_green},
+			{"text": "Вставь их в щиток и открой электроворота"},
+		])
+	if tracker:
+		add_child(tracker)
+
+
 func _setup_ui() -> void:
 	var ui = load("res://scenes/UI.tscn").instantiate() as CanvasLayer
 	ui.name = "UI"

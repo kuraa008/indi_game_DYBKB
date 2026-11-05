@@ -457,7 +457,7 @@ func interact(opener: Node3D = null) -> void:
 			GameManager.add_score("player", 100, "Доски сорваны ломом")
 			GameManager.emit_signal("inventory_changed")
 			if GameManager.ui_ref:
-				GameManager.ui_ref.call("show_hint", "Доски сорваны! Дверь заперта на ключ. Найдите ключ от выхода!", 3.5)
+				GameManager.ui_ref.call("show_hint", "Доски сорваны! Дверь заперта на ключ. Найдите ключ от выхода!" if is_exit else "Доски сорваны!", 3.5)
 		else:
 			_play_locked_sound()
 			if GameManager.ui_ref:
@@ -807,6 +807,8 @@ func get_door_info() -> Dictionary:
 	}
 
 func _setup_boards() -> void:
+	if _door_controller() != self:
+		return
 	if not requires_boards or door_boards_broken or (_is_exit_door() and GameManager.door_boards_broken):
 		return
 	if boards_node:
@@ -821,39 +823,43 @@ func _setup_boards() -> void:
 	boards_node = Node3D.new()
 	boards_node.name = "Boards"
 
-	var plank_mat = StandardMaterial3D.new()
-	plank_mat.albedo_color = Color(0.38, 0.24, 0.14)
-	plank_mat.roughness = 0.88
+	var plank_mat: StandardMaterial3D = HouseKit.wood_mat("board_weathered.png", Color.WHITE, 1.1)
 
 	var nail_mat = StandardMaterial3D.new()
 	nail_mat.albedo_color = Color(0.22, 0.22, 0.24)
 	nail_mat.metallic = 0.9
 	nail_mat.roughness = 0.35
 
+	# Доски видно с обеих сторон: снаружи заколотили, а изнутри прибили ещё раз
 	var heights = [0.55, 1.15, 1.72]
-	var tilts = [0.0, 0.0, 0.0]
-	for idx in range(3):
-		var plank = MeshInstance3D.new()
-		plank.name = "Plank_%d" % idx
-		var pm = BoxMesh.new()
-		pm.size = Vector3(1.15, 0.16, 0.04)
-		pm.material = plank_mat
-		plank.mesh = pm
-		plank.position = Vector3(0.0, heights[idx], -0.065)
-		plank.rotation_degrees = Vector3.ZERO
-		boards_node.add_child(plank)
+	var tilts = [4.0, -7.0, 3.0]
+	var board_len := 1.35
+	var frame_part = get_node_or_null("DoorFrame")
+	if frame_part and frame_part.mesh:
+		board_len = frame_part.mesh.get_aabb().size.x + 0.04
+	for side in [-1.0, 1.0]:
+		for idx in range(3):
+			var plank = MeshInstance3D.new()
+			plank.name = "Plank_%d" % idx
+			var pm = BoxMesh.new()
+			pm.size = Vector3(board_len, 0.16, 0.035)
+			pm.material = plank_mat
+			plank.mesh = pm
+			plank.position = Vector3(0.0, heights[idx], side * 0.2)
+			plank.rotation_degrees = Vector3(0, 0, tilts[idx] * side)
+			boards_node.add_child(plank)
 
-		for nx in [-0.46, 0.46]:
-			var nail = MeshInstance3D.new()
-			var nm = CylinderMesh.new()
-			nm.top_radius = 0.016
-			nm.bottom_radius = 0.016
-			nm.height = 0.045
-			nm.material = nail_mat
-			nail.mesh = nm
-			nail.rotation_degrees = Vector3(90, 0, 0)
-			nail.position = Vector3(nx, 0, -0.02)
-			plank.add_child(nail)
+			for nx in [-board_len * 0.44, board_len * 0.44]:
+				var nail = MeshInstance3D.new()
+				var nm = CylinderMesh.new()
+				nm.top_radius = 0.016
+				nm.bottom_radius = 0.016
+				nm.height = 0.045
+				nm.material = nail_mat
+				nail.mesh = nm
+				nail.rotation_degrees = Vector3(90, 0, 0)
+				nail.position = Vector3(nx, 0, side * 0.02)
+				plank.add_child(nail)
 
 	add_child(boards_node)
 
@@ -875,6 +881,10 @@ func _setup_padlock() -> void:
 	padlock_node = Node3D.new()
 	padlock_node.name = "DoorPadlock"
 	padlock_node.position = Vector3(0.44, 1.06, -0.08)
+	if name == "Panel" and _door_controller() != self:
+		padlock_node.free()
+		padlock_node = null
+		return
 
 	var steel_mat = StandardMaterial3D.new()
 	steel_mat.albedo_color = Color(0.72, 0.75, 0.80)
@@ -1054,6 +1064,12 @@ func _setup_padlock() -> void:
 				target_x = h.position.x - 0.04
 				target_y = h.position.y - 0.05
 				target_z = h.position.z - 0.04
+		var house_leaf = panel.get_node_or_null("HouseDoorLeaf")
+		if house_leaf:
+			target_x = house_leaf.mesh.get_aabb().size.x - 0.13
+			target_y = 1.28
+			target_z = 0.05
+			padlock_node.rotation_degrees.y = 180.0
 		padlock_node.position = Vector3(target_x, target_y, target_z)
 		panel.add_child(padlock_node)
 	else:
@@ -1287,7 +1303,7 @@ func _toggle_simple_door(opener: Node3D = null) -> void:
 		current_open_angle = 0.0
 	else:
 		is_open = true
-		current_open_angle = 95.0 * swing_sign
+		current_open_angle = 88.0 * swing_sign
 
 	_play_door_sound(is_open)
 
