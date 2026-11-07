@@ -10,6 +10,8 @@ const WRECK_ROT := Vector3(-4.0, 34.0, 3.0)    # поворот «Машины �
 const HOUSE_DIR_POS := Vector3(-60.0, 2.0, -225.0)
 const CAMERA_POS := Vector3(-7.4, 0.0, -312.0)
 const NEXT_MAP := "res://scenes/1level.json"
+const BASEMENT_WAKE := Vector3(-58.0, -4.15, -227.5)   # пол подвала под домом, глава 2
+const BASEMENT_LOOK := Vector3(-54.4, -4.15, -221.0)   # взгляд на лестницу к двери
 const FOG_COLOR := Color(0.062, 0.082, 0.125)
 const LOOK_SENS := 0.0022
 
@@ -43,6 +45,9 @@ var _turned := 0.0
 var _boundary_cd := 0.0
 var _interior: Array = []
 var _interior_on := true
+var _basement: Array = []
+var _basement_on := true
+var _basement_mode := false
 var _missions: MissionTracker
 var _doors: Dictionary = {}
 var _map: Dictionary = {}
@@ -53,6 +58,8 @@ var _candle: OmniLight3D
 
 func _ready() -> void:
 	name = "HighwayChapter"
+	_basement_mode = GameManager.wake_in_basement
+	GameManager.wake_in_basement = false
 	_load_map_data()
 	_hide_city_horizon()
 	_build_screen()
@@ -70,7 +77,10 @@ func _ready() -> void:
 	_set_items_still()
 	_setup_interior()
 	_setup_missions()
-	_run_start()
+	if _basement_mode:
+		_run_basement_wake()
+	else:
+		_run_start()
 
 
 func _say(speaker: String, line: String, hold: float) -> void:
@@ -193,9 +203,50 @@ func _setup_interior() -> void:
 	for n in candidates:
 		if n is Node3D and n != self:
 			var p: Vector3 = n.global_position
-			if p.x > -70.9 and p.x < -53.1 and p.z > -230.9 and p.z < -219.1 and p.y < 6.7:
+			# Подвал под домом (глава 2) живёт отдельно: его видно только из самого подвала
+			if p.y < -0.3 and p.x > -71.6 and p.x < -42.6 and p.z > -243.8 and p.z < -216.0:
+				_basement.append(n)
+			elif p.x > -70.9 and p.x < -53.1 and p.z > -230.9 and p.z < -219.1 and p.y < 6.7:
 				_interior.append(n)
+	_build_exit_hatch()
 	_set_interior(false)
+	_set_basement(false)
+
+
+# Выход из подвала: люк в потолке комнатки за дверью наверху лестницы, к нему ведут скобы,
+# а выбирается Итан во двор за домом, у такого же люка в земле
+const EXIT_HATCH := Vector3(-58.0, 0.0, -232.1)        # люк во дворе за задней стеной
+const EXIT_HATCH_INSIDE := Vector3(-54.4, -0.78, -217.7)  # люк в потолке комнатки за дверью
+
+
+func _build_exit_hatch() -> void:
+	var hatch: StaticBody3D = preload("res://scripts/BasementExitHatch.gd").new()
+	hatch.name = "BasementExitHatch"
+	add_child(hatch)
+	hatch.global_position = EXIT_HATCH_INSIDE
+	_basement.append(hatch)
+	var wood := StandardMaterial3D.new()
+	if ResourceLoader.exists("res://assets/textures/wood_planks.png"):
+		wood.albedo_texture = load("res://assets/textures/wood_planks.png")
+	wood.albedo_color = Color(0.32, 0.24, 0.17)
+	wood.roughness = 0.95
+	var iron := StandardMaterial3D.new()
+	iron.albedo_color = Color(0.12, 0.11, 0.1)
+	iron.roughness = 0.7
+	iron.metallic = 0.6
+	var top := Node3D.new()
+	top.name = "YardHatch"
+	add_child(top)
+	top.global_position = EXIT_HATCH
+	for part in [[Vector3(1.1, 0.05, 1.1), Vector3(0, 0.025, 0), iron], [Vector3(0.9, 0.04, 0.9), Vector3(0, 0.06, 0), wood],
+			[Vector3(0.06, 0.03, 0.5), Vector3(0.2, 0.09, 0), iron], [Vector3(0.06, 0.03, 0.5), Vector3(-0.2, 0.09, 0), iron]]:
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = part[0]
+		bm.material = part[2]
+		mi.mesh = bm
+		mi.position = part[1]
+		top.add_child(mi)
 
 
 func _set_interior(on: bool) -> void:
@@ -205,16 +256,32 @@ func _set_interior(on: bool) -> void:
 			n.visible = on
 
 
+func _set_basement(on: bool) -> void:
+	_basement_on = on
+	for n in _basement:
+		if is_instance_valid(n):
+			n.visible = on
+
+
 func _update_interior(pos: Vector3) -> void:
+	var below := pos.y < -0.8
 	var inside := pos.x > -71.0 and pos.x < -53.0 and pos.z > -231.0 and pos.z < -219.0
 	var at_door := Vector2(pos.x + 53.0, pos.z + 225.0).length() < 9.0 and _door_flag(-53.0, -225.0, "is_open")
-	var want := inside or at_door
+	var want := (inside or at_door) and not below
 	if want != _interior_on:
 		_set_interior(want)
+	if below != _basement_on:
+		_set_basement(below)
 
 
 func _setup_missions() -> void:
 	_missions = MissionTracker.new()
+	if _basement_mode:
+		_missions.setup([
+			{"text": "Выберись из подвала", "done": func(): return _pl_pos().y > -0.5},
+		])
+		add_child(_missions)
+		return
 	_missions.setup([
 		{"text": "Найди хижину", "done": func(): return _pl_pos().x < -38.0},
 		{"text": "Проверь дверь хижины", "done": func(): return _done.has("porch") or GameManager.has_crowbar},
@@ -497,6 +564,9 @@ func _build_grass() -> void:
 		var x := rng.randf_range(-96.0, 16.0)
 		var z := rng.randf_range(-324.0, -200.0)
 		if absf(x) < 5.8 or (x > -71.5 and x < -49.5 and z > -231.5 and z < -218.5) or (x > -53.5 and x < -40.5 and z > -213.5 and z < -203.5):
+			continue
+		# Трава не растёт на люке выхода из подвала за домом
+		if Vector2(x - EXIT_HATCH.x, z - EXIT_HATCH.z).length() < 1.6:
 			continue
 		if x < -78.0 and z < -262.0:
 			continue
@@ -906,6 +976,35 @@ func _run_start() -> void:
 	_say("ИТАН", "…Сэм?", 2.0)
 
 
+# Глава 2: Итан приходит в себя на холодном полу подвала и ничего не помнит
+func _run_basement_wake() -> void:
+	while not is_instance_valid(GameManager.player_ref) or not GameManager.player_ref.is_inside_tree():
+		await get_tree().process_frame
+	_player = GameManager.player_ref
+	_head = _player.get("head")
+	_player.set("is_in_cutscene", true)
+	_player.global_position = BASEMENT_WAKE
+	_player.velocity = Vector3.ZERO
+	_player.rotation.y = atan2(BASEMENT_WAKE.x - BASEMENT_LOOK.x, BASEMENT_WAKE.z - BASEMENT_LOOK.z)
+	_update_interior(BASEMENT_WAKE)
+	_head.position.y = 0.35
+	_head.rotation.z = 0.3
+	_sound("res://assets/audio/intro/tinnitus.wav", -6.0)
+	var drone := _sound("res://assets/audio/intro/dread_drone.wav", -16.0)
+	if drone:
+		drone.finished.disconnect(drone.queue_free)
+		drone.finished.connect(drone.play)
+	await get_tree().create_timer(1.5, false).timeout
+	var tw := create_tween().set_parallel()
+	tw.tween_property(_black, "color:a", 0.0, 3.0)
+	tw.tween_property(_head, "position:y", 1.62, 3.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(_head, "rotation:z", 0.0, 3.4).set_trans(Tween.TRANS_SINE)
+	await tw.finished
+	_head.rotation = Vector3.ZERO
+	_player.set("is_in_cutscene", false)
+	_say("ИТАН", "…Где я? Пахнет сыростью… Это наш подвал?", 3.2)
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	_boundary_cd = maxf(0.0, _boundary_cd - delta)
@@ -915,6 +1014,8 @@ func _process(delta: float) -> void:
 	if _ending or not is_instance_valid(_player) or _player.get("is_in_cutscene") == true:
 		return
 	var pos := _player.global_position
+	if _basement_mode:
+		return
 	_update_story(pos)
 	_update_boundary_hints(pos)
 
@@ -1160,7 +1261,8 @@ func _start_scare() -> void:
 	scare.finished.connect(_finish)
 
 
-# После скримера финал из кат-сцены: Итана волокут за ворота, затем 1-й уровень
+# После скримера финал из кат-сцены: Итана волокут за ворота, затем он очнётся в подвале дома отца
 func _finish() -> void:
 	GameManager.intro_epilogue = true
+	GameManager.wake_in_basement = true
 	get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")

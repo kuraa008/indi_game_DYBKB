@@ -26391,6 +26391,8502 @@
    ],
    "type": "prop_tree_pine",
    "visible": true
+  },
+  {
+   "color": "55504aff",
+   "comment": "Подвал, глава 2",
+   "id": 3000,
+   "lock_id": 0,
+   "name": "Подвал: пол главной комнаты",
+   "position": [
+    -57.5,
+    -4.3,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    9.0,
+    0.2,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_floor"
+  },
+  {
+   "color": "55504aff",
+   "comment": "Подвал, глава 2",
+   "id": 3001,
+   "lock_id": 0,
+   "name": "Подвал: пол котельной",
+   "position": [
+    -66.5,
+    -4.3,
+    -222.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    9.0,
+    0.2,
+    6.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_floor"
+  },
+  {
+   "color": "55504aff",
+   "comment": "Подвал, глава 2",
+   "id": 3002,
+   "lock_id": 0,
+   "name": "Подвал: пол кладовой",
+   "position": [
+    -66.5,
+    -4.3,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    9.0,
+    0.2,
+    6.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_floor"
+  },
+  {
+   "color": "4a3a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3003,
+   "lock_id": 0,
+   "name": "Подвал: потолок",
+   "position": [
+    -62.0,
+    -0.6,
+    -223.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    18.0,
+    0.2,
+    14.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3004,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -69.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3005,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -66.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3006,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -63.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3007,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -60.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3008,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -57.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3009,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -54.0,
+    -0.825,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3010,
+   "lock_id": 0,
+   "name": "Подвал: южная стена",
+   "position": [
+    -65.55,
+    -2.45,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    10.9,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3011,
+   "lock_id": 0,
+   "name": "Подвал: южная стена (перемычка)",
+   "position": [
+    -59.5,
+    -1.4,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3012,
+   "lock_id": 0,
+   "name": "Подвал: южная стена",
+   "position": [
+    -55.95,
+    -2.45,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    5.9,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3013,
+   "lock_id": 0,
+   "name": "Подвал: западная стена",
+   "position": [
+    -70.85,
+    -2.45,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    12.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3014,
+   "lock_id": 0,
+   "name": "Подвал: восточная стена",
+   "position": [
+    -53.15,
+    -2.45,
+    -228.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    4.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3015,
+   "lock_id": 0,
+   "name": "Подвал: восточная стена (перемычка)",
+   "position": [
+    -53.15,
+    -1.4,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    1.4,
+    1.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3016,
+   "lock_id": 0,
+   "name": "Подвал: восточная стена",
+   "position": [
+    -53.15,
+    -2.45,
+    -222.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    6.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3017,
+   "lock_id": 0,
+   "name": "Подвал: северная стена",
+   "position": [
+    -62.95,
+    -2.45,
+    -219.15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    16.1,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3018,
+   "lock_id": 0,
+   "name": "Подвал: северная стена под дверью",
+   "position": [
+    -54.4,
+    -3.45,
+    -219.15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3019,
+   "lock_id": 0,
+   "name": "Подвал: северная стена",
+   "position": [
+    -53.45,
+    -2.45,
+    -219.15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3020,
+   "lock_id": 0,
+   "name": "Подвал: перегородка",
+   "position": [
+    -62.0,
+    -2.45,
+    -229.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    2.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3021,
+   "lock_id": 0,
+   "name": "Подвал: перегородка",
+   "position": [
+    -62.0,
+    -2.45,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    4.8
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3022,
+   "lock_id": 0,
+   "name": "Подвал: перегородка",
+   "position": [
+    -62.0,
+    -2.45,
+    -220.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    2.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3023,
+   "lock_id": 0,
+   "name": "Подвал: перемычка над проходом",
+   "position": [
+    -62.0,
+    -1.4,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    1.4,
+    1.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3024,
+   "lock_id": 0,
+   "name": "Подвал: перемычка над проходом",
+   "position": [
+    -62.0,
+    -1.4,
+    -222.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    1.4,
+    1.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3025,
+   "lock_id": 0,
+   "name": "Подвал: стена между котельной и кладовой",
+   "position": [
+    -66.5,
+    -2.45,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    9.0,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3026,
+   "lock_id": 0,
+   "name": "Подвал: лестница к двери",
+   "position": [
+    -54.4,
+    -4.2,
+    -222.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    1.5,
+    3.0
+   ],
+   "type": "stairs_straight",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3027,
+   "lock_id": 0,
+   "name": "Подвал: площадка у двери",
+   "position": [
+    -54.25,
+    -2.775,
+    -220.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.9,
+    0.15,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3028,
+   "lock_id": 0,
+   "name": "Подвал: столб площадки",
+   "position": [
+    -55.1,
+    -3.525,
+    -220.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    1.35,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3029,
+   "lock_id": 0,
+   "name": "Подвал: столб площадки",
+   "position": [
+    -53.45,
+    -3.525,
+    -220.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    1.35,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3030,
+   "lock_id": 0,
+   "name": "Подвал: пол тамбура",
+   "position": [
+    -54.4,
+    -2.775,
+    -217.95
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.15,
+    2.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3031,
+   "lock_id": 0,
+   "name": "Подвал: стена под тамбуром",
+   "position": [
+    -54.4,
+    -3.525,
+    -217.95
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    1.35,
+    2.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3032,
+   "lock_id": 0,
+   "name": "Подвал: стена тамбура",
+   "position": [
+    -55.6,
+    -2.45,
+    -218.05
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    3.5,
+    1.9
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3033,
+   "lock_id": 0,
+   "name": "Подвал: стена тамбура",
+   "position": [
+    -53.2,
+    -2.45,
+    -218.05
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    3.5,
+    1.9
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3034,
+   "lock_id": 0,
+   "name": "Подвал: стена тамбура",
+   "position": [
+    -54.4,
+    -2.45,
+    -217.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.6,
+    3.5,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3035,
+   "lock_id": 0,
+   "name": "Подвал: дверь наверху лестницы",
+   "position": [
+    -54.4,
+    -2.7,
+    -219.15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    2.0,
+    0.2
+   ],
+   "type": "door_simple",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3036,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -2.38,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3037,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -2.06,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3038,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -1.74,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3039,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -1.42,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3040,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -1.1,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3041,
+   "lock_id": 0,
+   "name": "Подвал: лестница-скобы",
+   "position": [
+    -54.4,
+    -0.78,
+    -217.13
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.04,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2420ff",
+   "comment": "Подвал, глава 2",
+   "id": 3042,
+   "lock_id": 0,
+   "name": "Подвал: рама люка выхода",
+   "position": [
+    -54.4,
+    -0.73,
+    -217.7
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.1,
+    0.06,
+    1.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3043,
+   "lock_id": 0,
+   "name": "Подвал: люк выхода",
+   "position": [
+    -54.4,
+    -0.78,
+    -217.7
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    0.04,
+    0.9
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3044,
+   "lock_id": 0,
+   "name": "Подвал: шкаф (прятаться)",
+   "position": [
+    -59.0,
+    -4.2,
+    -219.72
+   ],
+   "rotation": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3045,
+   "lock_id": 0,
+   "name": "Подвал: верстак отца",
+   "position": [
+    -55.8,
+    -4.2,
+    -230.22
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.0,
+    0.9,
+    0.8
+   ],
+   "type": "prop_table",
+   "visible": true
+  },
+  {
+   "color": "6b2a1eff",
+   "comment": "Подвал, глава 2",
+   "id": 3046,
+   "lock_id": 0,
+   "name": "Подвал: ящик с инструментами",
+   "position": [
+    -55.2,
+    -3.175,
+    -230.22
+   ],
+   "rotation": [
+    0.0,
+    10.0,
+    0.0
+   ],
+   "scale": [
+    0.55,
+    0.25,
+    0.32
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "3d3a36ff",
+   "comment": "Подвал, глава 2. Кодовый замок, код 1815. Внутри записка №7",
+   "id": 3047,
+   "lock_id": 0,
+   "name": "Подвал: сундук отца (код 1815)",
+   "position": [
+    -57.7,
+    -4.2,
+    -230.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    0.6,
+    0.6
+   ],
+   "type": "prop_safe",
+   "visible": true
+  },
+  {
+   "color": "6a5038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3048,
+   "lock_id": 0,
+   "name": "Подвал: столб с отметками роста",
+   "position": [
+    -58.5,
+    -2.45,
+    -225.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3049,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -3.242,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3050,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.64,
+    -3.143,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3051,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -3.043,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3052,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.64,
+    -2.942,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3053,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -2.843,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3054,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.64,
+    -2.742,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3055,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -2.643,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3056,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.64,
+    -2.572,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3057,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -2.492,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3058,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.64,
+    -2.433,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "1b1410ff",
+   "comment": "Подвал, глава 2",
+   "id": 3059,
+   "lock_id": 0,
+   "name": "Подвал: отметка роста",
+   "position": [
+    -58.36,
+    -2.372,
+    -225.155
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.18,
+    0.015,
+    0.03
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3060,
+   "lock_id": 0,
+   "name": "Подвал: бочка",
+   "position": [
+    -61.3,
+    -3.65,
+    -230.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    1.1,
+    0.7
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3061,
+   "lock_id": 0,
+   "name": "Подвал: ящик",
+   "position": [
+    -61.2,
+    -3.8,
+    -220.05
+   ],
+   "rotation": [
+    0.0,
+    12.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    0.8,
+    0.9
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3062,
+   "lock_id": 0,
+   "name": "Подвал: ящик",
+   "position": [
+    -61.25,
+    -3.15,
+    -220.1
+   ],
+   "rotation": [
+    0.0,
+    -20.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.5,
+    0.6
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3063,
+   "lock_id": 0,
+   "name": "Подвал: ящик",
+   "position": [
+    -54.0,
+    -3.75,
+    -228.4
+   ],
+   "rotation": [
+    0.0,
+    5.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    0.9,
+    0.9
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "ffd9a0ff",
+   "comment": "Подвал, глава 2",
+   "id": 3064,
+   "lock_id": 0,
+   "name": "Подвал: лампочка (выключена до щитка)",
+   "position": [
+    -58.0,
+    -0.75,
+    -225.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.8,
+    0.5
+   ],
+   "type": "light_ceiling",
+   "visible": true
+  },
+  {
+   "color": "5a3a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3065,
+   "lock_id": 0,
+   "name": "Подвал: угольный котёл",
+   "position": [
+    -68.8,
+    -3.25,
+    -222.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    1.9,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "2a2420ff",
+   "comment": "Подвал, глава 2",
+   "id": 3066,
+   "lock_id": 0,
+   "name": "Подвал: топка котла",
+   "position": [
+    -68.085,
+    -3.55,
+    -222.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.07,
+    0.6,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3067,
+   "lock_id": 0,
+   "name": "Подвал: труба котла",
+   "position": [
+    -68.8,
+    -1.5,
+    -222.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    1.6,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3068,
+   "lock_id": 0,
+   "name": "Подвал: труба под потолком",
+   "position": [
+    -65.425,
+    -1.175,
+    -221.025
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    6.45,
+    0.15,
+    0.15
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3069,
+   "lock_id": 0,
+   "name": "Подвал: труба под потолком",
+   "position": [
+    -65.425,
+    -1.475,
+    -223.825
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    6.45,
+    0.15,
+    0.15
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "1c1a18ff",
+   "comment": "Подвал, глава 2",
+   "id": 3070,
+   "lock_id": 0,
+   "name": "Подвал: куча угля",
+   "position": [
+    -70.0,
+    -4.025,
+    -224.05
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    0.35,
+    1.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "5f5e5aff",
+   "comment": "Подвал, глава 2. Схема рубильников нарисована на крышке",
+   "id": 3071,
+   "lock_id": 0,
+   "name": "Подвал: щиток с рубильниками",
+   "position": [
+    -65.0,
+    -2.8,
+    -219.43
+   ],
+   "rotation": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.68,
+    0.25
+   ],
+   "type": "prop_fusebox",
+   "visible": true
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3072,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы) (стойка)",
+   "position": [
+    -63.77,
+    -3.2,
+    -219.755
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3073,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы) (стойка)",
+   "position": [
+    -63.77,
+    -3.2,
+    -219.365
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3074,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы) (стойка)",
+   "position": [
+    -62.43,
+    -3.2,
+    -219.755
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3075,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы) (стойка)",
+   "position": [
+    -62.43,
+    -3.2,
+    -219.365
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3076,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы)",
+   "position": [
+    -63.1,
+    -4.095,
+    -219.56
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3077,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы)",
+   "position": [
+    -63.1,
+    -3.595,
+    -219.56
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3078,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы)",
+   "position": [
+    -63.1,
+    -3.095,
+    -219.56
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3079,
+   "lock_id": 0,
+   "name": "Подвал: полка с инструментами (болторезы)",
+   "position": [
+    -63.1,
+    -2.595,
+    -219.56
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "6b2a1eff",
+   "comment": "Подвал, глава 2. Здесь лежат болторезы",
+   "id": 3080,
+   "lock_id": 0,
+   "name": "Подвал: инструменты на полке",
+   "position": [
+    -63.3,
+    -3.48,
+    -219.56
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.2,
+    0.3
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3081,
+   "lock_id": 0,
+   "name": "Подвал: ящик с инструментами",
+   "position": [
+    -66.6,
+    -3.9,
+    -224.4
+   ],
+   "rotation": [
+    0.0,
+    -8.0,
+    0.0
+   ],
+   "scale": [
+    0.8,
+    0.6,
+    0.6
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3082,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (стойка)",
+   "position": [
+    -69.495,
+    -3.2,
+    -228.77
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3083,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (стойка)",
+   "position": [
+    -69.495,
+    -3.2,
+    -227.23
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3084,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (стойка)",
+   "position": [
+    -69.105,
+    -3.2,
+    -228.77
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3085,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (стойка)",
+   "position": [
+    -69.105,
+    -3.2,
+    -227.23
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3086,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками",
+   "position": [
+    -69.3,
+    -4.095,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3087,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками",
+   "position": [
+    -69.3,
+    -3.595,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3088,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -3.48,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3089,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -3.367,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3090,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -3.465,
+    -228.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3091,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -3.338,
+    -228.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3092,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -3.495,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3093,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -3.397,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3094,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -3.465,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3095,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -3.338,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3096,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками",
+   "position": [
+    -69.3,
+    -3.095,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3097,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.965,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3098,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.838,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3099,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.995,
+    -228.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3100,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.897,
+    -228.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3101,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.965,
+    -227.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3102,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.838,
+    -227.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3103,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.995,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3104,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.897,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3105,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками",
+   "position": [
+    -69.3,
+    -2.595,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3106,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.495,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3107,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.397,
+    -228.64
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3108,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.465,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3109,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.338,
+    -228.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3110,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.495,
+    -227.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3111,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.397,
+    -227.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3112,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (банка)",
+   "position": [
+    -69.3,
+    -2.48,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3113,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж с банками (крышка банки)",
+   "position": [
+    -69.3,
+    -2.367,
+    -227.36
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3114,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -66.77,
+    -3.2,
+    -230.615
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3115,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -66.77,
+    -3.2,
+    -230.225
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3116,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -65.23,
+    -3.2,
+    -230.615
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3117,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -65.23,
+    -3.2,
+    -230.225
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3118,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -66.0,
+    -4.095,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3119,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -66.0,
+    -3.595,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3120,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.64,
+    -3.48,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3121,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.64,
+    -3.367,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3122,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.32,
+    -3.465,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3123,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.32,
+    -3.338,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3124,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.0,
+    -3.495,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3125,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.0,
+    -3.397,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3126,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -65.36,
+    -3.465,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3127,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -65.36,
+    -3.338,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3128,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -66.0,
+    -3.095,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3129,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.64,
+    -2.965,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3130,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.64,
+    -2.838,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3131,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.32,
+    -2.995,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3132,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.32,
+    -2.897,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3133,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -65.68,
+    -2.965,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3134,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -65.68,
+    -2.838,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3135,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -65.36,
+    -2.995,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3136,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -65.36,
+    -2.897,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3137,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -66.0,
+    -2.595,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3138,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.64,
+    -2.495,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3139,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.64,
+    -2.397,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3140,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -66.0,
+    -2.465,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3141,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -66.0,
+    -2.338,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3142,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -65.68,
+    -2.495,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3143,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -65.68,
+    -2.397,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3144,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -65.36,
+    -2.48,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3145,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -65.36,
+    -2.367,
+    -230.42
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3146,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -64.07,
+    -3.2,
+    -225.595
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3147,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -64.07,
+    -3.2,
+    -225.205
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3148,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -62.73,
+    -3.2,
+    -225.595
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3149,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (стойка)",
+   "position": [
+    -62.73,
+    -3.2,
+    -225.205
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3150,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -63.4,
+    -4.095,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3151,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -63.4,
+    -3.595,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3152,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.94,
+    -3.48,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3153,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.94,
+    -3.367,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3154,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.58,
+    -3.465,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3155,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.58,
+    -3.338,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3156,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.22,
+    -3.495,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3157,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.22,
+    -3.397,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3158,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -63.4,
+    -3.095,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3159,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.94,
+    -2.965,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3160,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.94,
+    -2.838,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3161,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.58,
+    -2.995,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3162,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.58,
+    -2.897,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3163,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -62.86,
+    -2.965,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3164,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -62.86,
+    -2.838,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3165,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж",
+   "position": [
+    -63.4,
+    -2.595,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3166,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.94,
+    -2.495,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3167,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.94,
+    -2.397,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3168,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -63.22,
+    -2.465,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3169,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -63.22,
+    -2.338,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3170,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (банка)",
+   "position": [
+    -62.86,
+    -2.495,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3171,
+   "lock_id": 0,
+   "name": "Подвал: стеллаж (крышка банки)",
+   "position": [
+    -62.86,
+    -2.397,
+    -225.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "6a5a3aff",
+   "comment": "Подвал, глава 2",
+   "id": 3172,
+   "lock_id": 0,
+   "name": "Подвал: ящик с детскими игрушками",
+   "position": [
+    -64.4,
+    -3.95,
+    -229.95
+   ],
+   "rotation": [
+    0.0,
+    15.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.5,
+    0.5
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3173,
+   "lock_id": 0,
+   "name": "Подвал: бочка",
+   "position": [
+    -62.9,
+    -3.725,
+    -230.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.95,
+    0.6
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3174,
+   "lock_id": 0,
+   "name": "Подвал: ящик",
+   "position": [
+    -67.9,
+    -3.85,
+    -225.8
+   ],
+   "rotation": [
+    0.0,
+    -10.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    0.7,
+    0.8
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "55504aff",
+   "comment": "Подвал, глава 2",
+   "id": 3175,
+   "lock_id": 0,
+   "name": "Подвал: пол южного блока",
+   "position": [
+    -58.0,
+    -4.3,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    26.0,
+    0.2,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_floor"
+  },
+  {
+   "color": "55504aff",
+   "comment": "Подвал, глава 2",
+   "id": 3176,
+   "lock_id": 0,
+   "name": "Подвал: пол мастерской",
+   "position": [
+    -49.0,
+    -4.3,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    8.0,
+    0.2,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_floor"
+  },
+  {
+   "color": "4a3a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3177,
+   "lock_id": 0,
+   "name": "Подвал: потолок южного блока",
+   "position": [
+    -58.0,
+    -0.6,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    26.0,
+    0.2,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3178,
+   "lock_id": 0,
+   "name": "Подвал: потолок мастерской",
+   "position": [
+    -49.0,
+    -0.6,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    8.0,
+    0.2,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3179,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -69.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3180,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -66.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3181,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -63.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3182,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -60.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3183,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -57.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3184,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -54.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3185,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -51.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3186,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -48.0,
+    -0.825,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3187,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -51.0,
+    -0.825,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3188,
+   "lock_id": 0,
+   "name": "Подвал: балка",
+   "position": [
+    -48.0,
+    -0.825,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3189,
+   "lock_id": 0,
+   "name": "Подвал: южная стена",
+   "position": [
+    -58.0,
+    -2.45,
+    -240.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    26.0,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3190,
+   "lock_id": 0,
+   "name": "Подвал: западная стена коридора",
+   "position": [
+    -70.85,
+    -2.45,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    10.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3191,
+   "lock_id": 0,
+   "name": "Подвал: восточная стена",
+   "position": [
+    -45.15,
+    -2.45,
+    -231.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    3.5,
+    20.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3192,
+   "lock_id": 0,
+   "name": "Подвал: северная стена мастерской",
+   "position": [
+    -49.0,
+    -2.45,
+    -221.15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    8.0,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3193,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора у мастерской",
+   "position": [
+    -51.3,
+    -2.45,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    3.4,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3194,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора у мастерской (перемычка)",
+   "position": [
+    -49.0,
+    -1.4,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3195,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора у мастерской",
+   "position": [
+    -46.7,
+    -2.45,
+    -230.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    3.4,
+    3.5,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3196,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора",
+   "position": [
+    -69.55,
+    -2.45,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.9,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3197,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора (перемычка)",
+   "position": [
+    -67.5,
+    -1.4,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3198,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора",
+   "position": [
+    -64.35,
+    -2.45,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    5.1,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3199,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора (перемычка)",
+   "position": [
+    -61.2,
+    -1.4,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3200,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора",
+   "position": [
+    -58.45,
+    -2.45,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    4.3,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3201,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора (перемычка)",
+   "position": [
+    -55.7,
+    -1.4,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3202,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора",
+   "position": [
+    -52.35,
+    -2.45,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    5.5,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3203,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора (перемычка)",
+   "position": [
+    -49.0,
+    -1.4,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.4,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3204,
+   "lock_id": 0,
+   "name": "Подвал: стена коридора",
+   "position": [
+    -46.7,
+    -2.45,
+    -233.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    3.4,
+    3.5,
+    0.25
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3205,
+   "lock_id": 0,
+   "name": "Подвал: стена между комнатами",
+   "position": [
+    -64.0,
+    -2.45,
+    -237.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    7.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3206,
+   "lock_id": 0,
+   "name": "Подвал: стена между комнатами",
+   "position": [
+    -58.5,
+    -2.45,
+    -237.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    7.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "7a6a5eff",
+   "comment": "Подвал, глава 2",
+   "id": 3207,
+   "lock_id": 0,
+   "name": "Подвал: стена между комнатами",
+   "position": [
+    -53.0,
+    -2.45,
+    -237.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.25,
+    3.5,
+    7.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3208,
+   "lock_id": 0,
+   "name": "Подвал: труба в коридоре",
+   "position": [
+    -58.0,
+    -1.075,
+    -233.075
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    25.0,
+    0.15,
+    0.15
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3209,
+   "lock_id": 0,
+   "name": "Подвал: ящик в коридоре",
+   "position": [
+    -65.0,
+    -3.9,
+    -232.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    0.6,
+    0.6
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3210,
+   "lock_id": 0,
+   "name": "Подвал: бочка в коридоре",
+   "position": [
+    -46.0,
+    -3.725,
+    -232.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.95,
+    0.6
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3211,
+   "lock_id": 0,
+   "name": "Подвал: стол в кабинете отца",
+   "position": [
+    -67.5,
+    -4.2,
+    -240.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.8,
+    0.8,
+    0.9
+   ],
+   "type": "prop_table",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3212,
+   "lock_id": 0,
+   "name": "Подвал: стул в кабинете отца",
+   "position": [
+    -67.5,
+    -4.2,
+    -239.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.95,
+    0.5
+   ],
+   "type": "prop_chair",
+   "visible": true
+  },
+  {
+   "color": "3a2a1aff",
+   "comment": "Подвал, глава 2",
+   "id": 3213,
+   "lock_id": 0,
+   "name": "Подвал: доска с картой леса",
+   "position": [
+    -70.66,
+    -2.6,
+    -237.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    1.2,
+    4.0
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "c8b890ff",
+   "comment": "Подвал, глава 2",
+   "id": 3214,
+   "lock_id": 0,
+   "name": "Подвал: карта леса на доске",
+   "position": [
+    -70.61,
+    -2.575,
+    -238.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.02,
+    0.75,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "ffffffff",
+   "comment": "Подвал, глава 2",
+   "id": 3215,
+   "lock_id": 0,
+   "name": "Подвал: рисунок скинволкера",
+   "position": [
+    -70.61,
+    -2.575,
+    -236.75
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.02,
+    0.65,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "skinwalker",
+   "collide": false
+  },
+  {
+   "color": "d8d0bcff",
+   "comment": "Подвал, глава 2",
+   "id": 3216,
+   "lock_id": 0,
+   "name": "Подвал: вырезка из газеты",
+   "position": [
+    -70.61,
+    -2.85,
+    -235.95
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.02,
+    0.4,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "8a1010ff",
+   "comment": "Подвал, глава 2",
+   "id": 3217,
+   "lock_id": 0,
+   "name": "Подвал: красная нить",
+   "position": [
+    -70.595,
+    -2.59,
+    -237.1
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.01,
+    0.02,
+    2.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "d8d0bcff",
+   "comment": "Подвал, глава 2",
+   "id": 3218,
+   "lock_id": 0,
+   "name": "Подвал: бумаги на столе",
+   "position": [
+    -67.9,
+    -3.39,
+    -240.225
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.02,
+    0.45
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "c8c0acff",
+   "comment": "Подвал, глава 2",
+   "id": 3219,
+   "lock_id": 0,
+   "name": "Подвал: бумаги на столе",
+   "position": [
+    -67.05,
+    -3.385,
+    -240.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.03,
+    0.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3220,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете (стойка)",
+   "position": [
+    -64.695,
+    -3.2,
+    -238.27
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3221,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете (стойка)",
+   "position": [
+    -64.695,
+    -3.2,
+    -236.73
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3222,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете (стойка)",
+   "position": [
+    -64.305,
+    -3.2,
+    -238.27
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3223,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете (стойка)",
+   "position": [
+    -64.305,
+    -3.2,
+    -236.73
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3224,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете",
+   "position": [
+    -64.5,
+    -4.095,
+    -237.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3225,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете",
+   "position": [
+    -64.5,
+    -3.595,
+    -237.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3226,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете",
+   "position": [
+    -64.5,
+    -3.095,
+    -237.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3227,
+   "lock_id": 0,
+   "name": "Подвал: полка с книгами в кабинете",
+   "position": [
+    -64.5,
+    -2.595,
+    -237.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a2a1aff",
+   "comment": "Подвал, глава 2",
+   "id": 3228,
+   "lock_id": 0,
+   "name": "Подвал: стопка книг",
+   "position": [
+    -64.5,
+    -3.455,
+    -238.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.25,
+    0.36
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "2a3a4aff",
+   "comment": "Подвал, глава 2",
+   "id": 3229,
+   "lock_id": 0,
+   "name": "Подвал: стопка книг",
+   "position": [
+    -64.5,
+    -3.455,
+    -237.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.25,
+    0.36
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "4a4a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3230,
+   "lock_id": 0,
+   "name": "Подвал: стопка книг",
+   "position": [
+    -64.5,
+    -2.955,
+    -237.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.25,
+    0.36
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "5a2a1aff",
+   "comment": "Подвал, глава 2",
+   "id": 3231,
+   "lock_id": 0,
+   "name": "Подвал: стопка книг",
+   "position": [
+    -64.5,
+    -2.955,
+    -237.1
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.25,
+    0.36
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "2a3a4aff",
+   "comment": "Подвал, глава 2",
+   "id": 3232,
+   "lock_id": 0,
+   "name": "Подвал: стопка книг",
+   "position": [
+    -64.5,
+    -2.455,
+    -237.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.25,
+    0.36
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "ffb060ff",
+   "comment": "Подвал, глава 2",
+   "id": 3233,
+   "lock_id": 0,
+   "name": "Подвал: настольная лампа отца",
+   "position": [
+    -66.9,
+    -3.1,
+    -240.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.2,
+    0.2
+   ],
+   "type": "light_warm",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3234,
+   "lock_id": 0,
+   "name": "Подвал: настольная лампа",
+   "position": [
+    -66.9,
+    -3.275,
+    -240.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.25,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3235,
+   "lock_id": 0,
+   "name": "Подвал: корыто (дно)",
+   "position": [
+    -62.6,
+    -3.925,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.05,
+    0.8
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3236,
+   "lock_id": 0,
+   "name": "Подвал: корыто (борт)",
+   "position": [
+    -62.6,
+    -3.7,
+    -240.27
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.5,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3237,
+   "lock_id": 0,
+   "name": "Подвал: корыто (борт)",
+   "position": [
+    -62.6,
+    -3.7,
+    -239.53
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.5,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3238,
+   "lock_id": 0,
+   "name": "Подвал: корыто (борт)",
+   "position": [
+    -63.37,
+    -3.7,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    0.5,
+    0.8
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3239,
+   "lock_id": 0,
+   "name": "Подвал: корыто (борт)",
+   "position": [
+    -61.83,
+    -3.7,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    0.5,
+    0.8
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "2a2420ff",
+   "comment": "Подвал, глава 2",
+   "id": 3240,
+   "lock_id": 0,
+   "name": "Подвал: ножка корыта",
+   "position": [
+    -63.3,
+    -4.075,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.25,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "2a2420ff",
+   "comment": "Подвал, глава 2",
+   "id": 3241,
+   "lock_id": 0,
+   "name": "Подвал: ножка корыта",
+   "position": [
+    -61.9,
+    -4.075,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.25,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1a2018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3242,
+   "lock_id": 0,
+   "name": "Подвал: мутная вода в корыте",
+   "position": [
+    -62.6,
+    -3.75,
+    -239.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.48,
+    0.3,
+    0.68
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "4a4640ff",
+   "comment": "Подвал, глава 2",
+   "id": 3243,
+   "lock_id": 0,
+   "name": "Подвал: каменная раковина",
+   "position": [
+    -59.3,
+    -3.775,
+    -240.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.8,
+    0.85,
+    0.5
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3244,
+   "lock_id": 0,
+   "name": "Подвал: кран",
+   "position": [
+    -59.3,
+    -3.2,
+    -240.55
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.3,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "6a5a40ff",
+   "comment": "Подвал, глава 2",
+   "id": 3245,
+   "lock_id": 0,
+   "name": "Подвал: верёвка для белья",
+   "position": [
+    -61.25,
+    -2.19,
+    -236.59
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    4.9,
+    0.02,
+    0.02
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge",
+   "collide": false
+  },
+  {
+   "color": "b8b0a0ff",
+   "comment": "Подвал, глава 2",
+   "id": 3246,
+   "lock_id": 0,
+   "name": "Подвал: висящая простыня",
+   "position": [
+    -62.7,
+    -2.7,
+    -236.59
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "9a9a90ff",
+   "comment": "Подвал, глава 2",
+   "id": 3247,
+   "lock_id": 0,
+   "name": "Подвал: висящая простыня",
+   "position": [
+    -61.1,
+    -2.7,
+    -236.59
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    1.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "a89880ff",
+   "comment": "Подвал, глава 2",
+   "id": 3248,
+   "lock_id": 0,
+   "name": "Подвал: висящая простыня",
+   "position": [
+    -59.75,
+    -2.7,
+    -236.59
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    1.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "6a5a3aff",
+   "comment": "Подвал, глава 2",
+   "id": 3249,
+   "lock_id": 0,
+   "name": "Подвал: корзина с бельём",
+   "position": [
+    -59.4,
+    -3.975,
+    -234.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.45,
+    0.5
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3250,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки (дно)",
+   "position": [
+    -57.45,
+    -4.175,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.05,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3251,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -57.45,
+    -3.85,
+    -240.65
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.7,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3252,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -57.45,
+    -3.9,
+    -239.35
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.6,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3253,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -58.15,
+    -3.85,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.7,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3254,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -56.75,
+    -3.85,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.7,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a2a18ff",
+   "comment": "Подвал, глава 2",
+   "id": 3255,
+   "lock_id": 0,
+   "name": "Подвал: гнилая картошка",
+   "position": [
+    -57.45,
+    -4.0,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.3,
+    0.3,
+    1.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3256,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки (дно)",
+   "position": [
+    -55.65,
+    -4.175,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.05,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3257,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -55.65,
+    -3.85,
+    -240.65
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.7,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3258,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -55.65,
+    -3.9,
+    -239.35
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    0.6,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3259,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -56.35,
+    -3.85,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.7,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3260,
+   "lock_id": 0,
+   "name": "Подвал: ларь для картошки",
+   "position": [
+    -54.95,
+    -3.85,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    0.7,
+    1.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a2a18ff",
+   "comment": "Подвал, глава 2",
+   "id": 3261,
+   "lock_id": 0,
+   "name": "Подвал: гнилая картошка",
+   "position": [
+    -55.65,
+    -4.0,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.3,
+    0.3,
+    1.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "6a5a3aff",
+   "comment": "Подвал, глава 2",
+   "id": 3262,
+   "lock_id": 0,
+   "name": "Подвал: мешок",
+   "position": [
+    -54.0,
+    -3.925,
+    -236.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.55,
+    0.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "6a5a3aff",
+   "comment": "Подвал, глава 2",
+   "id": 3263,
+   "lock_id": 0,
+   "name": "Подвал: мешок",
+   "position": [
+    -54.2,
+    -3.925,
+    -235.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.55,
+    0.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "6a5a3aff",
+   "comment": "Подвал, глава 2",
+   "id": 3264,
+   "lock_id": 0,
+   "name": "Подвал: мешок",
+   "position": [
+    -53.8,
+    -3.925,
+    -234.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.5,
+    0.55,
+    0.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3265,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (стойка)",
+   "position": [
+    -58.195,
+    -3.2,
+    -237.57
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3266,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (стойка)",
+   "position": [
+    -58.195,
+    -3.2,
+    -236.03
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3267,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (стойка)",
+   "position": [
+    -57.805,
+    -3.2,
+    -237.57
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3268,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (стойка)",
+   "position": [
+    -57.805,
+    -3.2,
+    -236.03
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    2.0,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3269,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями",
+   "position": [
+    -58.0,
+    -4.095,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3270,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями",
+   "position": [
+    -58.0,
+    -3.595,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3271,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -3.48,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3272,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -3.367,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3273,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -3.465,
+    -237.12
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3274,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -3.338,
+    -237.12
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3275,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -3.495,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3276,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -3.397,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3277,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -3.465,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3278,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -3.338,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3279,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями",
+   "position": [
+    -58.0,
+    -3.095,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3280,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.965,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3281,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.838,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3282,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.995,
+    -237.12
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3283,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.897,
+    -237.12
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3284,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.965,
+    -236.48
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3285,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.838,
+    -236.48
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3286,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.995,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3287,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.897,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3288,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями",
+   "position": [
+    -58.0,
+    -2.595,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3289,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.495,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3290,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.397,
+    -237.44
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a1e10ff",
+   "comment": "Подвал, глава 2",
+   "id": 3291,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.465,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.23,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3292,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.338,
+    -236.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3018ff",
+   "comment": "Подвал, глава 2",
+   "id": 3293,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.495,
+    -236.48
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.17,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3294,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.397,
+    -236.48
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "1e2a2aff",
+   "comment": "Подвал, глава 2",
+   "id": 3295,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (банка)",
+   "position": [
+    -58.0,
+    -2.48,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.12,
+    0.2,
+    0.12
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3296,
+   "lock_id": 0,
+   "name": "Подвал: полка с соленьями (крышка банки)",
+   "position": [
+    -58.0,
+    -2.367,
+    -236.16
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.13,
+    0.025,
+    0.13
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3297,
+   "lock_id": 0,
+   "name": "Подвал: бочка с капустой",
+   "position": [
+    -54.0,
+    -3.7,
+    -238.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.7,
+    1.0,
+    0.7
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "5a4a40ff",
+   "comment": "Подвал, глава 2",
+   "id": 3298,
+   "lock_id": 0,
+   "name": "Подвал: сруб колодца",
+   "position": [
+    -49.5,
+    -3.8,
+    -238.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.8,
+    0.8,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "5a4a40ff",
+   "comment": "Подвал, глава 2",
+   "id": 3299,
+   "lock_id": 0,
+   "name": "Подвал: сруб колодца",
+   "position": [
+    -49.5,
+    -3.8,
+    -236.7
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.8,
+    0.8,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "5a4a40ff",
+   "comment": "Подвал, глава 2",
+   "id": 3300,
+   "lock_id": 0,
+   "name": "Подвал: сруб колодца",
+   "position": [
+    -50.3,
+    -3.8,
+    -237.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.8,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "5a4a40ff",
+   "comment": "Подвал, глава 2",
+   "id": 3301,
+   "lock_id": 0,
+   "name": "Подвал: сруб колодца",
+   "position": [
+    -48.7,
+    -3.8,
+    -237.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.2,
+    0.8,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "brick_dark"
+  },
+  {
+   "color": "000000ff",
+   "comment": "Подвал, глава 2",
+   "id": 3302,
+   "lock_id": 0,
+   "name": "Подвал: темнота в колодце",
+   "position": [
+    -49.5,
+    -4.165,
+    -237.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.03,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "concrete_grunge"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3303,
+   "lock_id": 0,
+   "name": "Подвал: крышка колодца (сдвинута)",
+   "position": [
+    -48.9,
+    -3.37,
+    -238.4
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.06,
+    1.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3304,
+   "lock_id": 0,
+   "name": "Подвал: насос",
+   "position": [
+    -45.9,
+    -3.5,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    1.4,
+    0.6
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3305,
+   "lock_id": 0,
+   "name": "Подвал: труба насоса",
+   "position": [
+    -47.4,
+    -2.95,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.4,
+    0.1,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "4a3a30ff",
+   "comment": "Подвал, глава 2",
+   "id": 3306,
+   "lock_id": 0,
+   "name": "Подвал: труба насоса вверх",
+   "position": [
+    -45.9,
+    -1.75,
+    -240.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.1,
+    2.1,
+    0.1
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "3a3a36ff",
+   "comment": "Подвал, глава 2",
+   "id": 3307,
+   "lock_id": 0,
+   "name": "Подвал: бак для воды",
+   "position": [
+    -46.0,
+    -3.55,
+    -235.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.9,
+    1.3,
+    0.9
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3308,
+   "lock_id": 0,
+   "name": "Подвал: длинный верстак мастерской",
+   "position": [
+    -49.0,
+    -4.2,
+    -221.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.6,
+    0.9,
+    0.8
+   ],
+   "type": "prop_table",
+   "visible": true
+  },
+  {
+   "color": "3a3632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3309,
+   "lock_id": 0,
+   "name": "Подвал: тиски",
+   "position": [
+    -47.85,
+    -3.225,
+    -221.85
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.3,
+    0.15,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal"
+  },
+  {
+   "color": "6a5038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3310,
+   "lock_id": 0,
+   "name": "Подвал: щит для инструментов",
+   "position": [
+    -49.0,
+    -2.5,
+    -221.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    4.0,
+    1.0,
+    0.04
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3311,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -50.6,
+    -2.625,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.45,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3312,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -50.1,
+    -2.55,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.6,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3313,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -49.5,
+    -2.675,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.35,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3314,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -48.9,
+    -2.6,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.5,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3315,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -48.3,
+    -2.65,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.4,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "2a2a28ff",
+   "comment": "Подвал, глава 2",
+   "id": 3316,
+   "lock_id": 0,
+   "name": "Подвал: инструмент на стене",
+   "position": [
+    -47.7,
+    -2.575,
+    -221.37
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.55,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3317,
+   "lock_id": 0,
+   "name": "Подвал: козлы",
+   "position": [
+    -46.7,
+    -3.46,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.08,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3318,
+   "lock_id": 0,
+   "name": "Подвал: ножка козел",
+   "position": [
+    -47.3,
+    -3.85,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.7,
+    0.08
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3319,
+   "lock_id": 0,
+   "name": "Подвал: ножка козел",
+   "position": [
+    -46.1,
+    -3.85,
+    -226.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.7,
+    0.08
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3320,
+   "lock_id": 0,
+   "name": "Подвал: козлы",
+   "position": [
+    -46.7,
+    -3.46,
+    -227.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    0.08,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3321,
+   "lock_id": 0,
+   "name": "Подвал: ножка козел",
+   "position": [
+    -47.3,
+    -3.85,
+    -227.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.7,
+    0.08
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3e3022ff",
+   "comment": "Подвал, глава 2",
+   "id": 3322,
+   "lock_id": 0,
+   "name": "Подвал: ножка козел",
+   "position": [
+    -46.1,
+    -3.85,
+    -227.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.08,
+    0.7,
+    0.08
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "6a5038ff",
+   "comment": "Подвал, глава 2",
+   "id": 3323,
+   "lock_id": 0,
+   "name": "Подвал: доска на козлах",
+   "position": [
+    -46.7,
+    -3.4,
+    -226.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.8,
+    0.04,
+    2.4
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3324,
+   "lock_id": 0,
+   "name": "Подвал: штабель досок",
+   "position": [
+    -51.3,
+    -4.175,
+    -230.05
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.05,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3325,
+   "lock_id": 0,
+   "name": "Подвал: штабель досок",
+   "position": [
+    -51.3,
+    -4.115,
+    -230.02
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.05,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3326,
+   "lock_id": 0,
+   "name": "Подвал: штабель досок",
+   "position": [
+    -51.3,
+    -4.055,
+    -229.99
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.05,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3327,
+   "lock_id": 0,
+   "name": "Подвал: штабель досок",
+   "position": [
+    -51.3,
+    -3.995,
+    -229.96
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.05,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3328,
+   "lock_id": 0,
+   "name": "Подвал: штабель досок",
+   "position": [
+    -51.3,
+    -3.935,
+    -229.93
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    2.2,
+    0.05,
+    0.7
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks"
+  },
+  {
+   "color": "3a3a36ff",
+   "comment": "Подвал, глава 2",
+   "id": 3329,
+   "lock_id": 0,
+   "name": "Подвал: бочка с маслом",
+   "position": [
+    -45.8,
+    -3.725,
+    -229.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.95,
+    0.6
+   ],
+   "type": "prop_barrel",
+   "visible": true
+  },
+  {
+   "color": "5a4632ff",
+   "comment": "Подвал, глава 2",
+   "id": 3330,
+   "lock_id": 0,
+   "name": "Подвал: ящик с гвоздями",
+   "position": [
+    -51.9,
+    -4.0,
+    -222.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.6,
+    0.4,
+    0.5
+   ],
+   "type": "prop_crate",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3331,
+   "lock_id": 0,
+   "name": "Подвал: шкаф в кабинете отца (прятаться)",
+   "position": [
+    -65.2,
+    -4.2,
+    -240.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3332,
+   "lock_id": 0,
+   "name": "Подвал: шкаф в прачечной (прятаться)",
+   "position": [
+    -63.45,
+    -4.2,
+    -238.0
+   ],
+   "rotation": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3333,
+   "lock_id": 0,
+   "name": "Подвал: шкаф в насосной (прятаться)",
+   "position": [
+    -52.45,
+    -4.2,
+    -239.6
+   ],
+   "rotation": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Подвал, глава 2",
+   "id": 3334,
+   "lock_id": 0,
+   "name": "Подвал: шкаф в мастерской (прятаться)",
+   "position": [
+    -45.7,
+    -4.2,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    270.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №1, текст в сюжете",
+   "id": 3335,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №1 (в шкафу)",
+   "position": [
+    -59.0,
+    -4.15,
+    -219.75
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №2, текст в сюжете",
+   "id": 3336,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №2 (на верстаке)",
+   "position": [
+    -56.5,
+    -3.28,
+    -230.3
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №3, текст в сюжете",
+   "id": 3337,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №3 (в кладовой, в банке на стеллаже)",
+   "position": [
+    -65.9,
+    -3.06,
+    -230.32
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №4, текст в сюжете",
+   "id": 3338,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №4 (в котельной, за трубой)",
+   "position": [
+    -67.8,
+    -4.17,
+    -220.9
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №5, текст в сюжете",
+   "id": 3339,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №5 (в ящике с игрушками)",
+   "position": [
+    -64.4,
+    -3.67,
+    -229.95
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "e0d6b8ff",
+   "comment": "Подвал, глава 2. Записка №6, текст в сюжете",
+   "id": 3340,
+   "lock_id": 0,
+   "name": "Подвал: записка отца №6 (под лестницей)",
+   "position": [
+    -54.3,
+    -4.17,
+    -219.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.1,
+    0.3
+   ],
+   "type": "prop_note",
+   "visible": true
   }
  ],
  "sceneComment": "Пролог: шоссе Блэк-Пайн, авария, старый дом, камера 04",

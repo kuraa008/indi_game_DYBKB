@@ -153,6 +153,8 @@ var is_reading_note:   bool   = false
 # ──────────────────────────────────────────────
 var active_map_path: String = "res://scenes/1level.json"
 var intro_epilogue: bool = false
+# Глава 2: после пролога Итан приходит в себя в подвале дома отца на карте «Шоссе»
+var wake_in_basement: bool = false
 var door_position: Vector3 = Vector3(-0.9, 0.5, 10.5)
 
 func is_level_2() -> bool:

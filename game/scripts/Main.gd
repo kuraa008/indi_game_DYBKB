@@ -58,6 +58,10 @@ var highway_trees: Array = []
 func _ready() -> void:
 	if GameManager and GameManager.active_map_path != "":
 		map_json_path = GameManager.active_map_path
+	# После пролога старая карта больше не нужна: Итан очнётся в подвале дома отца
+	if GameManager and GameManager.wake_in_basement and "1level" in map_json_path.to_lower():
+		map_json_path = "res://scenes/Шоссе.json"
+		GameManager.active_map_path = map_json_path
 
 	GameManager.reset_state()
 	_setup_world()
@@ -781,7 +785,8 @@ func _load_map() -> void:
 				if is_legacy_map and sz.y >= 1.9 and sz.y <= 2.2:
 					sz.y  = wall_height
 					pos.y = wall_height * 0.5
-				var w_node = _box(pos, sz, col, "wall_%d" % obj_id, true, rot)
+				# "collide": false — декор, сквозь который можно пройти (простыни, балки, бумаги)
+				var w_node = _box(pos, sz, col, "wall_%d" % obj_id, bool(obj.get("collide", true)), rot)
 				if obj.has("wall_texture") and str(obj["wall_texture"]) != "":
 					TextureHelper.apply_wall_texture_to_node(w_node, str(obj["wall_texture"]), col)
 					if str(obj["wall_texture"]) == "brick_red" and abs(rot.x) < 0.5 and abs(rot.z) < 0.5:
