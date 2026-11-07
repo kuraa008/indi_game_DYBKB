@@ -1274,15 +1274,24 @@ sound('cashier_rule_2', 237, () => cashierLine('пазав+ут па +имени
 sound('cashier_rule_3', 238, () => cashierLine('пач+уствуешь, што кт+ота ид+ёт сл+едам — ни абар+ачивайся.', { f0a: 188, f0b: 140, rate: 1.04 }));
 
 // ══════════════════════════════════════════════════════════════════════════════
-fs.mkdirSync(OUT_DIR, { recursive: true });
-const only = process.argv.slice(2);
-for (const s of SOUNDS) {
-  if (only.length && !only.includes(s.name)) continue;
-  seed(s.sd);
-  const t0 = Date.now();
-  const r = s.fn();
-  if (!r.loop) for (const c of r.chs) hp1(c, 18);      // убрать постоянную составляющую
-  norm(r.chs, r.peak ?? -1);
-  writeWav(s.name, r.chs, r.loop);
-  console.log(`${s.name.padEnd(18)} ${(r.chs[0].length / SR).toFixed(2)}s ${r.chs.length}ch${r.loop ? ' loop' : ''}  ${Date.now() - t0} ms`);
+// Помощники для generate_cutscene_audio.js: при require() звуки не пересобираются
+module.exports = {
+  SR, TAU, seed, R, rnd, logU, expR, pick, N, buf, clamp, lerp, sstep, add, env, gain, mix, peakOf, norm, normRms,
+  sat, smooth2, white, pink, brown, wobble, coef, bq, bqv, lp1, hp1, ring, modes, burst, click, osc, particles, creak,
+  freeverb, wowDelay, loopXf, breathSeg, rattle, formantSynth, speak, ru2tok,
+};
+
+if (require.main === module) {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const only = process.argv.slice(2);
+  for (const s of SOUNDS) {
+    if (only.length && !only.includes(s.name)) continue;
+    seed(s.sd);
+    const t0 = Date.now();
+    const r = s.fn();
+    if (!r.loop) for (const c of r.chs) hp1(c, 18);      // убрать постоянную составляющую
+    norm(r.chs, r.peak ?? -1);
+    writeWav(s.name, r.chs, r.loop);
+    console.log(`${s.name.padEnd(18)} ${(r.chs[0].length / SR).toFixed(2)}s ${r.chs.length}ch${r.loop ? ' loop' : ''}  ${Date.now() - t0} ms`);
+  }
 }
