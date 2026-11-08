@@ -1020,9 +1020,13 @@ func _spawn_player() -> void:
 
 	if _is_apartment():
 		add_child(preload("res://scripts/ApartmentScene.gd").new())
+		# Звонок с неизвестного номера → кат-сцена «Звонок» → улица (Jan-ky)
+		add_child(preload("res://scripts/cutscenes/ApartmentCall.gd").new())
 
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
+		# Объявления и посадка в машину → дорога и авария (Jan-ky)
+		add_child(preload("res://scripts/cutscenes/StreetCar.gd").new())
 
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"

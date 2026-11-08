@@ -131,6 +131,50 @@ static func play(tree: SceneTree, scene_path: String, next_path: String = "", ex
 	tree.change_scene_to_file(scene_path)
 
 
+# Кат-сцена поверх игры, без смены сцены (для кат-сцен посреди уровня):
+#   await Cutscene.overlay(self, "res://scenes/cutscenes/Ch2Wake.tscn", {"from_gameplay": true})
+# На время кат-сцены игровая сцена скрыта и стоит на паузе (существа, игрок, звуки, её HUD),
+# её WorldEnvironment отключён. После конца всё возвращается, камера — снова у игрока.
+static func overlay(host: Node, scene_path: String, extra: Dictionary = {}) -> void:
+	var tree := host.get_tree()
+	var game: Node = tree.current_scene
+	var prev_cam := host.get_viewport().get_camera_3d()
+	var envs: Array = []
+	var layers: Array = []
+	if game:
+		for n in game.find_children("*", "WorldEnvironment", true, false):
+			envs.append([n, (n as WorldEnvironment).environment])
+			(n as WorldEnvironment).environment = null
+		for n in game.find_children("*", "CanvasLayer", true, false):
+			if (n as CanvasLayer).visible:
+				layers.append(n)
+				(n as CanvasLayer).visible = false
+	var saved_mode := game.process_mode if game else Node.PROCESS_MODE_INHERIT
+	if game:
+		game.process_mode = Node.PROCESS_MODE_DISABLED
+		if game is Node3D:
+			(game as Node3D).visible = false
+	_request_next = "none"
+	_request_args = extra
+	var cs: Node = (load(scene_path) as PackedScene).instantiate()
+	tree.root.add_child(cs)
+	await cs.finished
+	cs.queue_free()
+	if is_instance_valid(game):
+		game.process_mode = saved_mode
+		if game is Node3D:
+			(game as Node3D).visible = true
+	for e in envs:
+		if is_instance_valid(e[0]):
+			(e[0] as WorldEnvironment).environment = e[1]
+	for l in layers:
+		if is_instance_valid(l):
+			(l as CanvasLayer).visible = true
+	if is_instance_valid(prev_cam):
+		prev_cam.make_current()
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+
 func _ready() -> void:
 	args = _request_args.duplicate()
 	if args.get("autoplay", false):

@@ -2,10 +2,13 @@ class_name BasementExitHatch
 extends StaticBody3D
 
 # Люк в потолке тамбура над лестницей подвала (глава 2): через него Итан вылезает во двор.
-# Игрок смотрит вверх на люк и нажимает действие — экран темнеет, и Итан уже наверху.
+# Игрок смотрит вверх на люк и нажимает действие — кат-сцена Jan-ky «Лаз» (Ch2Tunnel) поверх игры:
+# последние метры лаза, крышка плечом, двор. После неё Итан стоит во дворе лицом к дому (END_POS).
 
 const OUT_POS := Vector3(-58.0, 0.15, -233.5)   # на заднем дворе, прямо за стеной дома, у такого же люка на земле
 const OUT_YAW := 0.0                              # спиной к дому, лицом к лесу
+const END_POS := Vector3(-59.2, 0.15, -239.35)    # где кончается кат-сцена: отошёл к лесу
+const END_LOOK := Vector3(-61.5, 0.15, -231.0)    # и обернулся на дом
 
 var _busy := false
 
@@ -27,6 +30,17 @@ func interact(opener: Node = null) -> void:
 	if _busy or opener == null or not (opener is Node3D):
 		return
 	_busy = true
+	opener.set("is_in_cutscene", true)
+	await Cutscene.overlay(self, "res://scenes/cutscenes/Ch2Tunnel.tscn", {"from_gameplay": true})
+	opener.global_position = END_POS
+	opener.rotation.y = atan2(END_POS.x - END_LOOK.x, END_POS.z - END_LOOK.z)
+	opener.set("velocity", Vector3.ZERO)
+	opener.set("is_in_cutscene", false)
+	_busy = false
+
+
+# Старый переход без кат-сцены (затемнение и перенос на OUT_POS) — если кат-сцену нужно отключить
+func _fade_out_old(opener: Node3D) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 120
 	var shade := ColorRect.new()

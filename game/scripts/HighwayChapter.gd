@@ -988,22 +988,19 @@ func _run_basement_wake() -> void:
 	_player.velocity = Vector3.ZERO
 	_player.rotation.y = atan2(BASEMENT_WAKE.x - BASEMENT_LOOK.x, BASEMENT_WAKE.z - BASEMENT_LOOK.z)
 	_update_interior(BASEMENT_WAKE)
-	_head.position.y = 0.35
-	_head.rotation.z = 0.3
-	_sound("res://assets/audio/intro/tinnitus.wav", -6.0)
+	# Пробуждение — кат-сцена Jan-ky (Ch2Wake, ~12 с) поверх игры: Итан приходит в себя на полу,
+	# садится, сверху копыта, дверь наверху лестницы открывается. Последний кадр — лестница,
+	# и управление сразу у игрока (он уже смотрит на BASEMENT_LOOK).
+	await get_tree().process_frame
+	await Cutscene.overlay(self, "res://scenes/cutscenes/Ch2Wake.tscn", {"from_gameplay": true})
+	_black.color.a = 0.0
+	_head.position.y = 1.62
+	_head.rotation = Vector3.ZERO
 	var drone := _sound("res://assets/audio/intro/dread_drone.wav", -16.0)
 	if drone:
 		drone.finished.disconnect(drone.queue_free)
 		drone.finished.connect(drone.play)
-	await get_tree().create_timer(1.5, false).timeout
-	var tw := create_tween().set_parallel()
-	tw.tween_property(_black, "color:a", 0.0, 3.0)
-	tw.tween_property(_head, "position:y", 1.62, 3.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(_head, "rotation:z", 0.0, 3.4).set_trans(Tween.TRANS_SINE)
-	await tw.finished
-	_head.rotation = Vector3.ZERO
 	_player.set("is_in_cutscene", false)
-	_say("ИТАН", "…Где я? Пахнет сыростью… Это наш подвал?", 3.2)
 
 
 func _process(delta: float) -> void:

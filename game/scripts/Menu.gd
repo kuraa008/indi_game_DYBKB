@@ -979,9 +979,10 @@ func _start_game() -> void:
 	VHSOverlay.glitch(1.0)
 	if GameManager:
 		GameManager.active_map_path = "res://scenes/1level.json"
-		# Вступление (авария на шоссе) показывается один раз за запуск игры
+		# Пролог (предыстория → квартира → звонок → улица → дорога и авария) показывается
+		# один раз за запуск игры; цепочка — в scripts/cutscenes/PrologueFlow.gd (Jan-ky)
 		if not GameManager.intro_cutscene_played:
-			get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
+			preload("res://scripts/cutscenes/PrologueFlow.gd").start_new_game(get_tree())
 			return
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
