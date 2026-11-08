@@ -72,6 +72,7 @@ func _ready() -> void:
 	_build_house_lights()
 	_build_camera04()
 	_dress_house()
+	preload("res://scripts/HouseStory.gd").build(self)
 	_build_forest()
 	_build_grass()
 	_set_items_still()

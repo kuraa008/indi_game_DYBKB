@@ -5494,9 +5494,9 @@
    "lock_id": 0,
    "name": "Находки Сэма",
    "position": [
-    -70.0,
+    -68.3,
     3.48,
-    -230.0
+    -228.2
    ],
    "rotation": [
     0.0,
@@ -34886,6 +34886,595 @@
     0.3
    ],
    "type": "prop_note",
+   "visible": true
+  },
+  {
+   "color": "c8a878ff",
+   "comment": "Дом отца, главы 1 и 3. Скрипит, если наступить. Под ней коробка",
+   "id": 4000,
+   "lock_id": 0,
+   "name": "Дом: скрипучая доска под кроватью",
+   "position": [
+    -69.3,
+    3.486,
+    -220.7
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.6,
+    0.012,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered",
+   "collide": false
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Дом отца, главы 1 и 3. Закрыта на ключ. Внутри олений череп и последняя записка отца",
+   "id": 4001,
+   "lock_id": 0,
+   "name": "Дом: металлическая коробка отца",
+   "position": [
+    -69.05,
+    3.55,
+    -220.8
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.4,
+    0.14,
+    0.3
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Дом отца, главы 1 и 3. В ящике письма Сэма",
+   "id": 4002,
+   "lock_id": 0,
+   "name": "Дом: стол отца",
+   "position": [
+    -63.6,
+    3.48,
+    -219.55
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.2,
+    0.75,
+    0.6
+   ],
+   "type": "prop_table",
+   "visible": true
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4003,
+   "lock_id": 0,
+   "name": "Дом: стул у стола отца",
+   "position": [
+    -63.6,
+    3.48,
+    -220.3
+   ],
+   "rotation": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scale": [
+    0.52,
+    0.96,
+    0.52
+   ],
+   "type": "prop_chair",
+   "visible": true
+  },
+  {
+   "color": "d8d0bcff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4004,
+   "lock_id": 0,
+   "name": "Дом: письма Сэма на столе",
+   "position": [
+    -63.9,
+    4.233,
+    -219.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.22,
+    0.006,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "c8c0acff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4005,
+   "lock_id": 0,
+   "name": "Дом: письма Сэма на столе",
+   "position": [
+    -63.75,
+    4.239,
+    -219.45
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.22,
+    0.006,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "d0c8b4ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4006,
+   "lock_id": 0,
+   "name": "Дом: письма Сэма на столе",
+   "position": [
+    -63.6,
+    4.245,
+    -219.55
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.22,
+    0.006,
+    0.16
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "1a1a1aff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4007,
+   "lock_id": 0,
+   "name": "Дом: ручка на столе",
+   "position": [
+    -63.125,
+    4.238,
+    -219.595
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.15,
+    0.015,
+    0.01
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "5a3a22ff",
+   "comment": "Дом отца, главы 1 и 3. Тайник Сэма и Итана: внутри ключ от коробки отца. Кукушку надо придерживать",
+   "id": 4008,
+   "lock_id": 0,
+   "name": "Дом: часы с кукушкой",
+   "position": [
+    -58.77,
+    1.935,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.14,
+    0.45,
+    0.32
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e2614ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4009,
+   "lock_id": 0,
+   "name": "Дом: крыша часов",
+   "position": [
+    -58.76,
+    2.165,
+    -223.7
+   ],
+   "rotation": [
+    25.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.16,
+    0.05,
+    0.24
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "3e2614ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4010,
+   "lock_id": 0,
+   "name": "Дом: крыша часов",
+   "position": [
+    -58.76,
+    2.165,
+    -223.5
+   ],
+   "rotation": [
+    -25.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.16,
+    0.05,
+    0.24
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "d8cfb8ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4011,
+   "lock_id": 0,
+   "name": "Дом: циферблат часов",
+   "position": [
+    -58.695,
+    1.92,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.01,
+    0.2,
+    0.2
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "plaster",
+   "collide": false
+  },
+  {
+   "color": "2a1a0cff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4012,
+   "lock_id": 0,
+   "name": "Дом: дверца кукушки",
+   "position": [
+    -58.693,
+    2.075,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.015,
+    0.07,
+    0.07
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "wood_planks",
+   "collide": false
+  },
+  {
+   "color": "8a7040ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4013,
+   "lock_id": 0,
+   "name": "Дом: маятник",
+   "position": [
+    -58.77,
+    1.495,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.02,
+    0.43,
+    0.02
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "8a7040ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4014,
+   "lock_id": 0,
+   "name": "Дом: груз маятника",
+   "position": [
+    -58.77,
+    1.28,
+    -223.6
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.04,
+    0.08,
+    0.08
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4015,
+   "lock_id": 0,
+   "name": "Дом: цепочка гири",
+   "position": [
+    -58.77,
+    1.41,
+    -223.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.01,
+    0.6,
+    0.01
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3020ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4016,
+   "lock_id": 0,
+   "name": "Дом: гиря-шишка",
+   "position": [
+    -58.77,
+    1.055,
+    -223.68
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    0.15,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "4a4038ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4017,
+   "lock_id": 0,
+   "name": "Дом: цепочка гири",
+   "position": [
+    -58.77,
+    1.41,
+    -223.52
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.01,
+    0.6,
+    0.01
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "3a3020ff",
+   "comment": "Дом отца, главы 1 и 3",
+   "id": 4018,
+   "lock_id": 0,
+   "name": "Дом: гиря-шишка",
+   "position": [
+    -58.77,
+    1.055,
+    -223.52
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.06,
+    0.15,
+    0.06
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "rusted_metal",
+   "collide": false
+  },
+  {
+   "color": "6a5a44ff",
+   "comment": "Дом отца, главы 1 и 3. Отрывать по одной монтировкой из сарая",
+   "id": 4019,
+   "lock_id": 0,
+   "name": "Дом: доска на окне кладовки",
+   "position": [
+    -62.0,
+    1.41,
+    -231.34
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    4.0
+   ],
+   "scale": [
+    1.9,
+    0.16,
+    0.04
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "6a5a44ff",
+   "comment": "Дом отца, главы 1 и 3. Отрывать по одной монтировкой из сарая",
+   "id": 4020,
+   "lock_id": 0,
+   "name": "Дом: доска на окне кладовки",
+   "position": [
+    -62.0,
+    1.88,
+    -231.34
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    -3.0
+   ],
+   "scale": [
+    1.9,
+    0.16,
+    0.04
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "6a5a44ff",
+   "comment": "Дом отца, главы 1 и 3. Отрывать по одной монтировкой из сарая",
+   "id": 4021,
+   "lock_id": 0,
+   "name": "Дом: доска на окне кладовки",
+   "position": [
+    -62.0,
+    2.36,
+    -231.34
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    6.0
+   ],
+   "scale": [
+    1.9,
+    0.16,
+    0.04
+   ],
+   "type": "cube",
+   "visible": true,
+   "wall_texture": "board_weathered"
+  },
+  {
+   "color": "4a3828ff",
+   "comment": "Дом отца, главы 1 и 3. За шкафом у пола детские имена, слева от шкафа надпись кровью",
+   "id": 4022,
+   "lock_id": 0,
+   "name": "Дом: шкаф в углу комнаты Сэма",
+   "position": [
+    -70.48,
+    3.48,
+    -229.85
+   ],
+   "rotation": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    2.24,
+    0.7
+   ],
+   "type": "prop_wardrobe",
    "visible": true
   }
  ],
