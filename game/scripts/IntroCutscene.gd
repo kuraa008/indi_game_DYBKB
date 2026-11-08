@@ -1,25 +1,27 @@
 extends Node3D
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  IntroCutscene.gd — Вступление: от кассеты Сэма до кошмара Итана
-#  1. Запись «ЛЕСНАЯ КАМЕРА 04», 14.10.1994: олень на шоссе встаёт на дыбы,
-#     глаза горят красным, белый шум и шёпот Сэма «…не приезжай. Это не олень»
-#  2. 31.10.1994, 21:40, последняя заправка перед лесом (scripts/GasStation.gd):
-#     «Гольф» Итана встаёт у колонки, на витрине среди старых объявлений —
-#     свежее «ПРОПАЛ: СЭМ КОУЛ»; три бутылки и карта на прилавке, кассирша
-#     видит круг посреди леса и вполголоса называет три правила; уезжает —
-#     она смотрит вслед. 23:06: шоссе через Блэк-Пайн, радио тонет в помехах
-#  3. Фонари впереди гаснут один за другим, олень в свете фар: сигнал, тормоза
-#     (нарушено первое правило), хруст суставов, крик, занос, удар о валун
+#  IntroCutscene.gd — ПРОЛОГ по сюжету Досыма: «Дорога» → «Заправка» → «Авария»
+#  (до этого — геймплей «Обычный день», кат-сцена «Звонок» и улица с объявлениями)
+#  1. «Два дня спустя. Дорога была долгой, по пути кончился бензин»: машина
+#     с кашлем мотора дотягивает до заправки (scripts/GasStation.gd, Досым)
+#  2. На витрине — «ПРОПАЛ ЧЕЛОВЕК» с лицом Сэма. За прилавком бабушка долго
+#     смотрит на Итана и рассказывает о скинволкере целиком, слово в слово по
+#     сюжету, и три правила. Пока она говорит, часы раскадровки стоят — запись
+#     актрисы любой длины встанет на место черновой (voice/grandma_*.wav)
+#  3. Итан расплачивается и уезжает: «Совсем бабка из ума выжила. Чушь какая-то».
+#     Ночью, ближе к дому, он задумывается и сбрасывает скорость — и из леса прямо
+#     под фары выскакивает чёрный олень с человеческими глазами: руль, занос, камень
+#  (TAPE_INTRO = true вернёт старое начало с записью камеры 04 — оно уже не канон)
 #  4. Звон в ушах, мир глохнет; Итан приходит в себя в разбитой кабине,
 #     отстёгивается, берёт фонарик из бардачка и вываливается из машины
 #  5. Сигнал смолкает сам, сверчки замолкают разом, «Сэм» зовёт из леса —
 #     Итан отзывается (второе правило)
 #  6. Камера 04 на сосне, вспышка памяти, падение, глаза в чаще, далёкий смех,
 #     шёпот у самого уха → «НЕ ОГЛЯДЫВАЙСЯ» → оборачивается (третье) → скример
-#  7. Запись камеры 04: тело Итана, фонарик, высокая тень между соснами
-#  8. Итана волокут за ноги: налобный фонарь, хрип старика, искры электрической
-#     калитки, лязг ворот и тот самый смех с обочины → 1-й уровень (сон)
+#  Финал после карты «Шоссе» (GameManager.intro_epilogue): темнота, Итана
+#  волочит само существо, стук копыт, дверь, ступени вниз → 1-й уровень.
+#  (Пункты 5–6 — запасные, в обычном потоке их заменяет карта «Шоссе».)
 #  Звуки: assets/audio/intro/*.wav — их собирает scripts/generate_intro_sfx.js
 #  [Пробел / Enter / Esc / Start] — пропустить
 # ══════════════════════════════════════════════════════════════════════════════
@@ -42,6 +44,7 @@ const T_JUMP_TAPE: float = 8.0      # сбой кадра: олень вдруг
 const T_STATIC: float = 8.6
 const T_TAPE_VOICE: float = 8.7     # tape_whisper.wav: фраза А с 0.05 с, фраза Б с 3.35 с
 const T_EJECT: float = 13.3
+const TAPE_INTRO := false          # запись камеры 04 из старой версии — не канон, пропускается
 # 2. Заправка, 21:40 (фразы кассирши: cashier_*.wav, речь 1.7 / 1.4 / 2.7 / 2.4 / 3.35 с)
 const T_TITLE: float = 13.8
 const T_GS_ARRIVE: float = 16.4     # «Гольф» сворачивает с шоссе к колонке
@@ -120,8 +123,13 @@ const LAMP_OFF := Color(0.16, 0.13, 0.1)
 # ── Движение машины ──
 # На шоссе машина в кадре 5.6 с (а не 10.6, как без заправки) — стартует ближе,
 # чтобы к T_POV оказаться там же, у z = -144
-const CAR_START_Z: float = -32.0
-const CAR_SPEED: float = 20.0          # ~72 км/ч
+const CAR_SPEED: float = 20.0          # ~72 км/ч по трассе
+const CAR_SLOW_SPEED: float = 12.0     # ближе к дому Итан сбрасывает скорость
+const CAR_CRASH_SPEED: float = 7.0     # в заносе: «только то, что он ехал медленно, спасло ему жизнь»
+const T_SLOW_FROM: float = T_RADIO_CUT
+const T_SLOW_TO: float = T_DEER_SEEN
+const CRASH_Z: float = -246.7
+const CAR_START_Z: float = CRASH_Z + CAR_SPEED * (T_SLOW_FROM - T_DRIVE) + (CAR_SPEED + CAR_SLOW_SPEED) * 0.5 * (T_SLOW_TO - T_SLOW_FROM) + CAR_SLOW_SPEED * (T_SWERVE - T_SLOW_TO) + (CAR_SLOW_SPEED + CAR_CRASH_SPEED) * 0.5 * (T_CRASH - T_SWERVE)
 const CAR_BRAKE_SPEED: float = 9.0
 const BRAKE_TIME: float = 1.4
 const SWERVE_X: float = -7.2           # уход влево с дороги
@@ -152,7 +160,21 @@ const DRAG_FROM := Vector3(-19.5, 0.32, -239.0)
 const DEER_HEIGHT: float = 2.3
 const DEER_EYES_PX = [Vector2(82, 178), Vector2(116, 178)]   # глаза на Olen.png
 
-const CASHIER := "КАССИРША"
+const CASHIER := "БАБУШКА"
+const THOUGHT := "ИТАН (ПРО СЕБЯ)"
+const MONO_VOICE := "res://assets/audio/cutscenes/voice/"
+# Монолог бабушки — текст сюжета Досыма без изменений
+const MONO := [
+	["grandma_1", "В этих лесах живёт тот, кто носит чужую шкуру. Старики зовут его скинволкер."],
+	["grandma_2", "Днём он прячется. А ночью выходит к дороге в облике чёрного оленя. Глаза у него светятся не как у зверя, а как у человека."],
+	["grandma_3", "Он ничего не забывает. Он запоминает голоса тех, кого забрал, и зовёт их голосами живых. Зовёт по имени. Тех, кто по ним скучает."],
+	["grandma_4", "Мой муж ушёл на голос сына. Сын к тому времени три года как лежал в земле. Мужа я больше не видела."],
+	["grandma_5", "Запомни, сынок."],
+	["grandma_rule_1", "Увидишь на дороге чёрного оленя — не останавливайся."],
+	["grandma_rule_2", "Позовут по имени из леса — не отзывайся."],
+	["grandma_rule_3", "Почувствуешь, что кто-то идёт следом, — не оборачивайся."],
+]
+const MONO_SHOTS := ["face", "window", "face", "close", "close", "close", "close", "close"]
 const SAM_TAPE := "СЭМ · ЗАПИСЬ КАМЕРЫ 04"
 
 # ── Заправка (scripts/GasStation.gd): стоит далеко от шоссе с оленем, в своём лесу.
@@ -304,6 +326,9 @@ var _fade_tween: Tween = null
 var _fresh_ang := Vector2.ZERO        # освежитель-ёлочка: (вперёд-назад, вбок)
 var _fresh_vel := Vector2.ZERO
 var _prev_speed: float = 0.0
+var _mono_active := false          # монолог бабушки: часы раскадровки стоят
+var _mono_shot := ""
+var _mono_t := 0.0
 
 func _ready() -> void:
 	name = "IntroCutscene"
@@ -332,6 +357,8 @@ func _ready() -> void:
 	if GameManager and GameManager.intro_epilogue:
 		GameManager.intro_epilogue = false
 		_start_epilogue_only()
+	elif not TAPE_INTRO:
+		_skip_tape()
 	_update_scene(0.0)
 
 func _exit_tree() -> void:
@@ -342,7 +369,8 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	if _finished:
 		return
-	_t += delta
+	if not _mono_active:
+		_t += delta
 	if not _epilogue_only:
 		_run_timeline()
 	if _finished:
@@ -442,6 +470,11 @@ func _run_timeline() -> void:
 		if is_instance_valid(gs_engine):
 			create_tween().tween_property(gs_engine, "pitch_scale", 0.55, 2.3)
 		_fade_to(gs_engine, -17.0, 2.3)
+	# Бензин кончился: мотор кашляет, машина еле дотягивает до колонки
+	if _once("gs_cough_1", T_GS_ARRIVE + 0.55):
+		_engine_cough()
+	if _once("gs_cough_2", T_GS_ARRIVE + 1.45):
+		_engine_cough()
 	if _once("gs_tyres", T_GS_PARKED - 2.2):
 		_sfx("tyres_roll", -15.0)
 	if _once("gs_idle", T_GS_PARKED - 0.45):
@@ -470,21 +503,11 @@ func _run_timeline() -> void:
 		_fade_to(gs_radio, -25.0, 0.05)
 	if _once("gs_bottles", T_GS_COUNTER + GS_BOTTLE_CLINK[0]):
 		_sfx("bottles_clink", -9.0, 1.0, false, BUS_MASTER)
-	if _once("gs_map", T_GS_COUNTER + 0.8):
-		_sfx("map_paper", -12.0, 1.0, false, BUS_MASTER)
 	if _once("gs_register", T_GS_COUNTER + 1.25):
 		_sfx("cash_register", -11.0, 1.0, false, BUS_MASTER)
-	if _once("gs_ask", T_GS_ASK):
-		_fade_to(gs_radio, -29.0, 0.6)
-		_cashier_says("cashier_ask", "Сегодня ночью — в Блэк-Пайн?", 1.7)
-	if _once("gs_three", T_GS_THREE):
-		_cashier_says("cashier_three", "Тогда запомни три вещи.", 1.4)
-	if _once("gs_rule_1", T_GS_RULE_1):
-		_cashier_says("cashier_rule_1", "Увидишь на дороге оленя — не останавливайся.", 2.7)
-	if _once("gs_rule_2", T_GS_RULE_2):
-		_cashier_says("cashier_rule_2", "Позовут по имени из леса — не отзывайся.", 2.4)
-	if _once("gs_rule_3", T_GS_RULE_3):
-		_cashier_says("cashier_rule_3", "Почувствуешь, что кто-то идёт следом, — не оборачивайся.", 3.35)
+	if _once("gs_mono", T_GS_ASK):
+		_fade_to(gs_radio, -32.0, 0.6)
+		_monologue()
 	if _once("gs_take", T_GS_TAKE):
 		_sfx("bottles_take", -10.0, 1.0, false, BUS_MASTER)
 		_fade_to(gs_radio, -25.0, 1.0)
@@ -502,6 +525,8 @@ func _run_timeline() -> void:
 		_fade_out(gs_idle, 0.35)
 		gs_idle = null
 		_sfx("tyres_roll", -19.0, 1.25)
+	if _once("gs_thought", T_GS_LEAVE + 0.7):
+		_say(THOUGHT, "«Совсем бабка из ума выжила. Чушь какая-то».", 3.0)
 	if _once("gs_away", T_GS_LEAVE + 2.2):
 		_fade_to(gs_engine, -26.0, 1.8)
 	if _once("gs_end", T_GS_END):
@@ -519,7 +544,6 @@ func _run_timeline() -> void:
 		engine_player = _sfx("engine_ext", -18.0, 1.0, true)
 		_fade_to(engine_player, -9.0, 1.4)
 		radio_player = _sfx("radio_static", -27.0, 1.0, true)
-		_show_time_card()
 	if _once("radio_swell", T_RADIO_CUT - 0.9):
 		_fade_to(radio_player, -18.0, 0.8)
 	if _once("radio_cut", T_RADIO_CUT):
@@ -528,6 +552,8 @@ func _run_timeline() -> void:
 		_sfx("radio_cut", -14.0)
 
 	# ─ 3. Фонари гаснут, олень, сигнал, тормоза, занос, валун ─
+	if _once("drive_thought", T_POV + 0.4):
+		_say(THOUGHT, "«А вдруг слова старухи как-то связаны со смертью отца… и с тем, что Сэм пропал?»", 3.5)
 	if _once("pov", T_POV):
 		var outside := engine_player
 		engine_player = _sfx("engine_int", -8.0, 1.0, true)
@@ -538,19 +564,17 @@ func _run_timeline() -> void:
 	if _once("drone", LAMP_DIE[12]):
 		drone_player = _sfx("dread_drone", -22.0)
 		_fade_to(drone_player, -9.0, 3.0)
-	if _once("horn", T_HORN):
-		_sfx("horn_double", -3.0)
-	if _once("brake", T_BRAKE):
-		_sfx("brake_squeal", -6.0)
-		if engine_player:
-			create_tween().tween_property(engine_player, "pitch_scale", 0.68, BRAKE_TIME)
-	if _once("rear", T_REAR):
-		_sfx("bone_crack", -2.0)
-	if _once("deer_eyes", T_DEER_EYES):
-		_sfx("creature_shriek", -3.0)
+	# Из леса прямо под фары выскакивает чёрный олень
+	if _once("deer_jump", T_SWERVE - 0.7):
+		_sfx_res("res://assets/audio/cutscenes/hoof_ground_1.wav", -4.0, 1.1)
 		_sfx("sub_hit", -6.0)
+	if _once("deer_land", T_SWERVE - 0.3):
+		_sfx_res("res://assets/audio/cutscenes/hoof_ground_3.wav", -3.0)
 	if _once("swerve", T_SWERVE):
 		_sfx("tire_screech", -2.0)
+		_sfx("brake_squeal", -7.0)
+		if engine_player:
+			create_tween().tween_property(engine_player, "pitch_scale", 0.68, T_CRASH - T_SWERVE)
 		_trauma = 0.55
 	if _once("gravel", T_GRAVEL):
 		_sfx("gravel_skid", -3.0)
@@ -583,6 +607,13 @@ func _run_timeline() -> void:
 		_sfx("seatbelt", -8.0)
 	if _once("glovebox", T_GLOVEBOX):
 		_sfx("glovebox", -8.0)
+	# Дверь заклинило: плечом — раз, два
+	if _once("door_jam_1", T_DOOR - 1.05):
+		_sfx_res("res://assets/audio/cutscenes/kneel_thud.wav", -9.0)
+		_trauma = 0.3
+	if _once("door_jam_2", T_DOOR - 0.6):
+		_sfx_res("res://assets/audio/cutscenes/kneel_thud.wav", -7.0, 1.1)
+		_trauma = 0.35
 	if _once("door_black", T_DOOR - 0.25):
 		_fade_black(1.0, 0.3)
 	if _once("door", T_DOOR):
@@ -673,56 +704,32 @@ func _run_timeline() -> void:
 func _run_epilogue() -> void:
 	var b := _epi_t0
 	var e := _t - b
-	# ─ 7. Запись камеры 04: тень между соснами ─
-	if _once("e_footage", b + E_FOOTAGE):
-		tape_players.append(_sfx("tape_hiss", -18.0, 1.0, true, BUS_MASTER))
-		tape_players.append(_sfx("forest_wind", -7.0, 1.0, true, BUS_TAPE))
-		tape_players.append(_sfx("lamp_buzz", -20.0, 1.0, true, BUS_TAPE))
-		_fade_black(0.0, 0.4)
-	if _once("e_look", b + E_LOOK):
-		_sfx("sub_hit", -11.0, 0.9, false, BUS_MASTER)
-	if _once("e_static", b + E_STATIC):
-		VHSOverlay.glitch(1.0)
-		static_player = _sfx("tape_static", -15.0, 1.0, true, BUS_MASTER)
-		for p in tape_players:
-			_fade_out(p, 0.05)
-		tape_players.clear()
-	# ─ 8. Итана волокут к особняку ─
-	if _once("e_drag", b + E_DRAG):
-		_stop(static_player)
-		static_player = null
+	# ─ 7. Темнота. Оно уносит Итана к дому, как зверь уносит добычу в нору ─
+	if _once("e_start", b + 0.3):
 		_set_black(1.0)
-		walker.visible = false
-		walker_eyes.visible = false
-		ethan_body.visible = false
-		wheeze_player =_sfx_res("res://assets/ded.mp3", -11.0, 0.95, true)
-		hum_player = _sfx_res("res://assets/audio/electric_hum.wav", -36.0, 1.0, true)
-		_fade_to(hum_player, -10.0, E_GATE - E_DRAG)
-	if e >= E_DRAG and e < E_SLAM - 0.4:
-		var pull := floori((e - E_DRAG) / DRAG_PERIOD)
-		if _once("e_pull_%d" % pull, b + E_DRAG + pull * DRAG_PERIOD):
-			_sfx("drag_pull", -7.0, randf_range(0.9, 1.05))
-			_sfx_res("res://assets/audio/step_%d.mp3" % (1 + pull % 2), -9.0, 0.82)
-	if _once("e_glimpse_1", b + E_DRAG + 0.5):
-		_glimpse(1.5)
-	if _once("e_glimpse_2", b + E_SPARK - 0.25):
-		_glimpse(0.9)
-	if _once("e_spark", b + E_SPARK):
-		_sfx_res("res://assets/audio/electric_spark.wav", -4.0)
-		_spark_t0 = _t
-	if _once("e_spark_2", b + E_SPARK + 0.26):
-		_sfx_res("res://assets/audio/electric_spark.wav", -10.0, 1.15)
-	if _once("e_gate", b + E_GATE):
-		_sfx("gate_creak", -5.0)
-	if _once("e_slam", b + E_SLAM):
-		_sfx("gate_slam", -2.0)
-		_fade_to(wheeze_player, -22.0, 1.5)
-	if _once("e_laugh", b + E_LAUGH):
-		# Тот же смех, что на обочине: те же паузы
-		_fade_out(_sfx_res("res://assets/creepy_laugh.mp3", -5.0, 1.0, false, BUS_WORLD, 1.25), 0.8, 2.2)
-	if _once("e_fade", b + E_FADE):
+		walker.visible = true
+		wheeze_player = _sfx_res("res://assets/audio/monster/monster_breath.wav", -14.0, 0.9, true)
+	if e >= 0.6 and e < 8.6:
+		var pull := floori((e - 0.6) / DRAG_PERIOD)
+		if _once("e_pull_%d" % pull, b + 0.6 + pull * DRAG_PERIOD):
+			_sfx("drag_pull", -8.0, randf_range(0.9, 1.05))
+			_sfx_res("res://assets/audio/cutscenes/hoof_ground_%d.wav" % (1 + pull % 4), -9.0, 0.9)
+	if _once("e_glimpse_1", b + 1.2):
+		_glimpse(1.6)
+	if _once("e_glimpse_2", b + 5.0):
+		_glimpse(1.1)
+	# ─ 8. Дверь, ступени вниз — подвал ─
+	if _once("e_door", b + 8.8):
+		_fade_to(wheeze_player, -30.0, 1.0)
+		_sfx("door_creak", -8.0)
+	for i in 4:
+		if _once("e_step_%d" % i, b + 9.6 + i * 0.45):
+			_sfx_res("res://assets/audio/cutscenes/hoof_wood_%d.wav" % (i + 1), -9.0 + i)
+	if _once("e_drop", b + 11.6):
+		_sfx("body_fall", -6.0)
+	if _once("e_fade", b + 12.4):
 		_silence(1.2)
-	if _once("e_end", b + E_END):
+	if _once("e_end", b + 13.6):
 		_finish()
 
 func _crash() -> void:
@@ -788,8 +795,8 @@ func _on_scare_finished(scare: Node) -> void:
 	if is_instance_valid(scare):
 		scare.queue_free()
 	VHSOverlay.set_fear(0.0)
-	walker.visible = true
-	ethan_body.visible = true
+	walker.visible = false
+	ethan_body.visible = false
 	cam04.visible = false
 
 # Сразу финал: авария уже была, Итан лежит у камеры 04
@@ -818,23 +825,29 @@ func _finish() -> void:
 func _car_distance(t: float) -> float:
 	if t <= T_DRIVE:
 		return 0.0
-	var d := (minf(t, T_HORN) - T_DRIVE) * CAR_SPEED
-	if t > T_HORN:
-		var b := minf(t - T_HORN, BRAKE_TIME)
-		var decel := (CAR_SPEED - CAR_BRAKE_SPEED) / BRAKE_TIME
-		d += CAR_SPEED * b - 0.5 * decel * b * b
-	if t > T_HORN + BRAKE_TIME:
-		d += (minf(t, T_CRASH) - T_HORN - BRAKE_TIME) * CAR_BRAKE_SPEED
+	var d := (minf(t, T_SLOW_FROM) - T_DRIVE) * CAR_SPEED
+	if t > T_SLOW_FROM:
+		var u := minf(t, T_SLOW_TO) - T_SLOW_FROM
+		var a := (CAR_SPEED - CAR_SLOW_SPEED) / (T_SLOW_TO - T_SLOW_FROM)
+		d += CAR_SPEED * u - 0.5 * a * u * u
+	if t > T_SLOW_TO:
+		d += (minf(t, T_SWERVE) - T_SLOW_TO) * CAR_SLOW_SPEED
+	if t > T_SWERVE:
+		var w := minf(t, T_CRASH) - T_SWERVE
+		var a2 := (CAR_SLOW_SPEED - CAR_CRASH_SPEED) / (T_CRASH - T_SWERVE)
+		d += CAR_SLOW_SPEED * w - 0.5 * a2 * w * w
 	return d
 
 func _car_speed(t: float) -> float:
 	if _car_crashed or t < T_DRIVE or t >= T_CRASH:
 		return 0.0
-	if t <= T_HORN:
+	if t <= T_SLOW_FROM:
 		return CAR_SPEED
-	if t <= T_HORN + BRAKE_TIME:
-		return lerpf(CAR_SPEED, CAR_BRAKE_SPEED, (t - T_HORN) / BRAKE_TIME)
-	return CAR_BRAKE_SPEED
+	if t <= T_SLOW_TO:
+		return lerpf(CAR_SPEED, CAR_SLOW_SPEED, (t - T_SLOW_FROM) / (T_SLOW_TO - T_SLOW_FROM))
+	if t <= T_SWERVE:
+		return CAR_SLOW_SPEED
+	return lerpf(CAR_SLOW_SPEED, CAR_CRASH_SPEED, (t - T_SWERVE) / (T_CRASH - T_SWERVE))
 
 func _car_swerve(t: float) -> float:
 	return smoothstep(0.0, 1.0, clampf((t - T_SWERVE) / (T_CRASH - T_SWERVE), 0.0, 1.0))
@@ -879,11 +892,12 @@ func _update_deer() -> void:
 			eyes = _t >= T_EYES_TAPE
 			if _t >= T_JUMP_TAPE:
 				pos = DEER_JUMP_POS
-		elif _t >= T_DEER_SEEN and _t < T_CRASH:
+		elif _t >= T_SWERVE - 0.75 and _t < T_CRASH:
+			# Чёрный олень выскакивает из леса прямо под фары и перелетает дорогу
 			show = true
-			rear = smoothstep(T_REAR, T_REAR + 0.6, _t)
-			tilt = smoothstep(T_REAR + 0.35, T_REAR + 0.9, _t)
-			eyes = _t >= T_DEER_EYES
+			var u := clampf((_t - (T_SWERVE - 0.75)) / 0.95, 0.0, 1.0)
+			pos = Vector3(lerpf(5.4, -1.8, u), sin(u * PI) * 0.55, DEER_POS.z + 0.8)
+			eyes = u > 0.2
 		elif _in_flashback():
 			show = true
 			rear = 1.0
@@ -899,7 +913,7 @@ func _update_deer() -> void:
 	deer_eyes.visible = eyes
 	var big := 2.2 if (_t < T_EJECT or _in_flashback()) else 1.0
 	for m in deer_eye_meshes:
-		m.scale = Vector3.ONE * big
+		m.scale = Vector3(1.3, 0.75, 0.5) * big
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Фонари, кабина, камера 04, тень, старик
@@ -981,7 +995,7 @@ func _update_cockpit(delta: float) -> void:
 	freshener.rotation = Vector3(_fresh_ang.x, 0.0, _fresh_ang.y)
 
 func _update_walker(delta: float) -> void:
-	if not walker.visible:
+	if not walker.visible or not TAPE_INTRO:
 		return
 	var e := _t - _epi_t0
 	var u := clampf((e - E_FOOTAGE) / (E_STOP - E_FOOTAGE), 0.0, 1.0)
@@ -998,7 +1012,8 @@ func _update_walker(delta: float) -> void:
 		walker_eyes.look_at(CAM04_POS, Vector3.UP)
 
 func _update_drag_lights() -> void:
-	var in_drag := _epi_t0 >= 0.0 and _t - _epi_t0 >= E_DRAG
+	# Старика-лесопила в новом сюжете нет: тащит само существо
+	var in_drag := TAPE_INTRO and _epi_t0 >= 0.0 and _t - _epi_t0 >= E_DRAG
 	oldman.visible = in_drag
 	gate_glow.visible = in_drag
 	spark_light.visible = in_drag
@@ -1019,6 +1034,8 @@ func _update_drag_lights() -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 func _shot() -> String:
 	if _epi_t0 >= 0.0:
+		if not TAPE_INTRO:
+			return "drag"
 		return "footage" if _t - _epi_t0 < E_DRAG else "drag"
 	if _t < T_EJECT:
 		return "footage"
@@ -1047,6 +1064,9 @@ func _shot() -> String:
 func _update_camera(delta: float) -> void:
 	_trauma = maxf(0.0, _trauma - delta * 1.2)
 	cam.attributes = null
+	if _mono_active:
+		_camera_mono(delta)
+		return
 	var shot := _shot()
 	ir_light.visible = shot == "footage" or shot == "flash"
 	match shot:
@@ -1097,8 +1117,13 @@ func _camera_pov() -> void:
 	var s := _car_swerve(_t)
 	if s > 0.0:
 		cam.rotate_object_local(Vector3.BACK, deg_to_rad(9.0) * sin(s * PI))
-	# Резкое торможение: голову бросает вперёд
-	var brake := smoothstep(T_BRAKE, T_BRAKE + 0.3, _t) * (1.0 - smoothstep(T_HORN + BRAKE_TIME, T_HORN + BRAKE_TIME + 0.4, _t))
+	# Итан задумался и перестал смотреть на дорогу — взгляд уходит вниз и вбок,
+	# пока олень не выскакивает в свете фар
+	var distract := smoothstep(T_POV + 1.4, T_POV + 2.8, _t) * (1.0 - smoothstep(T_SWERVE - 0.8, T_SWERVE - 0.6, _t))
+	cam.rotate_object_local(Vector3.UP, deg_to_rad(7.0) * distract)
+	cam.rotate_object_local(Vector3.RIGHT, deg_to_rad(-8.0) * distract)
+	# Руль рванул — голову бросает вперёд
+	var brake := smoothstep(T_SWERVE, T_SWERVE + 0.3, _t)
 	cam.rotate_object_local(Vector3.RIGHT, deg_to_rad(-3.5) * brake)
 
 func _camera_wake() -> void:
@@ -1166,6 +1191,20 @@ func _camera_fallen() -> void:
 	cam.rotate_object_local(Vector3.BACK, deg_to_rad(11.0) * f * (1.0 - 0.6 * smoothstep(T_WHISPER, T_WHISPER + 1.5, _t)))
 	cam.fov = lerpf(60.0, 70.0, f)
 
+# Новый финал: Итана волочит существо — идёт впереди, спиной к нам, к дому
+func _camera_drag_creature(e: float) -> void:
+	var pulls := maxf(0.0, (e - 0.6) / DRAG_PERIOD)
+	var k := floorf(pulls)
+	var off := (k + smoothstep(0.0, 0.45, pulls - k)) * 0.6
+	var pos := DRAG_FROM + Vector3(-off, 0.0, 0.0)
+	cam.fov = 68.0
+	cam.global_position = pos + Vector3(0.0, sin(e * 5.3) * 0.01, 0.0)
+	cam.look_at(pos + Vector3(-2.0, 3.3, 0.15), Vector3.UP)
+	cam.rotate_object_local(Vector3.BACK, deg_to_rad(8.0 + sin(e * 1.1) * 4.0))
+	walker.global_position = pos + Vector3(-1.9, -0.32, 0.0)
+	walker.rotation.y = -PI * 0.5
+	walker.update_motion(get_process_delta_time(), "walk", 0.5)
+
 func _drag_offset(e: float) -> float:
 	# Каждый рывок тянет тело на 0.6 м к особняку
 	var pulls := maxf(0.0, (e - E_DRAG) / DRAG_PERIOD)
@@ -1173,6 +1212,9 @@ func _drag_offset(e: float) -> float:
 	return (k + smoothstep(0.0, 0.45, pulls - k)) * 0.6
 
 func _camera_drag(e: float) -> void:
+	if not TAPE_INTRO:
+		_camera_drag_creature(e)
+		return
 	var pos := DRAG_FROM + Vector3(-_drag_offset(minf(e, E_SLAM)), 0.0, 0.0)
 	cam.fov = 68.0
 	cam.global_position = pos + Vector3(0.0, sin(e * 5.3) * 0.01, 0.0)
@@ -1573,11 +1615,10 @@ func _build_sam_poster() -> void:
 	root.add_child(_box(Vector3(0.002, 0.045, 0.12), Vector3(-0.0045, -0.025, 0.0), _mat(Color(0.3, 0.29, 0.27), 0.9)))
 	var ink := Color(0.06, 0.04, 0.035)
 	var at := GS_POSTER + Vector3(-0.006, 0.0, 0.0)
-	station._text("ПРОПАЛ", at + Vector3(0.0, 0.175, 0.0), -PI * 0.5, 0.055, ink, 4)
-	station._text("СЭМ КОУЛ", at + Vector3(0.0, -0.085, 0.0), -PI * 0.5, 0.034, ink, 2)
-	station._text("с 14 октября 1994", at + Vector3(0.0, -0.125, 0.0), -PI * 0.5, 0.022, ink)
-	station._text("шоссе через Блэк-Пайн", at + Vector3(0.0, -0.155, 0.0), -PI * 0.5, 0.019, ink)
-	station._text("Видели его? Сообщите шерифу", at + Vector3(0.0, -0.19, 0.0), -PI * 0.5, 0.017, Color(0.35, 0.05, 0.04))
+	station._text("ПРОПАЛ ЧЕЛОВЕК", at + Vector3(0.0, 0.175, 0.0), -PI * 0.5, 0.036, ink, 3)
+	station._text("СЭМ", at + Vector3(0.0, -0.09, 0.0), -PI * 0.5, 0.04, ink, 2)
+	station._text("Видели его?", at + Vector3(0.0, -0.14, 0.0), -PI * 0.5, 0.022, ink)
+	station._text("Сообщите в полицию округа", at + Vector3(0.0, -0.18, 0.0), -PI * 0.5, 0.017, Color(0.35, 0.05, 0.04))
 
 # Три бутылки газировки (из них потом и будут броски в игре) и карта с кругом посреди леса
 func _build_counter_props() -> void:
@@ -1724,9 +1765,92 @@ func _update_station() -> void:
 		var put: float = T_GS_COUNTER + GS_BOTTLE_CLINK[i]
 		gs_bottles[i].visible = _t >= put - 0.12 and _t < T_GS_TAKE + 0.08 + 0.12 * i
 		gs_bottles[i].position = GS_BOTTLES[i] + Vector3(0.0, 0.06 * (1.0 - smoothstep(put - 0.12, put, _t)), 0.0)
-	gs_map.visible = _t >= T_GS_COUNTER + 0.75 and _t < T_GS_TAKE + 0.55
+	gs_map.visible = false     # карта с кругом — из старой версии сюжета
 	var slide := smoothstep(T_GS_COUNTER + 0.75, T_GS_COUNTER + 1.05, _t)
 	gs_map.position = GS_MAP_POS + Vector3(-0.26, 0.0, 0.05) * (1.0 - slide)
+
+# Запись камеры 04 из старого вступления больше не нужна: сразу дорога и заправка
+func _skip_tape() -> void:
+	for key in ["vcr", "footage", "tape_rise", "tape_eyes", "tape_jump", "static", "tape_voice", "tape_line_a", "tape_line_b", "eject"]:
+		_fired[key] = true
+	_t = T_EJECT
+	_set_black(1.0)
+	car.visible = true
+
+# Мотор кашляет — бензин на нуле
+func _engine_cough() -> void:
+	if not is_instance_valid(gs_engine):
+		return
+	var tw := create_tween()
+	tw.tween_property(gs_engine, "volume_db", gs_engine.volume_db - 14.0, 0.08)
+	tw.tween_interval(0.12)
+	tw.tween_property(gs_engine, "volume_db", gs_engine.volume_db, 0.18)
+
+# Своё ожидание на таймере-ребёнке: если вступление пропустили, он исчезнет вместе со сценой
+func _wait_own(sec: float) -> void:
+	var tm := Timer.new()
+	tm.one_shot = true
+	add_child(tm)
+	tm.start(maxf(sec, 0.01))
+	await tm.timeout
+	tm.queue_free()
+
+# Монолог бабушки целиком. Пока она говорит, часы раскадровки стоят (_mono_active),
+# поэтому длина реплик может быть любой. Камера в это время — своя (_camera_mono).
+func _monologue() -> void:
+	_mono_active = true
+	_mono_shot = "look"
+	_mono_t = 0.0
+	# «Она долго смотрела на Итана, а потом тихо сказала»
+	await _wait_own(2.6)
+	for i in MONO.size():
+		if _finished:
+			return
+		_mono_shot = MONO_SHOTS[i]
+		_mono_t = 0.0
+		var d := _mono_line(MONO[i][0], MONO[i][1])
+		await _wait_own(d + (0.9 if i < 4 else 0.45))
+	_mono_active = false
+	_mono_shot = ""
+	_t = T_GS_TAKE - 0.6
+
+func _mono_line(id: String, line: String) -> float:
+	var path := MONO_VOICE + id + ".wav"
+	var d := clampf(0.9 + line.length() * 0.055, 1.4, 8.0)
+	if ResourceLoader.exists(path):
+		var st: AudioStream = load(path)
+		d = st.get_length()
+		_sfx_res(path, -4.0, 1.0, false, BUS_MASTER)
+	if station:
+		station.cashier.say(line, d * 0.92)
+	_say(CASHIER, "«%s»" % line, d + 0.15)
+	return d
+
+func _camera_mono(delta: float) -> void:
+	_mono_t += delta
+	cam.attributes = null
+	var head := station.cashier.get_head_position()
+	var base := GS_ORIGIN + GS_CAM_COUNTER
+	var drift := Vector3(sin(_mono_t * 0.7) * 0.01, sin(_mono_t * 1.1) * 0.006, 0.0)
+	match _mono_shot:
+		"window":
+			# Пока она говорит о лесе и олене — за окном чёрный лес
+			cam.fov = 44.0
+			cam.global_position = base + Vector3(-0.1, 0.02, -0.15) + drift
+			cam.look_at(GS_ORIGIN + GS_WINDOW_DARK + Vector3(0.0, 0.0, 0.3 * sin(_mono_t * 0.2)), Vector3.UP)
+		"face":
+			cam.fov = lerpf(38.0, 33.0, clampf(_mono_t / 10.0, 0.0, 1.0))
+			cam.global_position = base + Vector3(0.1, -0.03, 0.05) + drift
+			cam.look_at(head + Vector3(0.0, -0.02, 0.0), Vector3.UP)
+		"close":
+			cam.fov = lerpf(31.0, 26.0, clampf(_mono_t / 6.0, 0.0, 1.0))
+			cam.global_position = base + Vector3(0.16, -0.02, 0.09) + drift
+			cam.look_at(head + Vector3(0.0, -0.03, 0.0), Vector3.UP)
+		_:
+			# Долгий взгляд: медленный наезд с места Итана
+			cam.fov = lerpf(46.0, 40.0, clampf(_mono_t / 2.6, 0.0, 1.0))
+			cam.global_position = base + drift
+			cam.look_at(head, Vector3.UP)
 
 # Кассирша говорит вполголоса: губы по буквам, звук фразы и субтитр
 func _cashier_says(sound_name: String, line: String, speech: float) -> void:
@@ -1767,7 +1891,7 @@ func _camera_gs_window() -> void:
 func _camera_gs_counter() -> void:
 	var e := _t - T_GS_COUNTER
 	var counter := GS_ORIGIN + Vector3(24.75, 1.0, 1.25)
-	var look := counter.lerp(GS_ORIGIN + GS_MAP_POS, smoothstep(0.7, 1.3, e)).lerp(station.cashier.get_head_position(), smoothstep(1.8, 2.7, e))
+	var look := counter.lerp(GS_ORIGIN + GS_BOTTLES[1], smoothstep(0.7, 1.3, e)).lerp(station.cashier.get_head_position(), smoothstep(1.8, 2.7, e))
 	cam.global_position = GS_ORIGIN + GS_CAM_COUNTER + Vector3(sin(_t * 0.9) * 0.01, sin(_t * 1.3) * 0.008, sin(_t * 0.7) * 0.01)
 	cam.look_at(look, Vector3.UP)
 	cam.fov = lerpf(52.0, 40.0, smoothstep(T_GS_ASK, T_GS_TAKE, _t))
@@ -1830,8 +1954,8 @@ func _build_deer() -> void:
 		deer_eyes.add_child(eye)
 		deer_eye_meshes.append(eye)
 	var glow := OmniLight3D.new()
-	glow.light_color = Color(1.0, 0.15, 0.08)
-	glow.light_energy = 1.4
+	glow.light_color = Color(0.85, 0.88, 0.95)
+	glow.light_energy = 0.9
 	glow.omni_range = 2.2
 	glow.position = Vector3((99.0 - half.x) * px, (half.y - 178.0) * px, 0.3)
 	deer_eyes.add_child(glow)
@@ -1843,11 +1967,22 @@ func _make_eye(pos: Vector3) -> MeshInstance3D:
 		eye_mesh.height = 0.1
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color(1.0, 0.18, 0.1)
+		mat.albedo_color = Color(0.9, 0.88, 0.84)       # белки: «не как у зверя, а как у человека»
 		eye_mesh.material = mat
 	var eye := MeshInstance3D.new()
 	eye.mesh = eye_mesh
 	eye.position = pos
+	var pupil := MeshInstance3D.new()
+	var pm := SphereMesh.new()
+	pm.radius = 0.022
+	pm.height = 0.044
+	var pmat := StandardMaterial3D.new()
+	pmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pmat.albedo_color = Color(0.04, 0.03, 0.03)
+	pm.material = pmat
+	pupil.mesh = pm
+	pupil.position = Vector3(0.0, 0.0, 0.034)
+	eye.add_child(pupil)
 	return eye
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -2197,15 +2332,15 @@ func _build_overlay() -> void:
 	title_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_box.add_theme_constant_override("separation", 10)
 	title_box.modulate.a = 0.0
-	var date_title := _make_label("31 ОКТЯБРЯ 1994", 42, Color(0.92, 0.93, 0.95))
+	var date_title := _make_label("ДВА ДНЯ СПУСТЯ", 42, Color(0.92, 0.93, 0.95))
 	date_title.add_theme_font_override("font", VHSOverlay.tracked_font(6))
 	title_box.add_child(date_title)
-	title_place = _make_label("Последняя заправка перед лесом Блэк-Пайн · 21:40", 18, Color(0.62, 0.66, 0.74))
+	title_place = _make_label("Дорога к отцовскому дому была долгой. По пути кончился бензин…", 18, Color(0.62, 0.66, 0.74))
 	title_box.add_child(title_place)
 	layer.add_child(title_box)
 
 	# Подпись времени поверх кадра шоссе: прошло полтора часа
-	time_card = _make_label("23:06 · Шоссе через лес Блэк-Пайн", 18, Color(0.74, 0.77, 0.84))
+	time_card = _make_label("", 18, Color(0.74, 0.77, 0.84))
 	time_card.add_theme_font_override("font", VHSOverlay.tracked_font(3))
 	time_card.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	time_card.anchor_left = 0.06
