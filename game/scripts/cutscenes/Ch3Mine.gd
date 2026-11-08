@@ -1,18 +1,30 @@
 extends Cutscene
 
-# КОНЕЦ ГЛАВЫ 3 · «Это… моё». Комната отца: кровать сдвинута (под ножками тряпки),
-# доска поднята, металлическая коробка открыта. Итан берёт череп в руки — и стук
-# копыт в доме разом прекращается. Тишина, только часы в коридоре. Потом за дверью
-# низкий хриплый чужой голос: «Это… моё». Дверная ручка медленно поворачивается.
+# КОНЕЦ ГЛАВЫ 3 · «Это… моё». Комната отца на втором этаже дома с карты «Шоссе» (Досым):
+# стол с письмами Сэма, комод, шкаф, заколоченные окна. Кровать отодвинута от стены
+# (по полу следы), скрипучая доска поднята, металлическая коробка вытащена и открыта.
+# Итан стоит на коленях и берёт череп в руки — и стук копыт в доме разом прекращается.
+# Тишина, только старые часы в коридоре тикают. Потом за дверью низкий, хриплый,
+# чужой голос: «Это… моё». Дверная ручка медленно поворачивается. КОНЕЦ ГЛАВЫ 3.
 #
+# Коробка и доска стоят там же, где на карте (Дом: скрипучая доска / металлическая коробка),
+# дверь — «Дверь в спальню» в стене коридора. С карты не берутся только они и кровать:
+# здесь свои, потому что двигаются.
 # args.from_gameplay = true — игрок уже стоит на коленях у коробки (начало без затемнения).
 
-const KNEEL := Vector3(-0.35, 0.95, -0.15)
-const BOX_POS := Vector3(-0.35, 0.02, -0.85)
-const DOOR_ROOT := Vector3(1.65, 0.0, 1.88)
-const HANDLE_WORLD := Vector3(0.84, 1.0, 1.85)
+const MAP := "res://scenes/Шоссе.json"
+const FY := 3.48                                   # пол второго этажа (HouseStory.FY)
+const HOLE := Vector3(-69.3, FY, -220.7)           # где лежала скрипучая доска
+const BOX_POS := Vector3(-69.05, FY + 0.005, -221.15)
+const KNEEL := Vector3(-69.05, FY + 0.93, -220.4)
+const BED_FROM := Vector3(-69.3, 3.41, -220.7)     # кровать на карте
+const BED_TO := Vector3(-69.45, 3.41, -223.25)      # отодвинута к середине комнаты
+const DOOR_HINGE := Vector3(-59.0, FY, -223.04)    # «Дверь в спальню», петли с южной стороны
+const CLOCK_AT := Vector3(-57.6, 5.0, -223.6)      # часы в коридоре
+const SKIP_IDS := [1212, 4000, 4001, 1056]
 
 var door: Dictionary
+var handle_at := Vector3.ZERO
 var skull_rig: Node3D
 var skull: Node3D
 var candle_light: OmniLight3D
@@ -21,78 +33,62 @@ var hands: Array = []
 
 func build() -> void:
 	set_env(Color(0.0, 0.0, 0.0), Color(0.3, 0.32, 0.4), 0.85, 0.0, Color.BLACK, 1.3)
-	var planks := CutsceneKit.tmat("board_weathered.png", Color(0.55, 0.47, 0.4), 1.3)
+	CutsceneKit.map_area(self, MAP, Vector3(-65.0, 0.0, -222.0), 9.0, [], SKIP_IDS, AABB(), false)
 	var floor_m := CutsceneKit.tmat("wood_furniture.png", Color(0.5, 0.4, 0.31), 1.1)
-	var paper := CutsceneKit.mat(Color(0.3, 0.26, 0.21), 0.95)
-	# Комната отца 4.2 × 2.6 × 3.8: окно слева, дверь в коридор напротив коробки
-	CutsceneKit.box(self, Vector3(4.6, 0.1, 4.2), Vector3(0, -0.05, 0), floor_m)
-	CutsceneKit.box(self, Vector3(4.6, 0.1, 4.2), Vector3(0, 2.65, 0), planks)
-	CutsceneKit.wall(self, Vector3(-2.1, 0, 1.9), Vector3(-2.1, 0, -1.9), 2.6, 0.12, paper, Rect2(1.4, 0.9, 1.0, 1.2))
-	CutsceneKit.wall(self, Vector3(2.1, 0, -1.9), Vector3(2.1, 0, 1.9), 2.6, 0.12, paper)
-	CutsceneKit.wall(self, Vector3(-2.1, 0, -1.9), Vector3(2.1, 0, -1.9), 2.6, 0.12, paper)
-	CutsceneKit.wall(self, Vector3(2.1, 0, 1.9), Vector3(-2.1, 0, 1.9), 2.6, 0.12, paper, Rect2(0.45, 0.0, 0.9, 2.08))
-	door = CutsceneKit.door(self, DOOR_ROOT, Vector3(0, 180, 0), 0.9, 2.06)
-	# Окно: ночь, лунный свет полосой на полу
-	var frame := CutsceneKit.mat(Color(0.35, 0.3, 0.25), 0.8)
-	var wc := Vector3(-2.1, 1.5, -0.4)
-	for s in [-1.0, 1.0]:
-		CutsceneKit.box(self, Vector3(0.14, 1.2, 0.06), wc + Vector3(0, 0, 0.5 * s), frame)
-		CutsceneKit.box(self, Vector3(0.14, 0.06, 1.06), wc + Vector3(0, 0.6 * s, 0), frame)
-	CutsceneKit.box(self, Vector3(0.14, 1.2, 0.04), wc, frame)
-	var night := StandardMaterial3D.new()
-	night.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	night.albedo_color = Color(0.1, 0.13, 0.2)
-	CutsceneKit.quad(self, Vector2(3, 3), wc + Vector3(-1.5, 0, 0), night, Vector3(0, 90, 0))
+	# Дверь в коридор: на месте двери с карты, открывается внутрь комнаты
+	door = CutsceneKit.door(self, DOOR_HINGE, Vector3(0, -90, 0), 1.06, 2.26)
+	handle_at = (door.handle as Node3D).position.rotated(Vector3.UP, deg_to_rad(-90.0)) + DOOR_HINGE
+	# Луна сквозь доски западного окна: полосы света на полу
 	var moon := SpotLight3D.new()
 	moon.light_color = Color(0.55, 0.65, 0.95)
-	moon.light_energy = 4.0
-	moon.spot_range = 7.0
-	moon.spot_angle = 28.0
+	moon.light_energy = 6.0
+	moon.spot_range = 9.0
+	moon.spot_angle = 24.0
 	moon.shadow_enabled = true
 	add_child(moon)
-	moon.position = wc + Vector3(-1.2, 0.9, 0)
-	moon.look_at(Vector3(0.2, 0.0, -0.4), Vector3.UP)
-	# Кровать сдвинута, под ножками тряпки; пустая, со смятой простынёй
-	var bed := CutsceneKit.prefab(self, "prop_bed", Vector3(1.5, 0.9, 2.1), Vector3(1.2, 0, -0.95), Vector3(0, 90, 0), Color(0.45, 0.4, 0.35))
-	bed.rotation_degrees.y = 98.0
-	var rag := CutsceneKit.mat(Color(0.32, 0.3, 0.33), 1.0)
-	for p in [Vector3(0.2, 0.015, -1.6), Vector3(0.15, 0.015, -0.35), Vector3(2.0, 0.015, -1.55), Vector3(1.95, 0.015, -0.3)]:
-		CutsceneKit.box(self, Vector3(0.16, 0.03, 0.14), p, rag, Vector3(0, 20, 0))
-	CutsceneKit.cloth(self, Vector2(1.6, 1.0), Vector3(1.2, 0.62, -0.85), Vector3(0, 8, 0), Color(0.78, 0.76, 0.72))
-	# Поднятая доска и дыра в полу, рядом открытая коробка
-	CutsceneKit.box(self, Vector3(0.95, 0.02, 0.17), BOX_POS + Vector3(0, -0.04, -0.42), CutsceneKit.mat(Color(0.02, 0.02, 0.02), 1.0))
-	CutsceneKit.box(self, Vector3(0.95, 0.03, 0.17), BOX_POS + Vector3(0.6, 0.0, -0.1), floor_m, Vector3(0, 35, 0))
+	moon.position = Vector3(-73.4, 5.4, -222.0)
+	moon.look_at(Vector3(-68.2, FY, -221.4), Vector3.UP)
+	var room := OmniLight3D.new()
+	room.light_color = Color(0.45, 0.52, 0.75)
+	room.light_energy = 0.35
+	room.omni_range = 7.0
+	room.position = Vector3(-65.0, FY + 2.4, -222.0)
+	add_child(room)
+	# Кровать отодвинута от стены, на пыльном полу следы ножек
+	var bed := CutsceneKit.prefab(self, "prop_bed", Vector3(1.48, 0.88, 2.12), BED_TO, Vector3(0, 96, 0), Color(0.45, 0.4, 0.35))
+	bed.rotation_degrees.y = 96.0
+	var scuff := CutsceneKit.mat(Color(0.2, 0.16, 0.12), 1.0)
+	for dx in [-0.95, 0.95]:
+		var p0 := BED_FROM + Vector3(dx, 0.0, 0.0)
+		var p1 := BED_TO + Vector3(dx, 0.0, 0.0)
+		CutsceneKit.box(self, Vector3(0.05, 0.003, p0.distance_to(p1)), Vector3((p0.x + p1.x) * 0.5, FY + 0.002, (p0.z + p1.z) * 0.5), scuff, Vector3.ZERO, false)
+	# Поднятая доска и дыра в полу, рядом вытащенная открытая коробка
+	CutsceneKit.box(self, Vector3(1.55, 0.02, 0.15), HOLE + Vector3(0, -0.005, 0), CutsceneKit.mat(Color(0.02, 0.02, 0.02), 1.0))
+	CutsceneKit.box(self, Vector3(1.6, 0.03, 0.16), HOLE + Vector3(1.1, 0.02, 0.35), floor_m, Vector3(0, 28, 0))
 	var mbox := CutsceneKit.metal_box(self, BOX_POS, Vector3(0, 8, 0))
 	(mbox.get_node("Lid") as Node3D).rotation_degrees = Vector3(-112, 0, 0)
 	var note := CutsceneKit.box(self, Vector3(0.16, 0.002, 0.21), BOX_POS + Vector3(0.1, 0.02, 0.02), CutsceneKit.mat(Color(0.82, 0.78, 0.66), 0.95), Vector3(0, -14, 0))
 	note.name = "LastNote"
 	# Свеча на полу у коробки — тёплый дрожащий свет
-	CutsceneKit.cyl(self, 0.018, 0.02, 0.1, BOX_POS + Vector3(0.38, 0.05, 0.25), CutsceneKit.mat(Color(0.85, 0.82, 0.7), 0.6))
-	var flame := CutsceneKit.quad(self, Vector2(0.018, 0.035), BOX_POS + Vector3(0.38, 0.12, 0.25), CutsceneKit.add_mat(Color(1.0, 0.7, 0.3, 1.0), CutsceneKit.flame_tex()))
+	CutsceneKit.cyl(self, 0.018, 0.02, 0.1, BOX_POS + Vector3(0.42, 0.05, 0.2), CutsceneKit.mat(Color(0.85, 0.82, 0.7), 0.6))
+	var flame := CutsceneKit.quad(self, Vector2(0.018, 0.035), BOX_POS + Vector3(0.42, 0.12, 0.2), CutsceneKit.add_mat(Color(1.0, 0.7, 0.3, 1.0), CutsceneKit.flame_tex()))
 	(flame.material_override as StandardMaterial3D).billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	candle_light = OmniLight3D.new()
 	candle_light.light_color = Color(1.0, 0.62, 0.3)
 	candle_light.light_energy = 1.1
-	candle_light.omni_range = 3.4
+	candle_light.omni_range = 3.6
 	candle_light.shadow_enabled = true
-	candle_light.position = BOX_POS + Vector3(0.38, 0.2, 0.25)
+	candle_light.position = BOX_POS + Vector3(0.42, 0.2, 0.2)
 	add_child(candle_light)
-	# Отсвет луны на двери: ручку должно быть видно
+	# Отсвет на двери: ручку должно быть видно через всю комнату
 	var door_fill := OmniLight3D.new()
 	door_fill.light_color = Color(0.55, 0.62, 0.85)
-	door_fill.light_energy = 0.9
-	door_fill.omni_range = 1.8
-	door_fill.position = HANDLE_WORLD + Vector3(-0.35, 0.3, -0.6)
+	door_fill.light_energy = 2.2
+	door_fill.omni_range = 1.6
+	door_fill.position = handle_at + Vector3(-0.55, 0.25, -0.15)
 	add_child(door_fill)
-	# Стол с выдвинутым ящиком (письма Сэма), комод, шкаф
-	CutsceneKit.prefab(self, "prop_table", Vector3(1.2, 0.76, 0.6), Vector3(1.75, 0, 0.6), Vector3(0, 90, 0), Color(0.4, 0.3, 0.22))
-	CutsceneKit.box(self, Vector3(0.42, 0.12, 0.5), Vector3(1.32, 0.62, 0.6), CutsceneKit.tmat("wood_furniture.png", Color(0.42, 0.32, 0.24), 1.5))
-	for i in 3:
-		CutsceneKit.box(self, Vector3(0.15, 0.003, 0.22), Vector3(1.3 + i * 0.02, 0.69 + i * 0.004, 0.55 + i * 0.03), CutsceneKit.mat(Color(0.86, 0.83, 0.74), 0.95), Vector3(0, 10 * i, 0))
-	CutsceneKit.prefab(self, "prop_dresser", Vector3(1.2, 0.9, 0.5), Vector3(-1.8, 0, 1.2), Vector3(0, 90, 0), Color(0.36, 0.28, 0.2))
-	CutsceneKit.prefab(self, "prop_wardrobe", Vector3(1.2, 2.1, 0.6), Vector3(-1.4, 0, -1.55), Vector3.ZERO, Color(0.34, 0.26, 0.2))
-	CutsceneKit.cobweb(self, Vector3(2.0, 2.5, -1.8), 0.5, Vector3(0, -45, 0))
-	CutsceneKit.dust(self, Vector3(-0.6, 1.0, -0.4), Vector3(1.2, 0.8, 1.0), 50, Color(0.8, 0.85, 1.0, 0.3))
+	CutsceneKit.cobweb(self, Vector3(-70.8, FY + 3.1, -219.2), 0.5, Vector3(0, 45, 0))
+	CutsceneKit.dust(self, KNEEL + Vector3(-0.2, 0.0, -0.7), Vector3(1.4, 0.9, 1.2), 50, Color(0.8, 0.85, 1.0, 0.3))
 	# Череп и руки — у камеры, поднимаются в кадр снизу
 	skull_rig = Node3D.new()
 	cam.add_child(skull_rig)
@@ -121,7 +117,7 @@ func tick(_delta: float) -> void:
 
 func run() -> void:
 	var from_game: bool = args.get("from_gameplay", false)
-	var clock := loop("clock_tick", -22.0, 0.0, HANDLE_WORLD + Vector3(0.6, 0.6, 1.8), 4.0)
+	var clock := loop("clock_tick", -22.0, 0.0, CLOCK_AT, 4.0)
 	handheld = 0.35
 	breathe = 1.0
 	shot(KNEEL, BOX_POS + Vector3(0.02, 0.05, 0.0), 58.0)
@@ -143,14 +139,14 @@ func run() -> void:
 	sfx("ethan_breath_held", -12.0)
 	await wait(2.6)
 	# Взгляд — на дверь
-	look_to(HANDLE_WORLD + Vector3(-0.1, 0.25, 0.0), 2.4)
+	look_to(handle_at + Vector3(0.0, 0.3, -0.1), 2.4)
 	tween_prop(skull_rig, "position", Vector3(0.02, -0.32, -0.5), 2.4)
 	await wait(3.0)
 	# За дверью: «Это… моё».
-	await line("creature_mine", "ГОЛОС ЗА ДВЕРЬЮ", "Это… моё.", 0.5, HANDLE_WORLD + Vector3(0.0, 0.5, 0.7), 2.0, 5.0)
+	await line("creature_mine", "ГОЛОС ЗА ДВЕРЬЮ", "Это… моё.", 0.5, handle_at + Vector3(0.8, 0.5, 0.0), 4.0, 8.0)
 	# Ручка медленно поворачивается
-	glide(KNEEL + Vector3(0.05, 0.02, 0.25), HANDLE_WORLD, 4.4, 30.0)
-	sfx("door_handle_slow", -2.0, 1.0, HANDLE_WORLD, 3.0)
+	glide(KNEEL + Vector3(0.12, 0.02, -0.05), handle_at, 4.4, 12.0)
+	sfx("door_handle_slow", 2.0, 1.0, handle_at, 6.0)
 	tween_prop(door.handle, "rotation_degrees", Vector3(0, 0, 42), 3.9, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
 	await wait(4.1)
 	black(1.0)

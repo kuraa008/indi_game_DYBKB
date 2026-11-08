@@ -1,6 +1,6 @@
 extends Cutscene
 
-# НАЧАЛО ГЛАВЫ 2 · «Пробуждение» (≈16 с). Подвал Досыма под домом на карте «Шоссе».
+# НАЧАЛО ГЛАВЫ 2 · «Пробуждение» (≈12 с: короткая, потом управление сразу у игрока). Подвал Досыма под домом на карте «Шоссе».
 # Итан приходит в себя на холодном бетонном полу главной комнаты: голова раскалывается,
 # пахнет сыростью и землёй — это подвал их дома. Фонарик разбит, свет падает только
 # полосками сквозь щели в полу дома. Итан садится: столб с отметками роста, отцовский шкаф
@@ -9,7 +9,8 @@ extends Cutscene
 #
 # Итан лежит там же, куда его кладёт игра (HighwayChapter.BASEMENT_WAKE), и в конце смотрит
 # на лестницу (BASEMENT_LOOK). Дальше — геймплей (HighwayChapter._run_basement_wake).
-# args.from_gameplay = true — без затемнения в конце.
+# args.from_gameplay = true — без затемнения в конце: последний кадр — взгляд на лестницу,
+# с него игрок сразу получает управление (прятаться в шкаф).
 
 const MAP := "res://scenes/Шоссе.json"
 const WAKE := Vector3(-58.0, -4.2, -227.5)          # HighwayChapter.BASEMENT_WAKE (на полу)
@@ -138,34 +139,34 @@ func run() -> void:
 	vignette(0.6, 0.01)
 	# Лежит на боку щекой на бетоне: полоска света, осколки фонарика
 	shot(LIE, LIE + Vector3(1.9, 0.12, 1.6), 64.0, -1.25)
-	await wait(0.6)
-	lids(0.32, 1.1)
-	await wait(1.4)
+	await wait(0.4)
+	lids(0.32, 0.8)
+	await wait(1.0)
 	sfx("ethan_groan", -6.0)
-	lids(0.0, 0.25)
-	await wait(0.8)
+	lids(0.0, 0.2)
+	await wait(0.5)
 	# Переворачивается на спину: доски пола дома, свет в щелях
 	shot(LIE + Vector3(0.0, 0.04, 0.0), LIE + Vector3(0.4, 3.0, 0.7), 64.0, -0.5)
-	lids(0.6, 1.0)
-	blur(0.007, 1.4, 0.003)
-	tween_prop(self, "cam_roll", 0.0, 1.8)
-	await wait(1.15)
+	lids(0.6, 0.8)
+	blur(0.007, 1.1, 0.003)
+	tween_prop(self, "cam_roll", 0.0, 1.5)
+	await wait(0.9)
 	# Садится. Столб с отметками роста — их подвал
 	sfx("body_shift", -8.0)
-	glide(SIT, POST + Vector3(0.05, 1.35, -0.15), 1.6, 60.0, Tween.TRANS_SINE, Tween.EASE_OUT)
-	lids(1.0, 1.2)
-	blur(0.0, 1.8, 0.0)
-	muffle(4000.0, 2.0)
+	glide(SIT, POST + Vector3(0.05, 1.35, -0.15), 1.3, 60.0, Tween.TRANS_SINE, Tween.EASE_OUT)
+	lids(1.0, 1.0)
+	blur(0.0, 1.5, 0.0)
+	muffle(4000.0, 1.6)
 	if ring:
-		fade(ring, -24.0, 3.0)
+		fade(ring, -24.0, 2.5)
 	handheld = 0.7
 	breathe = 1.0
-	await wait(1.55)
-	look_to(POST + Vector3(0.1, 1.72, -0.15), 0.9)
-	await wait(1.0)
-	# Отцовский шкаф у стены
-	look_to(WARDROBE + Vector3(0.0, 1.05, -0.3), 1.1)
-	await wait(1.0)
+	await wait(1.25)
+	look_to(POST + Vector3(0.1, 1.72, -0.15), 0.7)
+	await wait(0.75)
+	# Отцовский шкаф у стены (в нём потом прятаться)
+	look_to(WARDROBE + Vector3(0.0, 1.05, -0.3), 0.8)
+	await wait(0.8)
 	# Сверху — копыта. По полу дома, к двери
 	muffle(20000.0, 0.3)
 	sfx("hoof_muffled_2", -3.0, 1.0, Vector3(-57.2, 0.1, -226.0), 8.0)
@@ -176,34 +177,35 @@ func run() -> void:
 	blur(0.0, 0.5)
 	handheld = 0.3
 	sfx("ethan_gasp", -9.0)
-	await wait(0.85)
+	await wait(0.7)
 	sfx("hoof_muffled_3", -5.0, 1.0, Vector3(-55.5, 0.1, -219.5), 8.0)
-	look_to(DOOR_TOP, 0.8)
-	await wait(0.6)
-	# За дверью проходит тень: свет в щели гаснет и снова загорается
-	tween_prop(legs, "position:x", -53.5, 1.1, Tween.TRANS_LINEAR)
-	tween_prop(hall_light, "light_energy", 0.9, 0.45)
+	look_to(DOOR_TOP, 0.6)
 	await wait(0.5)
-	tween_prop(hall_light, "light_energy", 3.2, 0.5)
-	await wait(0.6)
+	# За дверью проходит тень: свет в щели гаснет и снова загорается
+	tween_prop(legs, "position:x", -53.5, 0.95, Tween.TRANS_LINEAR)
+	tween_prop(hall_light, "light_energy", 0.9, 0.4)
+	await wait(0.45)
+	tween_prop(hall_light, "light_energy", 3.2, 0.45)
+	await wait(0.5)
 	# Дверь медленно открывается
 	sfx("res://assets/audio/monster/basement_door_open.wav", -7.0, 0.85, DOOR_TOP, 6.0)
-	tween_prop(door_leaf, "rotation_degrees:y", -82.0, 2.0, Tween.TRANS_SINE, Tween.EASE_OUT)
-	await wait(1.4)
+	tween_prop(door_leaf, "rotation_degrees:y", -82.0, 1.8, Tween.TRANS_SINE, Tween.EASE_OUT)
+	await wait(1.2)
 	# Пустой тамбур, скобы на стене — и свет заслоняет что-то большое. В проёме темно
 	sfx("creature_breath", -16.0, 0.9, DOOR_TOP, 4.0)
 	tween_prop(hall_light, "light_energy", 0.1, 0.7, Tween.TRANS_QUAD, Tween.EASE_IN)
 	tween_prop(env, "ambient_light_energy", 2.3, 2.0)
-	vignette(0.5, 1.6)
-	await wait(0.8)
+	vignette(0.5, 1.4)
+	await wait(0.6)
 	# Тк… тк… тк… Медленно, по ступенькам. Вниз
 	for i in 3:
 		sfx("hoof_wood_%d" % (i + 1), -4.0 + i, 1.0, LANDING + Vector3(0.0, -0.13 * i, -0.3 - 0.27 * i), 6.0)
-		await wait(0.85)
+		await wait(0.75)
+	# Последний кадр — лестница, по которой спускается стук: дальше играет игрок
 	if ring:
 		stop(ring, 0.5)
 	if not from_game:
 		sfx("hoof_wood_4", -2.0, 1.0, LANDING + Vector3(0.0, -0.4, -1.1), 6.0)
-		fade_out(0.9)
-		stop(amb, 1.1)
-		await wait(1.2)
+		fade_out(0.6)
+		stop(amb, 0.8)
+		await wait(0.7)
