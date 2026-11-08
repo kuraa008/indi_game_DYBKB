@@ -6,12 +6,15 @@ extends Cutscene
 # простыню на пустой кровати.
 #
 # args.with_dialogue = false — без диалога (если его уже сыграл геймплей по триггеру).
-# Окно комнаты отца — нижнее окно западной стены дома «Шоссе» (z = -222): заколоченное
-# окно с карты убрано и заменено открытым.
+# Комната отца — на втором этаже дома «Шоссе» (там же кровать, доска и коробка из главы 3).
+# Её окно — верхнее окно западной стены (z = -222): заколоченное окно с карты убрано
+# и заменено открытым, ставни по бокам остаются. Кровать с карты заменена своей —
+# с простынёй, которую шевелит ветер, — и стоит длинной стороной к окну.
 
 const MAP := "res://scenes/Шоссе.json"
-const WINDOW_IDS := [1149, 1150, 1151, 1152, 1014]
-const WIN := Vector3(-71.2, 1.245, -222.0)
+const WINDOW_IDS := [1153, 1154, 1018, 1212]       # верхнее западное окно, стена второго этажа, кровать
+const FY := 3.48                                    # пол второго этажа
+const WIN := Vector3(-71.2, 4.3, -222.0)
 const WALK_FROM := Vector3(-93.5, 0.0, -224.6)
 const WALK_DIR := Vector3(1, 0, 0)
 
@@ -41,7 +44,7 @@ func build() -> void:
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 80.0
 	add_child(sun)
-	CutsceneKit.map_area(self, MAP, Vector3(-66, 0, -225), 40.0, [], WINDOW_IDS, AABB(Vector3(-71.0, -0.5, -224.6), Vector3(4.5, 3.5, 5.2)))
+	CutsceneKit.map_area(self, MAP, Vector3(-66, 0, -225), 40.0, [], WINDOW_IDS)
 	CutsceneKit.ground(self, Vector3(-75, 0.0, -225), Vector2(120, 120), CutsceneKit.tmat("forest_floor.png", Color(0.62, 0.66, 0.55), 0.35))
 	CutsceneKit.grass(self, Vector3(-84, 0, -224.5), Vector2(22, 10), 260, 7, 0.8)
 	CutsceneKit.forest(self, Vector3(-100, 0, -225), 6.0, 26.0, 70, 17, 10.0, 18.0, func(x: float, z: float) -> bool: return x > -92.0 or (absf(z + 224.6) < 2.2 and x > -99.0))
@@ -57,9 +60,9 @@ func build() -> void:
 
 
 func _father_window() -> void:
-	# Западная стена дома с карты — заново, но с проёмом окна (на карте окна — накладки)
+	# Западная стена второго этажа с карты — заново, но с проёмом окна (на карте окна — накладки)
 	var planks := TextureHelper.create_wall_material("wood_planks", Color.html("8a8378ff"))
-	CutsceneKit.wall(self, Vector3(-71.0, 0, -219.0), Vector3(-71.0, 0, -231.0), 3.4, 0.3, planks, Rect2(2.25, 0.64, 1.5, 1.21))
+	CutsceneKit.wall(self, Vector3(-71.0, 3.4, -219.0), Vector3(-71.0, 3.4, -231.0), 3.4, 0.3, planks, Rect2(2.25, 0.3, 1.5, 1.2))
 	# Открытая рама, за ней комната отца: кровать со смятой простынёй
 	var frame := CutsceneKit.mat(Color(0.33, 0.27, 0.21), 0.8)
 	for s in [-1.0, 1.0]:
@@ -75,14 +78,10 @@ func _father_window() -> void:
 		CutsceneKit.box(leaf, Vector3(0.05, 1.12, 0.04), Vector3(-0.0, 0, -0.35 * s), frame)
 		CutsceneKit.box(leaf, Vector3(0.05, 1.12, 0.04), Vector3(-0.0, 0, -0.7 * s), frame)
 		CutsceneKit.box(leaf, Vector3(0.02, 1.08, 0.66), Vector3(0, 0, -0.35 * s), glass)
-	var room_m := CutsceneKit.mat(Color(0.34, 0.3, 0.26), 0.95)
-	var inside := Vector3(WIN.x + 1.6, 0.0, WIN.z)
-	CutsceneKit.box(self, Vector3(3.0, 0.1, 3.4), inside + Vector3(0, 0.16, 0), CutsceneKit.tmat("wood_furniture.png", Color(0.5, 0.4, 0.31), 1.1))
-	CutsceneKit.box(self, Vector3(0.1, 2.6, 3.4), inside + Vector3(1.5, 1.3, 0), room_m)
-	for s in [-1.0, 1.0]:
-		CutsceneKit.box(self, Vector3(3.0, 2.6, 0.1), inside + Vector3(0, 1.3, 1.7 * s), room_m)
+	# Сама комната — с карты (пол второго этажа, стены, стол с письмами, комод)
+	var inside := Vector3(WIN.x + 1.6, FY, WIN.z)
 	# Кровать отца длинной стороной к окну: рама, матрас, подушка и смятая простыня
-	var bed_at := inside + Vector3(-0.45, 0.2, 0.0)
+	var bed_at := inside + Vector3(-0.45, 0.04, 0.0)
 	var bed_wood := CutsceneKit.tmat("wood_furniture.png", Color(0.42, 0.32, 0.24), 1.4)
 	CutsceneKit.box(self, Vector3(1.0, 0.32, 2.0), bed_at + Vector3(0, 0.22, 0), bed_wood)
 	CutsceneKit.box(self, Vector3(1.0, 0.75, 0.06), bed_at + Vector3(0, 0.375, 1.0), bed_wood)
