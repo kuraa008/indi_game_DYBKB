@@ -1,0 +1,67 @@
+{
+ "boundary": [],
+ "generator": "MapForge",
+ "meta": {
+  "rotations": "градусы (X,Y,Z)",
+  "units": "метры",
+  "up": "Y"
+ },
+ "objects": [
+  {
+   "color": "1c1c1eff",
+   "comment": "Улица у дома Итана, пролог",
+   "id": 6000,
+   "lock_id": 0,
+   "name": "Улица: основание земли",
+   "position": [
+    0,
+    -0.5,
+    20
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    240,
+    1.0,
+    130
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "8a8378ff",
+   "comment": "Улица у дома Итана, пролог",
+   "id": 6001,
+   "lock_id": 0,
+   "name": "Улица: Итан выходит из подъезда",
+   "position": [
+    0,
+    0.1,
+    1.7
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.8,
+    1.8,
+    0.8
+   ],
+   "type": "marker_player",
+   "visible": true
+  }
+ ],
+ "sceneComment": "Двор и улица у дома Итана: пролог, пасмурный день",
+ "sceneSize": [
+  240,
+  16,
+  130
+ ],
+ "trails": [],
+ "version": 1
+}

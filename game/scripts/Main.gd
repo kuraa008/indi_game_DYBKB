@@ -933,7 +933,7 @@ func _spawn_candidate_items(candidates_dict: Dictionary) -> void:
 			custom_items_spawned = true
 
 func _setup_house_switches_and_lights() -> void:
-	if not nav_region or _is_apartment():
+	if not nav_region or _is_prologue_map():
 		return
 	# Проверяем, есть ли уже выключатели в nav_region
 	for ch in nav_region.get_children():
@@ -1021,6 +1021,9 @@ func _spawn_player() -> void:
 	if _is_apartment():
 		add_child(preload("res://scripts/ApartmentScene.gd").new())
 
+	if _is_street():
+		add_child(preload("res://scripts/CityStreetScene.gd").new())
+
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"
 	p.position = player_spawn
@@ -1065,7 +1068,7 @@ var item_spawn_spots: Array[Vector3] = [
 ]
 
 func _spawn_items() -> void:
-	if custom_items_spawned or _is_apartment():
+	if custom_items_spawned or _is_prologue_map():
 		return
 	# Фильтруем точки — предмет должен быть строго дальше 8 метров от спавна игрока
 	var valid_spots: Array[Vector3] = []
@@ -1104,7 +1107,7 @@ func _make_item(pos: Vector3, type: String, key_id: int = 0) -> void:
 # ══════════════════════════════════════════════
 func _setup_door() -> void:
 	# С карты шоссе уходят через сюжетную сцену, а не через дверь
-	if has_exit_door_spawned or _is_highway() or _is_apartment():
+	if has_exit_door_spawned or _is_highway() or _is_prologue_map():
 		return
 
 	var door_pos = GameManager.door_position
@@ -1388,6 +1391,13 @@ func _is_level_1() -> bool:
 
 func _is_apartment() -> bool:
 	return "квартира" in map_json_path.to_lower()
+
+func _is_street() -> bool:
+	return "улица" in map_json_path.to_lower()
+
+# Карты пролога: без предметов, выхода и выключателей общей сцены
+func _is_prologue_map() -> bool:
+	return _is_apartment() or _is_street()
 
 func _is_highway() -> bool:
 	return highway_map or "шоссе" in map_json_path.to_lower()
