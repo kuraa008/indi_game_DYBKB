@@ -283,7 +283,8 @@ static func _strip_logic(n: Node) -> void:
 # Собирается так же, как в Main.gd, только без логики, предметов и маркеров.
 # with_basement = false: подвал Досыма под домом (объекты «Подвал: …») не строится — он под землёй
 # и в кадре наружных сцен не виден, а это ~350 объектов.
-static func map_area(parent: Node, json_path: String, center: Vector3, radius: float, skip_types: Array = [], skip_ids: Array = [], skip_box: AABB = AABB(), with_basement: bool = false) -> Node3D:
+# y_max: объекты выше этой высоты пропускаются (для подвала: дом над ним в кадр не попадает).
+static func map_area(parent: Node, json_path: String, center: Vector3, radius: float, skip_types: Array = [], skip_ids: Array = [], skip_box: AABB = AABB(), with_basement: bool = false, y_max: float = INF) -> Node3D:
 	var root := Node3D.new()
 	root.name = "MapArea"
 	parent.add_child(root)
@@ -310,7 +311,7 @@ static func map_area(parent: Node, json_path: String, center: Vector3, radius: f
 			continue
 		var pa: Array = o.get("position", [0, 0, 0])
 		var pos := Vector3(float(pa[0]), float(pa[1]), float(pa[2]))
-		if Vector2(pos.x - center.x, pos.z - center.z).length() > radius:
+		if Vector2(pos.x - center.x, pos.z - center.z).length() > radius or pos.y > y_max:
 			continue
 		if skip_box.size != Vector3.ZERO and skip_box.has_point(pos) and type != "cube" and not type.begins_with("floor") and not type.begins_with("ceiling"):
 			continue
