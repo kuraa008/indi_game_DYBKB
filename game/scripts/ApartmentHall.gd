@@ -26,6 +26,21 @@ func _ready() -> void:
 	_build_coat()
 	_build_boots()
 	_build_bag()
+	_remove_lock_glow.call_deferred()
+
+
+# Цветной замок снаружи входной двери светится, и свет проходит сквозь дверь в коридор
+func _remove_lock_glow() -> void:
+	var level := get_parent().get_parent()
+	# Замок появляется не сразу после загрузки карты, поэтому ищем его несколько раз
+	for attempt in range(20):
+		var padlocks := level.find_children("DoorPadlock", "Node3D", true, false)
+		if not padlocks.is_empty():
+			for padlock in padlocks:
+				for light in padlock.find_children("*", "OmniLight3D", true, false):
+					light.queue_free()
+			return
+		await get_tree().create_timer(0.25).timeout
 
 
 func _build_hooks() -> void:

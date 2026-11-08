@@ -1,12 +1,12 @@
 extends "res://scripts/ApartmentKit.gd"
 
-# Деревянные жалюзи на окнах квартиры. Нажатие опускает их или поднимает.
+# Белые жалюзи в спальне и на кухне; в комнате висят шторы (ApartmentCurtains).
+# Нажатие опускает жалюзи или поднимает.
 # Планки — один MultiMesh на окно: 40 штук стоят один вызов отрисовки,
 # а пересчитываются только пока жалюзи движутся.
 
 # Окно: центр проёма, ширина, направление в комнату
 const WINDOWS := [
-	[Vector3(0.3, 1.685, 2.4), 1.6, Vector3(0, 0, -1)],
 	[Vector3(0.0, 1.685, -6.4), 1.6, Vector3(0, 0, 1)],
 	[Vector3(8.2, 1.685, -3.7), 1.4, Vector3(-1, 0, 0)],
 ]
@@ -16,7 +16,7 @@ const RAIL_LOW := -0.7        # нижняя планка в опущенных 
 const STACK := 0.0062         # толщина одной планки в собранной пачке
 const SLATS := 40
 const CHORD := 0.052
-const HONEY := Color(0.8, 0.6, 0.38)
+const WHITE := Color(0.86, 0.85, 0.81)
 
 
 class WindowBlind extends Area3D:
@@ -81,24 +81,19 @@ class WindowBlind extends Area3D:
 
 func _ready() -> void:
 	name = "ApartmentBlinds"
-	var wood: StandardMaterial3D = CutsceneKit.tmat("wood_furniture.png", Color.WHITE, 1.0, 0.55).duplicate()
-	wood.uv1_triplanar = false
-	wood.uv1_scale = Vector3.ONE
-	wood.vertex_color_use_as_albedo = true
-	wood.vertex_color_is_srgb = true
-	wood.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var paint := _vmat(0.42, 0.0, true)
 	var clack := _rattle()
 	for win in WINDOWS:
-		_build_blind(win[0], win[1], win[2], wood, clack)
+		_build_blind(win[0], win[1], win[2], paint, clack)
 
 
-func _build_blind(centre: Vector3, opening: float, inward: Vector3, wood: Material, clack: AudioStream) -> void:
+func _build_blind(centre: Vector3, opening: float, inward: Vector3, paint: Material, clack: AudioStream) -> void:
 	var yaw := rad_to_deg(atan2(inward.x, inward.z))
 	var at := _xf(centre + inward * INSET, Vector3(0, yaw, 0))
 	var w := opening + 0.14
-	var trim := CutsceneKit.tmat("wood_furniture.png", HONEY.darkened(0.12), 2.2, 0.5)
+	var trim := CutsceneKit.mat(WHITE, 0.45)
 
-	# Карниз: деревянная планка спереди, боковины, верхняя полка и профиль
+	# Карниз: белая планка спереди, боковины, верхняя полка и профиль
 	_base = at
 	_bx(Vector3(w + 0.02, 0.085, 0.014), Vector3(0, 0.795, 0.043), Color.WHITE)
 	_bx(Vector3(w + 0.034, 0.009, 0.02), Vector3(0, 0.84, 0.046), Color.WHITE)
@@ -108,15 +103,18 @@ func _build_blind(centre: Vector3, opening: float, inward: Vector3, wood: Materi
 		_bx(Vector3(0.014, 0.085, 0.08), Vector3(s * (w * 0.5 + 0.003), 0.795, 0.005), Color.WHITE)
 	_flush(trim)
 	_base = at
-	_bx(Vector3(w - 0.02, 0.04, 0.05), Vector3(0, 0.795, 0.0), Color(0.3, 0.3, 0.32))
+	_bx(Vector3(w - 0.02, 0.04, 0.05), Vector3(0, 0.795, 0.0), WHITE.darkened(0.25))
 	# Рукоятка для наклона планок
 	var wand := Vector3(-w * 0.5 + 0.06, 0.76, 0.05)
-	_tube([wand, wand + Vector3(0, -0.34, 0), wand + Vector3(0, -0.68, 0)], 0.0048, Color(0.58, 0.44, 0.27), 8)
-	_bl(Vector3(0.008, 0.016, 0.008), wand + Vector3(0, -0.69, 0), Color(0.58, 0.44, 0.27))
+	_tube([wand, wand + Vector3(0, -0.34, 0), wand + Vector3(0, -0.68, 0)], 0.0048, WHITE, 8)
+	_bl(Vector3(0.008, 0.016, 0.008), wand + Vector3(0, -0.69, 0), WHITE)
 	_flush(_vmat(0.45))
 
 	# Подвижная часть
 	var blind := WindowBlind.new()
+	# Планки лежат отдельно от зоны нажатия: игра подсвечивает только детей этой зоны
+	var visual := CutsceneKit.node(self)
+	visual.transform = at
 	blind.pitch = (HEAD_LOW - RAIL_LOW) / float(SLATS + 1)
 	blind.rail_up = HEAD_LOW - 0.016 - float(SLATS) * STACK
 	blind.tape_x = [-w * 0.36, 0.0, w * 0.36]
@@ -133,11 +131,11 @@ func _build_blind(centre: Vector3, opening: float, inward: Vector3, wood: Materi
 	mm.mesh = _slat_mesh(w - 0.03)
 	mm.instance_count = SLATS
 	for i in range(SLATS):
-		mm.set_instance_color(i, HONEY.darkened(_rng.randf_range(0.0, 0.14)))
+		mm.set_instance_color(i, WHITE.darkened(_rng.randf_range(0.0, 0.05)))
 	slat_set.multimesh = mm
-	slat_set.material_override = wood
+	slat_set.material_override = paint
 	slat_set.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	blind.add_child(slat_set)
+	visual.add_child(slat_set)
 	blind.slats = mm
 
 	var tape_set := MultiMeshInstance3D.new()
@@ -146,21 +144,21 @@ func _build_blind(centre: Vector3, opening: float, inward: Vector3, wood: Materi
 	tm.mesh = _unit_box
 	tm.instance_count = blind.tape_x.size() * 3
 	tape_set.multimesh = tm
-	tape_set.material_override = CutsceneKit.mat(Color(0.74, 0.68, 0.56), 0.9)
+	tape_set.material_override = CutsceneKit.mat(WHITE.darkened(0.08), 0.9)
 	tape_set.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	blind.add_child(tape_set)
+	visual.add_child(tape_set)
 	blind.tapes = tm
 
-	blind.rail = CutsceneKit.node(blind)
+	blind.rail = CutsceneKit.node(visual)
 	CutsceneKit.box(blind.rail, Vector3(w - 0.02, 0.024, CHORD + 0.006), Vector3.ZERO, trim, Vector3.ZERO, false)
-	var cap := CutsceneKit.mat(Color(0.24, 0.17, 0.1), 0.5)
+	var cap := CutsceneKit.mat(WHITE.darkened(0.3), 0.5)
 	for x in blind.tape_x:
 		CutsceneKit.box(blind.rail, Vector3(0.018, 0.005, 0.03), Vector3(x, -0.0145, 0), cap, Vector3.ZERO, false)
 
 	# Шнур: единичной высоты, длину задаёт масштаб
-	var cord_mat := CutsceneKit.mat(Color(0.74, 0.68, 0.56), 0.9)
-	blind.cord = CutsceneKit.box(blind, Vector3(0.0034, 1.0, 0.0034), Vector3(w * 0.5 - 0.06, 0, 0.05), cord_mat, Vector3.ZERO, false)
-	blind.acorn = CutsceneKit.node(blind, Vector3(w * 0.5 - 0.06, 0, 0.05))
+	var cord_mat := CutsceneKit.mat(WHITE.darkened(0.08), 0.9)
+	blind.cord = CutsceneKit.box(visual, Vector3(0.0034, 1.0, 0.0034), Vector3(w * 0.5 - 0.06, 0, 0.05), cord_mat, Vector3.ZERO, false)
+	blind.acorn = CutsceneKit.node(visual, Vector3(w * 0.5 - 0.06, 0, 0.05))
 	var acorn_mat := trim
 	CutsceneKit.cyl(blind.acorn, 0.0065, 0.012, 0.036, Vector3.ZERO, acorn_mat, Vector3.ZERO, 10)
 
@@ -175,7 +173,7 @@ func _build_blind(centre: Vector3, opening: float, inward: Vector3, wood: Materi
 	blind.transform = at
 
 
-# Одна планка: слегка выгнутая полоска, волокна дерева идут вдоль неё
+# Одна планка: слегка выгнутая полоска
 func _slat_mesh(length: float) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

@@ -94,7 +94,7 @@ func _ready() -> void:
 	_window(Vector3(8.2, 1.675 + FL, -3.7), 1.4, Vector3(1, 0, 0))
 	_build_darkness()
 	_build_tv()
-	for part in ["ApartmentProps", "ApartmentKitchen", "ApartmentBathroom", "ApartmentHall", "ApartmentLights", "ApartmentBlinds"]:
+	for part in ["ApartmentProps", "ApartmentKitchen", "ApartmentBathroom", "ApartmentHall", "ApartmentLights", "ApartmentBlinds", "ApartmentCurtains"]:
 		add_child(load("res://scripts/%s.gd" % part).new())
 	_build_lights()
 
