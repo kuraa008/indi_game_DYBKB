@@ -272,7 +272,7 @@ func _build_ground() -> void:
 		_bx(Vector3(w, 0.1, 0.09), Vector3(mid, 0.05, YARD_END), stone)
 	for x in [-1.6, 1.6, 14.0]:
 		_bx(Vector3(0.09, 0.1, YARD_END - 2.6), Vector3(x, 0.05, (2.6 + YARD_END) * 0.5), stone)
-	_flush(_vmat(0.9))
+	_flush(_vmat(0.9, 0.0, false, "concrete"))
 
 	# Трава кустиками у дорожек
 	var xforms: Array[Transform3D] = []
@@ -323,7 +323,7 @@ func _build_blocks() -> void:
 	# Карнизы
 	_bx(Vector3(74.4, 0.3, 12.4), Vector3(3.0, 15.15, -6.0), concrete.darkened(0.2))
 	_bx(Vector3(12.4, 0.3, 36.4), Vector3(-40.0, 15.15, 6.0), concrete.darkened(0.2))
-	_flush(_vmat(0.9))
+	_flush(_vmat(0.9, 0.0, false, "concrete"))
 
 	# Гаражи с восточной стороны двора
 	var metal := Color(0.24, 0.27, 0.27)
@@ -361,7 +361,7 @@ func _build_entrance() -> void:
 		_bx(Vector3(0.36, 2.2, 0.1), Vector3(s * 0.98, 1.1, 0.04), concrete.darkened(0.16))
 	_bx(Vector3(2.32, 0.5, 0.1), Vector3(0, 2.42, 0.04), concrete.darkened(0.16))
 	_bx(Vector3(3.4, 0.06, 2.0), Vector3(0, 0.03, 1.0), concrete.darkened(0.25))
-	_flush(_vmat(0.9))
+	_flush(_vmat(0.9, 0.0, false, "concrete"))
 
 	var door := Color(0.13, 0.21, 0.18)
 	_bx(Vector3(1.56, 2.14, 0.06), Vector3(0, 1.08, 0.03), door.darkened(0.3))
@@ -443,7 +443,7 @@ func _bench(pos: Vector3, yaw: float) -> void:
 		_bx(Vector3(1.7, 0.03, 0.095), Vector3(0, 0.45, -0.17 + float(k) * 0.115), wood.darkened(float(k % 2) * 0.1))
 	for k in range(3):
 		_bx(Vector3(1.7, 0.095, 0.03), Vector3(0, 0.6 + float(k) * 0.12, -0.235 - float(k) * 0.027), wood.darkened(float(k % 2) * 0.1), Vector3(-14, 0, 0))
-	_flush(_vmat(0.75))
+	_flush(_vmat(0.75, 0.0, false, "wood"))
 	_solid(pos + Vector3(0, 0.4, 0), Vector3(1.7, 0.8, 0.5) if absf(sin(deg_to_rad(yaw))) < 0.5 else Vector3(0.5, 0.8, 1.7))
 
 
@@ -488,7 +488,7 @@ func _branch(from: Vector3, dir: Vector3, length: float, r: float, depth: int) -
 func _build_yard() -> void:
 	for t in [[-29.0, 18.0], [-24.0, 20.5], [-11.0, 6.0], [-7.0, 19.0], [-13.0, 15.5], [5.5, 7.0], [9.5, 19.0], [11.5, 11.0], [-31.0, 6.0]]:
 		_tree(Vector3(t[0], 0.0, t[1]))
-	_flush(_vmat(0.96))
+	_flush(_vmat(0.96, 0.0, false, "soil"))
 	_bench(Vector3(-3.2, 0.012, 1.0), 0.0)
 	_bench(Vector3(3.2, 0.012, 1.0), 0.0)
 	_bin(Vector3(-2.2, 0.012, 1.1))
@@ -519,7 +519,7 @@ func _build_yard() -> void:
 		_bx(Vector3(3.1, 0.3, 0.1), Vector3(0, 0.15, s * 1.5), board)
 		_bx(Vector3(0.1, 0.3, 3.1), Vector3(s * 1.5, 0.15, 0), board)
 	_bx(Vector3(2.95, 0.1, 2.95), Vector3(0, 0.08, 0), Color(0.42, 0.36, 0.26))
-	_flush(_vmat(0.95))
+	_flush(_vmat(0.95, 0.0, false, "concrete"))
 
 	# Низкая ограда между двором и тротуаром, с проходом у дорожки
 	var iron := Color(0.11, 0.13, 0.13)
@@ -630,11 +630,11 @@ func _build_district() -> void:
 	while z < SOUTH_WALK - 0.4:
 		_bx(Vector3(3.2, 0.03, 0.5), Vector3(0, _road_y(z), z), paint)
 		z += 1.0
-	_flush(_vmat(0.82))
+	_flush(_vmat(0.82, 0.0, false, "concrete"))
 	_base = Transform3D.IDENTITY
 	for k in range(6):
 		_bx(Vector3(1.9, 0.12, 0.22), Vector3(17.4 + float(k) * 2.8, 0.08, 12.0), Color(0.42, 0.41, 0.38))
-	_flush(_vmat(0.9))
+	_flush(_vmat(0.9, 0.0, false, "concrete"))
 
 	# Машины вдоль бордюров
 	_parked_car(Vector3(-11.5, 0.0, 29.5), 90.0, Color(0.33, 0.36, 0.33))
@@ -669,7 +669,7 @@ func _build_district() -> void:
 		var h := _rng.randf_range(0.5, 0.95)
 		var y := _rng.randf_range(0.65, 1.85)
 		_bx(Vector3(0.24, h, 0.012), Vector3(sin(a) * 0.54, y, cos(a) * 0.54), shreds[k % shreds.size()].darkened(_rng.randf_range(0.0, 0.3)), Vector3(0, rad_to_deg(a), 0))
-	_flush(_vmat(0.85))
+	_flush(_vmat(0.85, 0.0, false, "concrete"))
 	_solid(at + Vector3(0, 1.4, 0), Vector3(1.1, 2.8, 1.1))
 	for yaw in [180.0, 90.0, -90.0, 0.0]:
 		var a := deg_to_rad(yaw)
@@ -706,7 +706,7 @@ func _build_district() -> void:
 			continue
 		var size := _rng.randf_range(0.04, 0.085)
 		_bx(Vector3(size, 0.002, size * 0.7), Vector3(lx, 0.058 if lz > YARD_END else 0.034, lz), leaf_cols[k % 3].darkened(_rng.randf_range(0.0, 0.3)), Vector3(_rng.randf_range(-8.0, 8.0), _rng.randf() * 180.0, 0))
-	_flush(_vmat(0.95))
+	_flush(_vmat(0.95, 0.0, false, "concrete"))
 
 	_dress_facade()
 
@@ -840,7 +840,7 @@ func _pole(pos: Vector3, tall: float, arm_dir: float) -> void:
 	var c := Color(0.5, 0.49, 0.45)
 	_cy(0.1, 0.15, tall, Vector3(0, tall * 0.5, 0), c, Vector3.ZERO, 10)
 	_cy(0.18, 0.2, 0.4, Vector3(0, 0.2, 0), c.darkened(0.15), Vector3.ZERO, 10)
-	_flush(_vmat(0.9))
+	_flush(_vmat(0.9, 0.0, false, "concrete"))
 	if arm_dir == 0.0:
 		_base = _xf(pos)
 		_bl(Vector3.ONE * 0.2, Vector3(0, tall + 0.2, 0), Color(0.72, 0.72, 0.68))

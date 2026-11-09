@@ -149,7 +149,7 @@ func _build_covered_car() -> void:
 			var x := lerpf(-half_x * 0.95, half_x * 0.95, float(k) / 24.0)
 			pts.append(Vector3(x, maxf(_car_height(x, z), 0.2) + 0.018, z))
 		_tube(pts, 0.009, rope, 5)
-	_flush(_vmat(0.85))
+	_flush(_vmat(0.85, 0.0, false, "fabric"))
 	_solid(CAR_POS + Vector3(0, 0.72, 0), Vector3(1.72, 1.44, 4.78))
 
 	# Полная канистра под задранным углом брезента
@@ -172,7 +172,7 @@ func _build_garage_inside() -> void:
 		_bx(Vector3(0.62, 0.03, 2.34), Vector3(0, y, 0), board.darkened(_rng.randf_range(0.0, 0.2)))
 		for sz in [-1.15, 1.15]:
 			_bx(Vector3(0.6, 0.03, 0.04), Vector3(0, y - 0.03, sz), post)
-	_flush(_vmat(0.85))
+	_flush(_vmat(0.85, 0.0, false, "wood"))
 	_solid(rack + Vector3(0, 1.0, 0), Vector3(0.66, 2.05, 2.4))
 
 	# Пустая канистра на полке; банки, бутылки и ящик с инструментом
@@ -376,7 +376,7 @@ func _build_woodpile() -> void:
 				_cy(r * 0.92, r * 0.92, 0.004, centre + Vector3(-length * 0.5 - 0.001, 0, 0), pale, Vector3(0, 0, 90), 9)
 				_cy(r * 0.5, r * 0.5, 0.002, centre + Vector3(-length * 0.5 - 0.004, 0, 0), pale.darkened(0.2), Vector3(0, 0, 90), 6)
 			z += step
-	_flush(_vmat(0.92))
+	_flush(_vmat(0.92, 0.0, false, "log"))
 
 	# Навес из досок на столбиках
 	var wood_col := OLD_WOOD.darkened(0.15)
@@ -409,7 +409,7 @@ func _build_woodpile() -> void:
 		var r := _rng.randf_range(0.34, 1.0)
 		var size := Vector3(_rng.randf_range(0.03, 0.12), 0.012, _rng.randf_range(0.02, 0.05))
 		_bx(size, Vector3(cos(a) * r, 0.008, sin(a) * r), cut.darkened(_rng.randf_range(0.05, 0.4)), Vector3(0, _rng.randf() * 180.0, 0))
-	_flush(_vmat(0.95))
+	_flush(_vmat(0.95, 0.0, false, "concrete"))
 
 	_solid(Vector3(x_end + length * 0.5, 0.65, (z0 + z1) * 0.5), Vector3(length, 1.3, z1 - z0))
 	_solid(block + Vector3(0, 0.25, 0), Vector3(0.56, 0.5, 0.56))
@@ -488,7 +488,7 @@ func _build_yard_hatch() -> void:
 		var px := _rng.randf_range(-0.62, 0.62)
 		var pz := _rng.randf_range(-0.6, 0.6)
 		_bx(Vector3(size, 0.002, 0.005), Vector3(px, y + 0.008, pz), Color(0.2, 0.13, 0.06).darkened(_rng.randf_range(0.0, 0.4)), Vector3(0, _rng.randf() * 180.0, 0))
-	_flush(_vmat(0.96))
+	_flush(_vmat(0.96, 0.0, false, "concrete"))
 	var tufts: Array[Transform3D] = []
 	for k in range(13):
 		var a := _rng.randf() * TAU
@@ -582,7 +582,7 @@ func _build_well() -> void:
 		var a := _rng.randf() * TAU
 		var rr := r + _rng.randf_range(0.1, 0.17)
 		_bl(Vector3(_rng.randf_range(0.08, 0.2), _rng.randf_range(0.02, 0.06), _rng.randf_range(0.06, 0.12)), Vector3(cos(a) * rr, _rng.randf_range(0.03, 0.34) * pow(_rng.randf(), 2.0), sin(a) * rr), Color(0.09, 0.13, 0.05).darkened(_rng.randf_range(0.0, 0.35)), Vector3(0, rad_to_deg(-a) + 90.0, 0))
-	_flush(_vmat(0.96))
+	_flush(_vmat(0.96, 0.0, false, "concrete"))
 
 	_solid(at + Vector3(0, 0.6, 0), Vector3(1.95, 1.2, 1.95))
 	_solid(at + Vector3(0.82, 0.18, 0.62), Vector3(0.36, 0.36, 0.36))
@@ -660,7 +660,7 @@ func _build_porch() -> void:
 	_base = _xf(Vector3(-52.15, deck_top + 0.016, -225.0))
 	var mat_col := Color(0.25, 0.2, 0.13)
 	_loft([_rg(0.32, 0.5, 0.03, 0.0), _rg(0.32, 0.5, 0.03, 0.014), _rg(0.3, 0.48, 0.03, 0.018), _rg(0.0, 0.0, 0.0, 0.018)], mat_col, Transform3D.IDENTITY, 2)
-	_flush(_vmat(0.98))
+	_flush(_vmat(0.98, 0.0, false, "wood_h"))
 	var lamp := Vector3(-51.3, 0.0, -225.0)
 	_base = _xf(lamp)
 	_pipe(Vector3(0, 2.96, 0), Vector3(0, 2.6, 0), 0.006, IRON)

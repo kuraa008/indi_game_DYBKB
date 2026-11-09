@@ -242,7 +242,7 @@ func _build_sofa() -> void:
 	for sx in [-1.02, 1.02]:
 		for sz in [-0.4, 0.4]:
 			_cy(0.03, 0.02, 0.1, Vector3(sx, 0.05, sz), Color(0.22, 0.14, 0.08), Vector3.ZERO, 10)
-	_flush(_vmat(0.5))
+	_flush(_vmat(0.86, 0.0, false, "fabric"))
 	_solid(at + Vector3(0, 0.45, 0), Vector3(2.24, 0.9, 0.98))
 
 
@@ -264,7 +264,7 @@ func _build_table_small() -> void:
 		for col in range(3):
 			_bx(Vector3(0.009, 0.003, 0.006), Vector3(-0.013 + col * 0.013, 0.0185, 0.0 + row * 0.014), Color(0.24, 0.25, 0.28))
 	_bx(Vector3(0.02, 0.0015, 0.004), Vector3(0, 0.0175, -0.076), Color(0.2, 0.2, 0.24))
-	_flush(_vmat(0.5))
+	_flush(_vmat(0.5, 0.0, false, "wood"))
 
 
 func _mug(pos: Vector3, col: Color, yaw: float, coffee: bool) -> void:
@@ -380,7 +380,7 @@ func _build_bookshelf() -> void:
 			4:
 				_books(-0.22, half, floor_y, gap)
 				_jar(Vector3(-0.36, floor_y, 0.02))
-	_flush(_vmat(0.72))
+	_flush(_vmat(0.72, 0.0, false, "wood"))
 
 	var body := StaticBody3D.new()
 	var col := CollisionShape3D.new()
@@ -490,4 +490,4 @@ func _build_clothes() -> void:
 		_bl(Vector3(0.042, 0.016, 0.08), Vector3(0, 0.015, -0.03), sock)
 		_bl(Vector3(0.04, 0.018, 0.055), Vector3(0.022, 0.015, 0.07), sock.darkened(0.08), Vector3(0, -32, 0))
 
-	_flush(_vmat(0.92))
+	_flush(_vmat(0.92, 0.0, false, "fabric"))

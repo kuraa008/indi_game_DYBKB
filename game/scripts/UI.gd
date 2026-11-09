@@ -1196,38 +1196,19 @@ func _on_backpack_toggled(is_open: bool) -> void:
 
 		var vp_size = get_viewport().get_visible_rect().size
 		var target_y = (vp_size.y - backpack_container.size.y) * 0.5
-		var start_y = target_y + 40.0
-
-		backpack_container.position.y = start_y
-		backpack_dim_rect.color.a = 0.0
-
-		backpack_open_tween = create_tween().set_parallel(true)
-		backpack_open_tween.tween_property(backpack_container, "position:y", target_y, 0.22)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		backpack_open_tween.tween_property(backpack_dim_rect, "color:a", 0.65, 0.20)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		backpack_container.position.y = target_y
+		backpack_dim_rect.color.a = 0.65
 
 		if GameManager.is_gamepad:
 			call_deferred("_warp_mouse_to_slot", backpack_cursor_index)
 	else:
 		_play_ui_sound("res://assets/audio/bag_close.wav", -3.5)
-		var vp_size = get_viewport().get_visible_rect().size
-		var target_y = (vp_size.y - backpack_container.size.y) * 0.5
-		var hide_y = target_y + 40.0
-
-		backpack_open_tween = create_tween().set_parallel(true)
-		backpack_open_tween.tween_property(backpack_container, "position:y", hide_y, 0.18)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		backpack_open_tween.tween_property(backpack_dim_rect, "color:a", 0.0, 0.18)\
-			.set_trans(Tween.TRANS_LINEAR)
-		backpack_open_tween.chain().tween_callback(func():
-			if not GameManager.is_backpack_open:
-				backpack_overlay.visible = false
-				if hotbar_container:
-					hotbar_container.visible = true
-					_refresh_hotbar()
-					_flash_hotbar()
-		)
+		backpack_dim_rect.color.a = 0.0
+		backpack_overlay.visible = false
+		if hotbar_container:
+			hotbar_container.visible = true
+			_refresh_hotbar()
+			_flash_hotbar()
 
 func _play_ui_sound(path: String, volume_db: float = 0.0) -> void:
 	if ResourceLoader.exists(path):

@@ -208,7 +208,7 @@ func _build_stream() -> void:
 	for k in range(5):
 		var p := cross + dir * (float(k) - 2.0) * 0.82 + Vector2(_rng.randf_range(-0.1, 0.1), _rng.randf_range(-0.1, 0.1))
 		_softbox(Vector3(0.62, 0.11, 0.54), _xf(Vector3(p.x, 0.05, p.y), Vector3(0, _rng.randf() * 180.0, 0)), Color(0.3, 0.29, 0.27).darkened(_rng.randf_range(0.0, 0.2)), 0.65, 0.05, 0.2, 6)
-	_flush(_vmat(0.8))
+	_flush(_vmat(0.8, 0.0, false, "concrete"))
 
 
 func _clear_spot(x: float, z: float) -> bool:
@@ -294,7 +294,7 @@ func _build_marks() -> void:
 		_flush(_bark, true)
 		var trail_side := Vector3(-normal.x - dir.x * 0.75, 0, -normal.y - dir.y * 0.75).normalized()
 		_notches(tree, trail_side, r)
-		_flush(_vmat(0.85))
+		_flush(_vmat(0.85, 0.0, false, "log"))
 		_collider(tree, r + 0.05, 4.0)
 		marks.append({"pos": tree, "face": trail_side, "r": r})
 	# Страница дневника прибита к последней метке перед поляной
@@ -433,7 +433,7 @@ func _build_scatter() -> void:
 		var a := _rng.randf() * TAU
 		var l := _rng.randf_range(0.4, 1.5)
 		_pipe(p, p + Vector3(cos(a) * l, 0.02, sin(a) * l), _rng.randf_range(0.012, 0.03), Color(0.14, 0.11, 0.08))
-	_flush(_vmat(0.96))
+	_flush(_vmat(0.96, 0.0, false, "log"))
 
 
 func _stump(at: Vector3) -> void:

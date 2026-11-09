@@ -1361,28 +1361,7 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			sb.set_meta("item_type", "wardrobe")
 			sb.set_meta("hiding_type", "wardrobe")
 
-			var wood_mat = StandardMaterial3D.new()
-			wood_mat.albedo_color = Color(0.29, 0.17, 0.10)
-			wood_mat.roughness = 0.85
-			if is_ghost:
-				wood_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				wood_mat.albedo_color.a = 0.60
-
-			# Hollow cabinet: the player sees real inner walls and the gap between doors.
-			for panel_data in [
-				[Vector3(-0.615,1.10,0), Vector3(0.07,2.10,0.62)],
-				[Vector3(0.615,1.10,0), Vector3(0.07,2.10,0.62)],
-				[Vector3(0,1.10,-0.285), Vector3(1.16,2.10,0.05)],
-				[Vector3(0,2.115,0), Vector3(1.16,0.07,0.62)],
-				[Vector3(0,0.085,0), Vector3(1.16,0.07,0.62)]
-			]:
-				var panel = MeshInstance3D.new()
-				var panel_mesh = BoxMesh.new()
-				panel_mesh.size = panel_data[1]
-				panel_mesh.material = wood_mat
-				panel.mesh = panel_mesh
-				panel.position = panel_data[0]
-				sb.add_child(panel)
+			HouseKit.add_wardrobe_body(sb, is_ghost)
 			var hide_anchor = Marker3D.new()
 			hide_anchor.name = "HideAnchor"
 			hide_anchor.position = Vector3(0, 0.12, 0.08)
@@ -1391,52 +1370,6 @@ static func _build_prefab_raw(type: String, sz: Vector3, color: Color, is_ghost:
 			exit_anchor.name = "ExitAnchor"
 			exit_anchor.position = Vector3(0, 0.05, 1.05)
 			sb.add_child(exit_anchor)
-
-			# Верхний карниз (молдинг)
-			var cornice = MeshInstance3D.new()
-			var bm_corn = BoxMesh.new()
-			bm_corn.size = Vector3(1.40, 0.09, 0.70)
-			var dark_wood = StandardMaterial3D.new()
-			dark_wood.albedo_color = Color(0.20, 0.11, 0.06)
-			bm_corn.material = dark_wood
-			cornice.mesh = bm_corn
-			cornice.position = Vector3(0, 2.18, 0)
-			sb.add_child(cornice)
-
-			# Створки дверей (левая и правая)
-			var door_mat = StandardMaterial3D.new()
-			door_mat.albedo_color = Color(0.35, 0.21, 0.12)
-			for x in [-0.35, 0.35]:
-				var door = MeshInstance3D.new()
-				var dm = BoxMesh.new()
-				dm.size = Vector3(0.54, 2.00, 0.045)
-				dm.material = door_mat
-				door.mesh = dm
-				door.position = Vector3(x, 1.10, 0.315)
-				sb.add_child(door)
-
-			# Латунные ручки на дверях
-			var brass_mat = StandardMaterial3D.new()
-			brass_mat.albedo_color = Color(0.85, 0.70, 0.20)
-			brass_mat.metallic = 0.8
-			brass_mat.roughness = 0.3
-			for x in [-0.06, 0.06]:
-				var hndl = MeshInstance3D.new()
-				var hm = BoxMesh.new()
-				hm.size = Vector3(0.03, 0.18, 0.04)
-				hm.material = brass_mat
-				hndl.mesh = hm
-				hndl.position = Vector3(x, 1.10, 0.34)
-				sb.add_child(hndl)
-
-			# Нижний цоколь
-			var plinth = MeshInstance3D.new()
-			var pm = BoxMesh.new()
-			pm.size = Vector3(1.34, 0.07, 0.65)
-			pm.material = dark_wood
-			plinth.mesh = pm
-			plinth.position = Vector3(0, 0.035, 0)
-			sb.add_child(plinth)
 
 			if not is_ghost:
 				var col = CollisionShape3D.new()

@@ -16,6 +16,7 @@ static func build(chapter: Node3D) -> void:
 	_claw_marks(chapter, Vector3(-58.84, GY + 2.3, -226.6), 90.0)
 	_claw_marks(chapter, Vector3(-53.16, GY + 2.4, -223.4), -90.0)
 	_claw_marks(chapter, Vector3(-58.84, FY + 2.2, -229.8), 90.0)
+	_cellar_door(chapter)
 
 
 # Угол комнаты Сэма у окна: шкаф у западной стены, на южной стене за шкафом у пола
@@ -81,3 +82,89 @@ static func _claw_marks(chapter: Node3D, at: Vector3, yaw: float) -> void:
 	var out := Vector3(1.0 if yaw > 0.0 else -1.0, 0.0, 0.0)
 	mark.global_position = at + out * 0.003
 	mark.rotation_degrees = Vector3(0.0, yaw, fposmod(at.z * 37.0, 14.0) - 7.0)
+
+
+# Дверь на южной стене прачечной, между корытом и каменной раковиной.
+# Этим путём Итана затащили вниз. Изнутри у неё нет ни засова, ни замка, открыть её нельзя.
+static func _cellar_door(chapter: Node3D) -> void:
+	var root := Node3D.new()
+	root.name = "CellarDoor"
+	chapter.add_child(root)
+	root.global_position = Vector3(-60.93, -4.2, -240.7)
+	root.rotation.y = PI
+	var stone: Array = []
+	var dark: Array = []
+	var light: Array = []
+	var iron: Array = []
+	# Бетонная коробка проёма и порог
+	stone.append(_box(Vector3(0.16, 2.26, 0.12), Vector3(-0.64, 1.13, -0.06)))
+	stone.append(_box(Vector3(0.16, 2.26, 0.12), Vector3(0.64, 1.13, -0.06)))
+	stone.append(_box(Vector3(1.44, 0.18, 0.15), Vector3(0, 2.35, -0.075)))
+	stone.append(_box(Vector3(1.12, 0.05, 0.16), Vector3(0, 0.025, -0.08)))
+	# Вертикальные доски полотна с тонкими щелями
+	var plank_w := 0.186
+	for i in range(6):
+		var x := -0.465 + plank_w * i
+		var tall := 2.17 + 0.012 * float((i * 7) % 3)
+		var group: Array = dark if i % 2 == 0 else light
+		group.append(_box(Vector3(plank_w - 0.007, tall, 0.05), Vector3(x, 0.05 + tall * 0.5, -0.05)))
+	# Кованые полосы с петлями, заклёпки и кольцо. Запирается дверь только снаружи
+	for y: float in [0.38, 1.12, 1.86]:
+		iron.append(_box(Vector3(0.98, 0.07, 0.012), Vector3(-0.03, y, -0.081)))
+		iron.append(_box(Vector3(0.09, 0.12, 0.05), Vector3(-0.56, y, -0.07)))
+		for k in range(5):
+			iron.append(_box(Vector3(0.024, 0.024, 0.012), Vector3(-0.42 + 0.21 * k, y, -0.092)))
+	iron.append(_box(Vector3(0.12, 0.17, 0.012), Vector3(0.36, 1.0, -0.081)))
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.043
+	ring.outer_radius = 0.06
+	ring.rings = 12
+	ring.ring_segments = 6
+	iron.append([ring, Transform3D(Basis.from_euler(Vector3(PI * 0.5, 0, 0)), Vector3(0.36, 0.95, -0.1))])
+
+	var wood_tex: Texture2D = load("res://assets/textures/wood_planks.png")
+	_merged(root, stone, Color(0.2, 0.19, 0.175), 0.97, 0.0, load("res://assets/textures/concrete_grunge.png"))
+	_merged(root, dark, Color(0.2, 0.145, 0.095), 0.92, 0.0, wood_tex)
+	_merged(root, light, Color(0.26, 0.19, 0.125), 0.92, 0.0, wood_tex)
+	_merged(root, iron, Color(0.085, 0.078, 0.07), 0.62, 0.65, null)
+
+	var spot: Area3D = load("res://scripts/StorySpot.gd").new()
+	spot.name = "CellarDoorSpot"
+	spot.setup("Открыть дверь", _on_cellar_door.bind(spot), Vector3(1.2, 2.2, 0.24))
+	chapter.add_child(spot)
+	spot.global_position = root.global_position + Vector3(0, 1.1, 0.12)
+
+
+static func _on_cellar_door(spot: Node3D) -> void:
+	var sound := AudioStreamPlayer3D.new()
+	sound.stream = load("res://assets/audio/cutscenes/door_handle_slow.wav")
+	spot.add_child(sound)
+	sound.finished.connect(sound.queue_free)
+	sound.play()
+	if GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
+		GameManager.ui_ref.call("show_hint", "Заперто снаружи. Здесь не выйти.", 2.5)
+
+
+static func _box(size: Vector3, pos: Vector3) -> Array:
+	var box := BoxMesh.new()
+	box.size = size
+	return [box, Transform3D(Basis.IDENTITY, pos)]
+
+
+static func _merged(parent: Node3D, parts: Array, color: Color, rough: float, metal: float, tex: Texture2D) -> void:
+	var st := SurfaceTool.new()
+	for part in parts:
+		st.append_from(part[0], 0, part[1])
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = rough
+	mat.metallic = metal
+	if tex:
+		mat.albedo_texture = tex
+		mat.uv1_triplanar = true
+		mat.uv1_world_triplanar = true
+		mat.uv1_scale = Vector3.ONE * 0.8
+	var mesh := MeshInstance3D.new()
+	mesh.mesh = st.commit()
+	mesh.material_override = mat
+	parent.add_child(mesh)

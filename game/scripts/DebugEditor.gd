@@ -26,6 +26,7 @@ var current_mode: EditorMode = EditorMode.EDIT
 #  Узлы сцены
 # ──────────────────────────────────────────────────────────────────────────────
 var editor_cam: Camera3D
+var tools: Node
 var cam_pivot: Node3D
 var nav_region: NavigationRegion3D
 var objects_root: Node3D
@@ -1188,6 +1189,9 @@ func _ready() -> void:
 	_setup_grid()
 	_setup_selection_box()
 	_build_editor_ui()
+	tools = load("res://scripts/EditorTools.gd").new()
+	tools.ed = self
+	add_child(tools)
 
 	# Автозагрузка карты или создание чистого полигона
 	# Приоритет: 1) GameManager.active_map_path, 2) Карта_6.json, 3) Карта_4.json, 4) prototype map.json
@@ -2084,6 +2088,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			elif event.keycode == KEY_ESCAPE:
 				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		return
+
+	# [J] — Окно телепорта, [B] — камера к точке под курсором
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_J:
+		tools.open_panel()
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
+		tools.teleport_under_cursor()
+		get_viewport().set_input_as_handled()
 		return
 
 	# [Home] — Вернуть камеру в исходное положение
@@ -3092,6 +3106,8 @@ func _instantiate_object_from_data(data: Dictionary) -> Node3D:
 	node.set_meta("obj_scale", sz)
 	node.set_meta("prefab_base_size", base_sz)
 	node.set_meta("base_size", base_sz)
+	if not bool(data.get("collide", true)):
+		node.set_meta("collide", false)
 
 	if is_prim:
 		_update_box_mesh_size(node, sz)
@@ -4065,6 +4081,8 @@ func _serialize_single_object(node: Node3D) -> Dictionary:
 	elif pnl and pnl.has_meta("door_texture") and str(pnl.get_meta("door_texture")) != "":
 		d["door_texture"] = str(pnl.get_meta("door_texture"))
 
+	if not bool(node.get_meta("collide", true)):
+		d["collide"] = false
 	if node.has_meta("model_path"):
 		d["model_path"] = str(node.get_meta("model_path"))
 	if node.has_meta("wall_texture") and str(node.get_meta("wall_texture")) != "":
@@ -4358,6 +4376,7 @@ func load_map_from_json(path: String) -> bool:
 	var gm_load = _get_gm()
 	if gm_load:
 		gm_load.set("active_map_path", path)
+	tools.refresh_scenery(path)
 	show_notification("Загружена карта (%d объектов): %s" % [objects.size(), path.get_file()])
 	return true
 
@@ -4872,6 +4891,7 @@ func clear_all_objects() -> void:
 
 func create_clean_polygon() -> void:
 	clear_all_objects()
+	tools.refresh_scenery("")
 
 	# 1. Секция асфальтированной дороги
 	next_obj_id = 1
@@ -4989,6 +5009,13 @@ func toggle_editor_playtest() -> void:
 	else:
 		stop_playtest()
 
+# Команда tp из консоли: в режиме редактирования двигает камеру
+func editor_teleport(pos: Vector3) -> bool:
+	if current_mode != EditorMode.EDIT:
+		return false
+	tools.teleport(pos)
+	return true
+
 func reset_editor_camera_to_initial() -> void:
 	var target_pos = Vector3(0.0, 8.0, 14.0)
 	for child in objects_root.get_children():
@@ -5003,6 +5030,7 @@ func reset_editor_camera_to_initial() -> void:
 
 func start_playtest() -> void:
 	current_mode = EditorMode.PLAYTEST
+	tools.set_scenery_solid(true)
 	saved_cam_transform = editor_cam.global_transform
 	saved_pivot_pos = cam_pivot.global_position
 	saved_cam_yaw = cam_yaw
@@ -5398,6 +5426,7 @@ func _load_mp3(path: String) -> AudioStreamMP3:
 
 func stop_playtest() -> void:
 	current_mode = EditorMode.EDIT
+	tools.set_scenery_solid(false)
 
 	if outdoor_ambient_player and is_instance_valid(outdoor_ambient_player):
 		outdoor_ambient_player.stop()
@@ -5636,6 +5665,10 @@ func _build_top_bar() -> void:
 		get_tree().change_scene_to_file("res://scenes/Main.tscn")
 	)
 	hb.add_child(btn_play_campaign)
+
+	var btn_teleport = _create_top_btn("🧭 Телепорт", "Перейти к координатам, месту или объекту [J]", func(): tools.open_panel())
+	btn_teleport.add_theme_color_override("font_color", Color(0.45, 1.0, 0.7))
+	hb.add_child(btn_teleport)
 
 	var btn_help = _create_top_btn("❓ [H]", "Показать список всех горячих клавиш и подсказок [H / F1]", _toggle_help_modal)
 	btn_help.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
@@ -7595,7 +7628,7 @@ func _reset_selected_rotation() -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 func _build_hotkeys_hint() -> void:
 	hotkeys_hint = Label.new()
-	hotkeys_hint.text = "[1] Ставить | [2] Удалить | [3] Взять | [R/Q] Поворот Y | [T] Наклон X | [Y] Крен Z | [Стрелки/PgUp/PgDn] X/Y/Z | [End] На пол | [Ctrl+C/V] Копия | [V] Сверху | [Tab] Каталог | [7] ТЕСТ"
+	hotkeys_hint.text = "[J] Телепорт | [B] К курсору | [1] Ставить | [2] Удалить | [3] Взять | [R/Q] Поворот Y | [T] Наклон X | [Y] Крен Z | [Стрелки/PgUp/PgDn] X/Y/Z | [End] На пол | [Ctrl+C/V] Копия | [V] Сверху | [Tab] Каталог | [7] ТЕСТ"
 	hotkeys_hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	hotkeys_hint.set_anchor_and_offset(SIDE_BOTTOM, 1, -3)
 	hotkeys_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

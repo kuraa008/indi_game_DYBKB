@@ -7,7 +7,7 @@ extends RefCounted
 
 const TEX := "res://assets/textures/nature/"
 const SPRUCE_TINT_REF := Color(0.12, 0.30, 0.14)
-const NEAR_END := 36.0
+const NEAR_END := 27.0
 const FAR_END := 120.0
 
 static var _meshes: Dictionary = {}

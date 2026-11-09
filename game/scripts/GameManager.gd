@@ -1191,3 +1191,28 @@ func get_time_remaining() -> float:
 
 func get_timer_elapsed() -> float:
 	return timer_elapsed
+
+
+# Смена сцены без ощущения зависания: чёрный экран появляется сразу, и только потом
+# строится карта. Иначе на время постройки застывает последний кадр старой сцены.
+func change_scene_fast(path: String) -> void:
+	var tree := get_tree()
+	var layer := CanvasLayer.new()
+	layer.layer = 127
+	var shade := ColorRect.new()
+	shade.color = Color.BLACK
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(shade)
+	var text := Label.new()
+	text.text = "Загрузка…"
+	text.set_anchors_preset(Control.PRESET_FULL_RECT)
+	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layer.add_child(text)
+	add_child(layer)
+	await RenderingServer.frame_post_draw
+	tree.change_scene_to_file(path)
+	await tree.scene_changed
+	await tree.process_frame
+	layer.queue_free()

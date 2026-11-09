@@ -125,11 +125,11 @@ func _build_coat() -> void:
 			var p: Vector3 = _coat_point(side * lerpf(0.42, 0.72, w), lerpf(0.47, 0.58, w))[0]
 			slit.append(p + Vector3(-0.0025, 0, 0))
 		_tube(slit, 0.0055, COAT.darkened(0.7), 6, 0.25, Vector3.UP)
-	_flush(_vmat(0.74))
+	_flush(_vmat(0.74, 0.0, false, "fabric"))
 
 	# Петля на крючке и бегунок молнии
 	_torus(0.01, 0.0135, Vector3(WALL_X - 0.035, HOOK_Y - 0.011, HOOK_Z), Color(0.06, 0.06, 0.06), Vector3(0, 0, 90))
-	_flush(_vmat(0.8))
+	_flush(_vmat(0.8, 0.0, false, "fabric"))
 	var pull: Vector3 = _coat_point(0.0, TOP + 0.03)[0]
 	_bx(Vector3(0.004, 0.028, 0.009), pull + Vector3(-0.005, -0.012, 0), Color(0.62, 0.62, 0.64))
 	_flush(_vmat(0.3, 0.6))
@@ -164,7 +164,7 @@ func _build_bag() -> void:
 		var e := clampf(minf(k, 1.0 - k) / 0.13, 0.0, 1.0)
 		return r * sqrt(1.0 - (1.0 - e) * (1.0 - e)) * (0.97 + 0.03 * sin(k * 17.0))
 	_tube(path, radius, canvas, 16, 0.86, Vector3.UP)
-	_flush(_vmat(0.86))
+	_flush(_vmat(0.86, 0.0, false, "fabric"))
 
 	for sx in [x0 + 0.13, x1 - 0.13]:
 		var band := []
@@ -178,6 +178,6 @@ func _build_bag() -> void:
 		var dz: float = 0.035 * side
 		_tube(_smooth([Vector3(x0 + 0.13, top_y, z + dz), Vector3(x0 + 0.17, top_y + 0.05, z + dz * 2.0), Vector3((x0 + x1) * 0.5, top_y + 0.075, z + dz * 3.4),
 			Vector3(x1 - 0.17, top_y + 0.05, z + dz * 2.0), Vector3(x1 - 0.13, top_y, z + dz)], 6), 0.012, strap, 8, 0.45, Vector3.BACK)
-	_flush(_vmat(0.8))
+	_flush(_vmat(0.8, 0.0, false, "fabric"))
 
 	_solid(Vector3((x0 + x1) * 0.5, FL + r, z), Vector3(x1 - x0, r * 2.0, r * 2.0 * 0.86))

@@ -400,10 +400,7 @@ func _show_ui() -> void:
 	_body.visible = true
 	_toast.visible = false
 	_toast_left = 0.0
-	_body.position.y = get_viewport().get_visible_rect().size.y
-	var target_y: float = _body_target_y()
-	var tw := create_tween()
-	tw.tween_property(_body, "position:y", target_y, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_body.position.y = _body_target_y()
 	_update_processing()
 
 

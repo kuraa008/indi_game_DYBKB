@@ -422,7 +422,7 @@ func _execute_command(cmd_str: String) -> void:
 		"polygon", "testai", "arena":
 			print_log("[color=#55ffaa]Загрузка интерактивного полигона ИИ...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Polygon.tscn")
+			GameManager.change_scene_fast("res://scenes/Polygon.tscn")
 
 		"minimap", "map2d":
 			if GameManager.minimap:
@@ -562,6 +562,11 @@ func _cmd_setobj(type_name: String) -> void:
 	print_log("[color=#55ff55]Создан объект '%s' на позиции (%.1f, %.1f, %.1f)[/color]" % [type_name, spawn_pos.x, spawn_pos.y, spawn_pos.z])
 
 func _cmd_teleport(args: Array[String]) -> void:
+	var scene := get_tree().current_scene
+	if scene and scene.has_method("editor_teleport") and args.size() >= 3 and args[0].is_valid_float() and args[1].is_valid_float() and args[2].is_valid_float():
+		if scene.call("editor_teleport", Vector3(float(args[0]), float(args[1]), float(args[2]))):
+			print_log("[color=#55ff55]Камера редактора перемещена.[/color]")
+			return
 	var player = GameManager.player_ref
 	if not player or not is_instance_valid(player):
 		print_log("[color=#ff6666]Ошибка: игрок не найден.[/color]")
@@ -617,7 +622,7 @@ func _cmd_possess() -> void:
 func _cmd_skinwalkerfun() -> void:
 	print_log("[color=#ffaa33]Запуск секретного режима Skinwalker Fun...[/color]")
 	close_console()
-	get_tree().change_scene_to_file("res://scenes/Polygon.tscn")
+	GameManager.change_scene_fast("res://scenes/Polygon.tscn")
 
 func _cmd_map(args: Array[String]) -> void:
 	var json_maps = _get_available_json_maps()
@@ -638,7 +643,7 @@ func _cmd_map(args: Array[String]) -> void:
 		"main", "game":
 			print_log("[color=#55ffaa]Загрузка основной сцены...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Main.tscn")
+			GameManager.change_scene_fast("res://scenes/Main.tscn")
 			return
 		"polygon", "arena", "test", "fun", "skinwalkerfun":
 			_cmd_skinwalkerfun()
@@ -646,22 +651,22 @@ func _cmd_map(args: Array[String]) -> void:
 		"editor", "debug":
 			print_log("[color=#55ffaa]Загрузка 3D редактора карт...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/DebugEditor.tscn")
+			GameManager.change_scene_fast("res://scenes/DebugEditor.tscn")
 			return
 		"menu":
 			print_log("[color=#55ffaa]Загрузка главного меню...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+			GameManager.change_scene_fast("res://scenes/Menu.tscn")
 			return
 		"street":
 			print_log("[color=#55ffaa]Загрузка улицы (побег на машине)...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Street.tscn")
+			GameManager.change_scene_fast("res://scenes/Street.tscn")
 			return
 		"intro", "cutscene":
 			print_log("[color=#55ffaa]Загрузка вступления (авария на шоссе)...[/color]")
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
+			GameManager.change_scene_fast("res://scenes/IntroCutscene.tscn")
 			return
 
 	# Проверка по порядковому номеру карты (например: map 1)
@@ -672,7 +677,7 @@ func _cmd_map(args: Array[String]) -> void:
 			GameManager.active_map_path = chosen["path"]
 			print_log("[color=#55ffaa]Загрузка JSON-карты [%d] '%s'...[/color]" % [idx + 1, chosen["name"]])
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Main.tscn")
+			GameManager.change_scene_fast("res://scenes/Main.tscn")
 			return
 		else:
 			print_log("[color=#ff6666]Ошибка: номер карты вне диапазона (1..%d). Введите 'map' для списка.[/color]" % json_maps.size())
@@ -687,14 +692,14 @@ func _cmd_map(args: Array[String]) -> void:
 			GameManager.active_map_path = m["path"]
 			print_log("[color=#55ffaa]Загрузка JSON-карты '%s' (%s)...[/color]" % [m["name"], m["path"]])
 			close_console()
-			get_tree().change_scene_to_file("res://scenes/Main.tscn")
+			GameManager.change_scene_fast("res://scenes/Main.tscn")
 			return
 
 	# Если указан прямой путь к .tscn
 	if target_arg.ends_with(".tscn") and ResourceLoader.exists(target_arg):
 		print_log("[color=#55ffaa]Загрузка сцены: %s...[/color]" % target_arg)
 		close_console()
-		get_tree().change_scene_to_file(target_arg)
+		GameManager.change_scene_fast(target_arg)
 		return
 
 	print_log("[color=#ff6666]Карта '%s' не найдена. Введите 'map' для списка всех доступных карт из JSON.[/color]" % target_arg)

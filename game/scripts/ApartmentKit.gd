@@ -27,14 +27,20 @@ func _xf(pos: Vector3, rot_deg: Vector3 = Vector3.ZERO, scl: Vector3 = Vector3.O
 
 
 func _bx(size: Vector3, pos: Vector3, col: Color, rot: Vector3 = Vector3.ZERO) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	_parts.append([_unit_box, _base * _xf(pos, rot, size), col])
 
 
 func _bl(radii: Vector3, pos: Vector3, col: Color, rot: Vector3 = Vector3.ZERO) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	_parts.append([_unit_ball, _base * _xf(pos, rot, radii), col])
 
 
 func _cy(r_top: float, r_bot: float, h: float, pos: Vector3, col: Color, rot: Vector3 = Vector3.ZERO, sides: int = 14, top: bool = true) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var m := CylinderMesh.new()
 	m.top_radius = r_top
 	m.bottom_radius = r_bot
@@ -46,6 +52,8 @@ func _cy(r_top: float, r_bot: float, h: float, pos: Vector3, col: Color, rot: Ve
 
 
 func _torus(inner: float, outer: float, pos: Vector3, col: Color, rot: Vector3 = Vector3.ZERO, scl: Vector3 = Vector3.ONE) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var m := TorusMesh.new()
 	m.inner_radius = inner
 	m.outer_radius = outer
@@ -56,6 +64,8 @@ func _torus(inner: float, outer: float, pos: Vector3, col: Color, rot: Vector3 =
 
 # Трубка между двумя точками
 func _pipe(a: Vector3, b: Vector3, r: float, col: Color) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var d := b - a
 	var y := d.normalized()
 	var x := y.cross(Vector3.RIGHT if absf(y.x) < 0.9 else Vector3.BACK).normalized()
@@ -82,6 +92,8 @@ func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ca: Color, cb
 
 
 func _commit(st: SurfaceTool, xf: Transform3D = Transform3D.IDENTITY) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	st.generate_normals()
 	st.index()
 	_parts.append([st.commit(), _base * xf, Color.WHITE])
@@ -89,6 +101,8 @@ func _commit(st: SurfaceTool, xf: Transform3D = Transform3D.IDENTITY) -> void:
 
 # grid и cols: ряды точек и цветов одинаковой длины; closed замыкает ряд в кольцо
 func _emit_grid(grid: Array, cols: Array, closed: bool, flip: bool, xf: Transform3D) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var nu: int = grid[0].size()
@@ -139,6 +153,8 @@ func _rr_point(hx: float, hz: float, r: float, idx: int, corner: int) -> Vector2
 # Поверхность по кольцам, как на гончарном круге: снаружи снизу вверх,
 # через край и внутрь. Круг — это кольцо с r = hx = hz. colors — цвет каждого кольца.
 func _loft(rings: Array, col: Color, xf: Transform3D = Transform3D.IDENTITY, corner: int = 6, colors: Array = []) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var around := 4 * (corner + 1)
 	var grid := []
 	var cols := []
@@ -160,6 +176,8 @@ func _spow(v: float, e: float) -> float:
 # Мягкая подушка: коробка со скруглёнными краями. e — насколько кругло (0.2 почти кубик,
 # 0.6 подушка), puff раздувает верх и низ, shade затемняет низ
 func _softbox(size: Vector3, xf: Transform3D, col: Color, e: float = 0.28, puff: float = 0.0, shade: float = 0.22, res: int = 18) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var half := size * 0.5
 	var grid := []
 	var cols := []
@@ -197,6 +215,8 @@ func _smooth(points: Array, steps: int = 6) -> Array:
 # Трубка вдоль линии. radius — число или func(0..1); col — цвет или func(0..1).
 # flat сжимает сечение вдоль (направление × hint): так получаются плоские полоски.
 func _tube(path: Array, radius: Variant, col: Variant, sides: int = 10, flat: float = 1.0, hint: Vector3 = Vector3.ZERO) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var count := path.size()
 	var first: Vector3 = (path[1] - path[0]).normalized()
 	var nrm: Vector3 = hint
@@ -235,6 +255,8 @@ func _tube(path: Array, radius: Variant, col: Variant, sides: int = 10, flat: fl
 
 # Сетка nu × nv; fn(i, j) возвращает [точка, цвет]
 func _surface(nu: int, nv: int, fn: Callable, xf: Transform3D = Transform3D.IDENTITY) -> void:
+	if _cache_mode == CACHE_READ:
+		return
 	var grid := []
 	var cols := []
 	for j in range(nv + 1):
@@ -333,36 +355,134 @@ func _bottle(pos: Vector3, r: float, h: float, col: Color, cap: Color) -> void:
 
 # ── Сборка ──
 
+# Математику слияния считают все ядра, поэтому карта строится заметно быстрее.
+# Готовые вершины попадают в меши в конце кадра, до первой отрисовки.
+static var _pending: Array = []
+static var _sync_queued := false
+
+# Кэш готовых мешей на диске. Первая загрузка карты сохраняет их в user://map_cache,
+# следующие берут оттуда и не считают геометрию. Новый exe сбрасывает кэш.
+# Вместе с игрой идут заранее собранные модели: их создаёт сцена res://tools/BakeMaps.tscn.
+# В редакторе кэш выключен, чтобы правки скриптов были видны сразу.
+const CACHE_OFF := 0
+const CACHE_WRITE := 1
+const CACHE_READ := 2
+const CACHE_SAVE := 3
+const CACHE_DIR := "user://map_cache"
+const SHIP_DIR := "res://assets/map_cache"
+static var cache_force := false
+static var cache_bake := false
+static var _cache_shipped := false
+static var _cache_bad := ""
+static var _cache_mode := CACHE_OFF
+static var _cache_data := {}
+static var _cache_order := {}
+static var _cache_path := ""
+static var _cache_missed := false
+
+
+static func cache_begin(map_key: String) -> void:
+	_cache_mode = CACHE_OFF
+	_cache_data = {}
+	_cache_order = {}
+	_cache_missed = false
+	_cache_shipped = false
+	var file_name := map_key.md5_text()
+	if cache_bake:
+		DirAccess.make_dir_recursive_absolute(SHIP_DIR)
+		_cache_path = "%s/%s.bin" % [SHIP_DIR, file_name]
+		_cache_mode = CACHE_WRITE
+		return
+	if OS.has_feature("editor") and not cache_force:
+		return
+	var stamp := str(FileAccess.get_modified_time(OS.get_executable_path()))
+	DirAccess.make_dir_recursive_absolute(CACHE_DIR)
+	var own := "%s/%s_%s.bin" % [CACHE_DIR, stamp, file_name]
+	_cache_bad = "%s/%s_%s.bad" % [CACHE_DIR, stamp, file_name]
+	var shipped := "%s/%s.bin" % [SHIP_DIR, file_name]
+	if FileAccess.file_exists(shipped) and not FileAccess.file_exists(_cache_bad) and _cache_read(shipped):
+		_cache_shipped = true
+		return
+	_cache_path = own
+	if FileAccess.file_exists(own) and _cache_read(own):
+		return
+	for old in DirAccess.get_files_at(CACHE_DIR):
+		if not old.begins_with(stamp + "_"):
+			DirAccess.remove_absolute(CACHE_DIR + "/" + old)
+	_cache_mode = CACHE_WRITE
+
+
+static func _cache_read(path: String) -> bool:
+	var f := FileAccess.open_compressed(path, FileAccess.READ, FileAccess.COMPRESSION_ZSTD)
+	if f == null:
+		return false
+	var saved: Variant = f.get_var()
+	if saved is Dictionary and not (saved as Dictionary).is_empty():
+		_cache_data = saved
+		_cache_mode = CACHE_READ
+		return true
+	return false
+
+
+static func cache_end() -> void:
+	if _cache_mode == CACHE_READ:
+		_cache_mode = CACHE_OFF
+		_cache_data = {}
+		# Ход постройки изменился: файл больше не подходит, в следующий раз карта соберётся заново
+		if _cache_missed:
+			if _cache_shipped:
+				FileAccess.open(_cache_bad, FileAccess.WRITE)
+			else:
+				DirAccess.remove_absolute(_cache_path)
+	elif _cache_mode == CACHE_WRITE:
+		_cache_mode = CACHE_SAVE if not _pending.is_empty() else CACHE_OFF
+
+
+func _cache_slot() -> String:
+	var path: String = get_script().resource_path
+	var n: int = _cache_order.get(path, 0)
+	_cache_order[path] = n + 1
+	return "%s#%d" % [path, n]
+
+
 func _flush(mt: Material, shadows: bool = false) -> MeshInstance3D:
-	var vs := PackedVector3Array()
-	var ns := PackedVector3Array()
-	var cs := PackedColorArray()
-	var idx := PackedInt32Array()
+	var slot := ""
+	if _cache_mode == CACHE_READ or _cache_mode == CACHE_WRITE:
+		slot = _cache_slot()
+	if _cache_mode == CACHE_READ:
+		return _flush_cached(mt, shadows, slot)
+	var sources := {}
+	var job: Array = []
 	for part in _parts:
-		var xf: Transform3D = part[1]
-		var col: Color = part[2]
-		var smooth: bool = part[0] is ArrayMesh
-		var a: Array = part[0].surface_get_arrays(0) if smooth else part[0].get_mesh_arrays()
-		var v: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
-		var n: PackedVector3Array = a[Mesh.ARRAY_NORMAL]
-		var ind: PackedInt32Array = a[Mesh.ARRAY_INDEX]
-		var nb := xf.basis.inverse().transposed()
-		var src_cols = a[Mesh.ARRAY_COLOR]
-		var off := vs.size()
-		for i in range(v.size()):
-			vs.append(xf * v[i])
-			ns.append((nb * n[i]).normalized())
-			cs.append(src_cols[i] if smooth else col)
-		for i in ind:
-			idx.append(off + i)
-	var arr := []
-	arr.resize(Mesh.ARRAY_MAX)
-	arr[Mesh.ARRAY_VERTEX] = vs
-	arr[Mesh.ARRAY_NORMAL] = ns
-	arr[Mesh.ARRAY_COLOR] = cs
-	arr[Mesh.ARRAY_INDEX] = idx
+		var m: Mesh = part[0]
+		if not sources.has(m):
+			sources[m] = m.surface_get_arrays(0) if m is ArrayMesh else (m as PrimitiveMesh).get_mesh_arrays()
+		job.append([sources[m], part[1], part[2], m is ArrayMesh])
 	var am := ArrayMesh.new()
-	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	var mi := MeshInstance3D.new()
+	mi.mesh = am
+	mi.material_override = mt
+	if not shadows:
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	_parts.clear()
+	_base = Transform3D.IDENTITY
+	var data := {"parts": job, "arrays": []}
+	_pending.append([WorkerThreadPool.add_task(_merge.bind(data)), data, am, slot])
+	if not _sync_queued:
+		_sync_queued = true
+		_finish_pending.call_deferred()
+	return mi
+
+
+func _flush_cached(mt: Material, shadows: bool, slot: String) -> MeshInstance3D:
+	var am := ArrayMesh.new()
+	if _cache_data.has(slot):
+		var arr: Variant = _cache_data[slot]
+		if arr is Array:
+			am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	else:
+		_cache_missed = true
 	var mi := MeshInstance3D.new()
 	mi.mesh = am
 	mi.material_override = mt
@@ -374,7 +494,93 @@ func _flush(mt: Material, shadows: bool = false) -> MeshInstance3D:
 	return mi
 
 
-func _vmat(rough: float, metal: float = 0.0, two_sided: bool = false) -> StandardMaterial3D:
+static func _merge(data: Dictionary) -> void:
+	var vs := PackedVector3Array()
+	var ns := PackedVector3Array()
+	var cs := PackedColorArray()
+	var idx := PackedInt32Array()
+	for part: Array in data["parts"]:
+		var a: Array = part[0]
+		var xf: Transform3D = part[1]
+		var col: Color = part[2]
+		var smooth: bool = part[3]
+		var v: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
+		var n: PackedVector3Array = a[Mesh.ARRAY_NORMAL]
+		var ind: PackedInt32Array = a[Mesh.ARRAY_INDEX]
+		var nb := xf.basis.inverse().transposed()
+		var off := vs.size()
+		vs.append_array(xf * v)
+		var turned: PackedVector3Array = Transform3D(nb, Vector3.ZERO) * n
+		if absf(nb.x.length_squared() - 1.0) > 0.001 or absf(nb.y.length_squared() - 1.0) > 0.001 or absf(nb.z.length_squared() - 1.0) > 0.001:
+			for i in range(turned.size()):
+				turned[i] = turned[i].normalized()
+		ns.append_array(turned)
+		if smooth:
+			cs.append_array(a[Mesh.ARRAY_COLOR])
+		else:
+			var tint := PackedColorArray()
+			tint.resize(v.size())
+			tint.fill(col)
+			cs.append_array(tint)
+		var shifted := idx.size()
+		idx.resize(shifted + ind.size())
+		for i in range(ind.size()):
+			idx[shifted + i] = ind[i] + off
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = vs
+	arr[Mesh.ARRAY_NORMAL] = ns
+	arr[Mesh.ARRAY_COLOR] = cs
+	arr[Mesh.ARRAY_INDEX] = idx
+	data["arrays"] = arr
+
+
+static func _finish_pending() -> void:
+	_sync_queued = false
+	for item: Array in _pending:
+		WorkerThreadPool.wait_for_task_completion(item[0])
+		var arr: Array = item[1]["arrays"]
+		var filled: bool = not arr.is_empty() and not (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).is_empty()
+		if filled:
+			(item[2] as ArrayMesh).add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		if item[3] != "":
+			_cache_data[item[3]] = arr if filled else null
+	_pending.clear()
+	if _cache_mode == CACHE_SAVE:
+		_cache_mode = CACHE_OFF
+		var f := FileAccess.open_compressed(_cache_path, FileAccess.WRITE, FileAccess.COMPRESSION_ZSTD)
+		if f:
+			f.store_var(_cache_data)
+			f.close()
+		_cache_data = {}
+
+
+# kind: "wood", "wood_h", "log", "fabric", "concrete", "plaster", "metal" или "none".
+# Без указания: матовое получает лёгкую фактуру, металл — царапины, глянец остаётся гладким.
+const SURFACES := {
+	"wood": ["wood", 1.0, 1.0, Color(1.2, 1.2, 1.2)],
+	"wood_h": ["wood_h", 1.0, 1.0, Color(1.2, 1.2, 1.2)],
+	"log": ["wood_log", 0.8, 1.3, Color(1.34, 1.34, 1.34)],
+	"fabric": ["fabric", 2.4, 0.9, Color(1.32, 1.32, 1.32)],
+	"concrete": ["concrete", 0.4, 1.0, Color(1.22, 1.22, 1.22)],
+	"plaster": ["plaster", 0.75, 0.5, Color(1.1, 1.1, 1.1)],
+	"soil": ["soil", 0.5, 1.3, Color(1.34, 1.34, 1.34)],
+	"metal": ["metal", 1.2, 0.5, Color(1.14, 1.14, 1.14)],
+}
+static var _vmats := {}
+
+
+func _vmat(rough: float, metal: float = 0.0, two_sided: bool = false, kind: String = "") -> StandardMaterial3D:
+	if kind == "":
+		if metal >= 0.25:
+			kind = "metal"
+		elif rough >= 0.45:
+			kind = "plaster"
+		else:
+			kind = "none"
+	var key := "%.2f_%.2f_%s_%s" % [rough, metal, two_sided, kind]
+	if _vmats.has(key):
+		return _vmats[key]
 	var m := StandardMaterial3D.new()
 	m.vertex_color_use_as_albedo = true
 	m.vertex_color_is_srgb = true
@@ -382,6 +588,17 @@ func _vmat(rough: float, metal: float = 0.0, two_sided: bool = false) -> Standar
 	m.metallic = metal
 	if two_sided:
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if SURFACES.has(kind):
+		var surface: Array = SURFACES[kind]
+		m.albedo_texture = TextureHelper.get_texture(TextureHelper.SURFACE + surface[0] + ".png")
+		m.albedo_color = surface[3]
+		m.normal_enabled = true
+		m.normal_texture = TextureHelper.get_texture(TextureHelper.SURFACE + surface[0] + "_n.png")
+		m.normal_scale = surface[2]
+		m.uv1_triplanar = true
+		m.uv1_scale = Vector3.ONE * float(surface[1])
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_vmats[key] = m
 	return m
 
 

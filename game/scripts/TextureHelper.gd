@@ -9,6 +9,37 @@ extends RefCounted
 static var _cache: Dictionary = {}
 static var _wall_mats: Dictionary = {}
 
+const SURFACE := "res://assets/textures/surface/"
+# Старые файлы и их замена: новая текстура, рельеф, множитель цвета и масштаб
+const UPGRADES := {
+	"wood_furniture.png": ["wood", 0.9, Color(0.9, 0.82, 0.72), 0.7],
+	"wood_door.png": ["wood", 0.9, Color(0.5, 0.36, 0.24), 0.72],
+	"fabric.png": ["fabric", 0.7, Color(1.08, 1.08, 1.08), 0.42],
+	"metal_worn.png": ["metal", 0.5, Color(1.1, 1.1, 1.1), 0.7],
+	"concrete.png": ["concrete", 0.9, Color(0.92, 0.92, 0.92), 0.8],
+	"forest_floor.png": ["", 1.0, Color.WHITE, 1.0, "soil_n"],
+	"dirt_path.png": ["", 1.0, Color.WHITE, 1.0, "soil_n"],
+	"board_weathered.png": ["", 0.8, Color.WHITE, 1.0, "wood_h_n"],
+}
+
+
+# Подменяет старую текстуру материала на новую из assets/textures/surface
+static func upgrade_material(m: StandardMaterial3D, file: String) -> void:
+	var key := file.get_file()
+	if not UPGRADES.has(key):
+		return
+	var u: Array = UPGRADES[key]
+	var base: String = u[0]
+	var normal: String = (u[4] if u.size() > 4 else base + "_n")
+	if base != "":
+		m.albedo_texture = get_texture(SURFACE + base + ".png")
+		m.albedo_color = Color(m.albedo_color.r * u[2].r, m.albedo_color.g * u[2].g, m.albedo_color.b * u[2].b, m.albedo_color.a)
+		m.uv1_scale *= u[3]
+	m.normal_enabled = true
+	m.normal_texture = get_texture(SURFACE + normal + ".png")
+	m.normal_scale = u[1]
+
+
 const WALL_TEXTURES = {
 	"siding": {
 		"path": "res://assets/textures/house/siding.png",
@@ -16,9 +47,11 @@ const WALL_TEXTURES = {
 		"name": "Старая обшивка",
 	},
 	"plaster": {
-		"path": "res://assets/textures/house/plaster.png",
-		"triplanar_scale": Vector3(0.3, 0.3, 0.3),
+		"path": "res://assets/textures/surface/plaster.png",
+		"triplanar_scale": Vector3(0.5, 0.5, 0.5),
 		"name": "Штукатурка",
+		"normal": "res://assets/textures/surface/plaster_n.png",
+		"normal_scale": 0.8,
 	},
 	"tile_clean": {
 		"path": "res://assets/textures/house/tile_clean.png",
@@ -26,14 +59,18 @@ const WALL_TEXTURES = {
 		"name": "Плитка",
 	},
 	"concrete_floor": {
-		"path": "res://assets/textures/house/concrete.png",
-		"triplanar_scale": Vector3(0.25, 0.25, 0.25),
+		"path": "res://assets/textures/surface/concrete.png",
+		"triplanar_scale": Vector3(0.32, 0.32, 0.32),
 		"name": "Бетон",
+		"normal": "res://assets/textures/surface/concrete_n.png",
+		"normal_scale": 1.0,
 	},
 	"board_weathered": {
 		"path": "res://assets/textures/house/board_weathered.png",
 		"triplanar_scale": Vector3(0.5, 0.5, 0.5),
 		"name": "Старые доски",
+		"normal": "res://assets/textures/surface/wood_h_n.png",
+		"normal_scale": 0.8,
 	},
 	"brick_red": {
 		"name": "Красный кирпич",
@@ -57,10 +94,12 @@ const WALL_TEXTURES = {
 	"wallpaper_vintage": {
 		"name": "Винтажные обои",
 		"icon": "📜",
-		"path": "res://assets/textures/wallpaper_vintage.png",
+		"path": "res://assets/textures/surface/wallpaper.png",
 		"roughness": 0.80,
 		"metallic": 0.0,
-		"triplanar_scale": Vector3(0.6, 0.6, 0.6)
+		"triplanar_scale": Vector3(0.7, 0.7, 0.7),
+		"normal": "res://assets/textures/surface/wallpaper_n.png",
+		"normal_scale": 0.7,
 	},
 	"wood_planks": {
 		"name": "Деревянные доски",

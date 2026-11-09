@@ -128,7 +128,11 @@ var _vig_rect: TextureRect
 static func play(tree: SceneTree, scene_path: String, next_path: String = "", extra: Dictionary = {}) -> void:
 	_request_next = next_path
 	_request_args = extra
-	tree.change_scene_to_file(scene_path)
+	var manager := tree.root.get_node_or_null("GameManager")
+	if manager:
+		manager.call("change_scene_fast", scene_path)
+	else:
+		tree.change_scene_to_file(scene_path)
 
 
 # Кат-сцена поверх игры, без смены сцены (для кат-сцен посреди уровня):
@@ -228,12 +232,13 @@ func end() -> void:
 	if _done:
 		return
 	_done = true
-	if skipping:
-		await get_tree().create_timer(0.35).timeout
 	finished.emit()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if next_scene != "" and next_scene != "none" and is_inside_tree():
-		get_tree().change_scene_to_file(next_scene)
+		if gm():
+			gm().call("change_scene_fast", next_scene)
+		else:
+			get_tree().change_scene_to_file(next_scene)
 
 
 func skip() -> void:
@@ -241,10 +246,12 @@ func skip() -> void:
 		return
 	skipping = true
 	_prompt_waiting = false
-	_fade_to(1.0, 0.3)
-	for n in _loops:
-		if is_instance_valid(n):
-			fade(n, -60.0, 0.3)
+	# Пропуск срабатывает сразу: экран чёрный, звук обрывается
+	black(1.0)
+	clear_subtitle()
+	for n in get_children():
+		if n is AudioStreamPlayer or n is AudioStreamPlayer3D:
+			n.call("stop")
 
 
 func _exit_tree() -> void:
@@ -274,7 +281,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_prompt_waiting = false
 		get_viewport().set_input_as_handled()
 		return
-	if t < 0.6:
+	if t < 0.1:
 		return
 	var want := event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept")
 	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_START:

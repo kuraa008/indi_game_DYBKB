@@ -984,7 +984,7 @@ func _start_game() -> void:
 		if not GameManager.intro_cutscene_played:
 			preload("res://scripts/cutscenes/PrologueFlow.gd").start_new_game(get_tree())
 			return
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	GameManager.change_scene_fast("res://scenes/Main.tscn")
 
 func _quit() -> void:
 	get_tree().quit()

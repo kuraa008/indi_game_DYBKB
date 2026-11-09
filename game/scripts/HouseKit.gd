@@ -26,6 +26,7 @@ static func wood_mat(file: String, tint: Color = Color.WHITE, scale_uv: float = 
 	m.roughness = rough
 	m.metallic_specular = 0.25
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	TextureHelper.upgrade_material(m, file)
 	_mats[key] = m
 	return m
 
@@ -373,7 +374,7 @@ static func _dressed_material(src: StandardMaterial3D) -> StandardMaterial3D:
 	elif c.h < 0.14 or c.h > 0.97:
 		if c.v < 0.75 and c.s > 0.28 and c.s < 0.92:
 			file = "wood_furniture.png"
-			tint = Color(c.r * 1.35, c.g * 1.35, c.b * 1.35)
+			tint = Color(c.r * 1.3, c.g * 1.22, c.b * 1.15)
 		else:
 			file = "fabric.png"
 			uv = 7.0
@@ -393,5 +394,112 @@ static func _dressed_material(src: StandardMaterial3D) -> StandardMaterial3D:
 	m.metallic = metal
 	m.cull_mode = src.cull_mode
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	if file != "":
+		TextureHelper.upgrade_material(m, file)
 	_mats[key] = m
 	return m
+
+
+# ─── ШКАФ ─────────────────────────────────────────────────────────────────────
+
+# Старый двустворчатый шкаф: филёнки, ступенчатый карниз, ножки, бронзовая фурнитура.
+# Внутри он полый, а на уровне глаз между створками оставлена щель, из неё смотрит спрятавшийся игрок.
+static func add_wardrobe_body(body: Node3D, ghost: bool) -> void:
+	var carcass: Array = []
+	var frame: Array = []
+	var panel: Array = []
+	var crown: Array = []
+	var bronze: Array = []
+	# Корпус
+	carcass.append(_wbox(Vector3(0.07, 2.0, 0.62), Vector3(-0.615, 1.14, 0)))
+	carcass.append(_wbox(Vector3(0.07, 2.0, 0.62), Vector3(0.615, 1.14, 0)))
+	carcass.append(_wbox(Vector3(1.16, 2.0, 0.05), Vector3(0, 1.14, -0.285)))
+	carcass.append(_wbox(Vector3(1.16, 0.07, 0.62), Vector3(0, 2.1, 0)))
+	carcass.append(_wbox(Vector3(1.16, 0.07, 0.62), Vector3(0, 0.205, 0)))
+	var inside: Array = [_wbox(Vector3(1.16, 1.86, 0.006), Vector3(0, 1.14, -0.257))]
+	# Цоколь и ножки
+	crown.append(_wbox(Vector3(1.36, 0.1, 0.67), Vector3(0, 0.19, 0)))
+	crown.append(_wbox(Vector3(1.42, 0.035, 0.7), Vector3(0, 0.15, 0.005)))
+	for x: float in [-0.61, 0.61]:
+		for z: float in [-0.25, 0.26]:
+			crown.append(_wbox(Vector3(0.15, 0.135, 0.15), Vector3(x, 0.0675, z)))
+	# Ступенчатый карниз
+	crown.append(_wbox(Vector3(1.34, 0.05, 0.665), Vector3(0, 2.115, 0.0)))
+	crown.append(_wbox(Vector3(1.4, 0.04, 0.7), Vector3(0, 2.16, 0.012)))
+	crown.append(_wbox(Vector3(1.47, 0.055, 0.735), Vector3(0, 2.207, 0.02)))
+	crown.append(_wbox(Vector3(0.62, 0.05, 0.05), Vector3(0, 2.26, 0.355)))
+	# Боковые филёнки
+	for s: float in [-1.0, 1.0]:
+		panel.append(_wbox(Vector3(0.012, 1.62, 0.44), Vector3(s * 0.654, 1.15, 0.0)))
+	# Рама фасада
+	for s: float in [-1.0, 1.0]:
+		frame.append(_wbox(Vector3(0.1, 1.86, 0.04), Vector3(s * 0.625, 1.17, 0.315)))
+	frame.append(_wbox(Vector3(1.15, 0.05, 0.04), Vector3(0, 2.085, 0.315)))
+	frame.append(_wbox(Vector3(1.15, 0.05, 0.04), Vector3(0, 0.255, 0.315)))
+	# Створки
+	for s: float in [-1.0, 1.0]:
+		carcass.append(_wbox(Vector3(0.56, 1.14, 0.022), Vector3(s * 0.285, 0.85, 0.316)))
+		carcass.append(_wbox(Vector3(0.505, 0.62, 0.022), Vector3(s * 0.3125, 1.75, 0.316)))
+		frame.append(_wbox(Vector3(0.095, 1.78, 0.03), Vector3(s * 0.5175, 1.17, 0.337)))
+		frame.append(_wbox(Vector3(0.095, 1.2, 0.03), Vector3(s * 0.0525, 0.86, 0.337)))
+		frame.append(_wbox(Vector3(0.09, 0.68, 0.03), Vector3(s * 0.105, 1.72, 0.337)))
+		frame.append(_wbox(Vector3(0.37, 0.1, 0.03), Vector3(s * 0.285, 0.33, 0.337)))
+		frame.append(_wbox(Vector3(0.37, 0.16, 0.03), Vector3(s * 0.285, 1.38, 0.337)))
+		frame.append(_wbox(Vector3(0.32, 0.1, 0.03), Vector3(s * 0.31, 2.01, 0.337)))
+		# Выпуклые филёнки с тонкой фаской
+		panel.append(_wbox(Vector3(0.31, 0.88, 0.016), Vector3(s * 0.285, 0.84, 0.333)))
+		panel.append(_wbox(Vector3(0.25, 0.75, 0.018), Vector3(s * 0.285, 0.84, 0.345)))
+		panel.append(_wbox(Vector3(0.26, 0.46, 0.016), Vector3(s * 0.31, 1.72, 0.333)))
+		panel.append(_wbox(Vector3(0.2, 0.33, 0.018), Vector3(s * 0.31, 1.72, 0.345)))
+		# Петли, накладка и ручка
+		for y: float in [0.56, 1.88]:
+			bronze.append(_wbox(Vector3(0.018, 0.085, 0.03), Vector3(s * 0.572, y, 0.34)))
+		bronze.append(_wbox(Vector3(0.05, 0.15, 0.006), Vector3(s * 0.05, 1.12, 0.355)))
+		var knob := SphereMesh.new()
+		knob.radius = 0.021
+		knob.height = 0.042
+		knob.radial_segments = 8
+		knob.rings = 4
+		bronze.append([knob, Transform3D(Basis.IDENTITY, Vector3(s * 0.05, 1.15, 0.378))])
+		var neck := CylinderMesh.new()
+		neck.top_radius = 0.008
+		neck.bottom_radius = 0.008
+		neck.height = 0.03
+		neck.radial_segments = 6
+		bronze.append([neck, Transform3D(Basis.from_euler(Vector3(PI * 0.5, 0, 0)), Vector3(s * 0.05, 1.15, 0.36))])
+	_wardrobe_part(body, inside, "wardrobe_inside", Color(0.012, 0.009, 0.007), "wood_furniture.png", 1.0, 0.0, ghost)
+	_wardrobe_part(body, carcass, "wardrobe_carcass", Color(0.17, 0.105, 0.062), "wood_furniture.png", 0.82, 0.0, ghost)
+	_wardrobe_part(body, frame, "wardrobe_frame", Color(0.24, 0.15, 0.085), "wood_furniture.png", 0.72, 0.0, ghost)
+	_wardrobe_part(body, panel, "wardrobe_panel", Color(0.31, 0.2, 0.115), "wood_furniture.png", 0.66, 0.0, ghost)
+	_wardrobe_part(body, crown, "wardrobe_crown", Color(0.13, 0.08, 0.048), "wood_furniture.png", 0.76, 0.0, ghost)
+	_wardrobe_part(body, bronze, "wardrobe_bronze", Color(0.2, 0.15, 0.09), "metal_worn.png", 0.6, 0.45, ghost)
+
+
+static func _wbox(size: Vector3, pos: Vector3) -> Array:
+	var box := BoxMesh.new()
+	box.size = size
+	return [box, Transform3D(Basis.IDENTITY, pos)]
+
+
+static func _wardrobe_part(parent: Node3D, parts: Array, key: String, color: Color, file: String, rough: float, metal: float, ghost: bool) -> void:
+	var st := SurfaceTool.new()
+	for part in parts:
+		st.append_from(part[0], 0, part[1])
+	var mat_key := key + ("_ghost" if ghost else "")
+	if not _mats.has(mat_key):
+		var m := StandardMaterial3D.new()
+		m.albedo_texture = tex(file)
+		m.uv1_triplanar = true
+		m.uv1_scale = Vector3.ONE * 2.0
+		m.albedo_color = color
+		m.roughness = rough
+		m.metallic = metal
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if ghost:
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			m.albedo_color.a = 0.6
+		_mats[mat_key] = m
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = _mats[mat_key]
+	parent.add_child(mi)

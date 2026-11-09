@@ -40,6 +40,7 @@ static func tmat(file: String, tint: Color = Color.WHITE, uv: float = 1.0, rough
 	m.uv1_scale = Vector3.ONE * uv
 	m.roughness = rough
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	TextureHelper.upgrade_material(m, path)
 	if normal_file != "":
 		var np := normal_file if normal_file.begins_with("res://") else NATURE + normal_file
 		m.normal_enabled = true

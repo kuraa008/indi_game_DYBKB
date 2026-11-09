@@ -195,7 +195,7 @@ func _build_walls() -> void:
 			if half - ragged > 0.2:
 				_cy(r, r, half * 2.0 - ragged, Vector3(-ragged * 0.5, y, z), _charred(), Vector3(0, 0, 90), 8)
 			y += 0.23
-	_flush(_tex("board_weathered.png", 1.2, 0.97), true)
+	_flush(_vmat(0.95, 0.0, false, "log"), true)
 
 	_solid(Vector3(0, 1.3, -D), Vector3(W * 2.0 + 0.4, 2.6, 0.3))
 	_solid(Vector3(0, 1.3, D), Vector3(W * 2.0 + 0.4, 2.6, 0.3))
@@ -247,7 +247,7 @@ func _build_roof() -> void:
 		var l := _rng.randf_range(0.9, 1.9)
 		var p := Vector3(_rng.randf_range(1.15, 2.6), 0.05 + float(i % 4) * 0.035, _rng.randf_range(-2.15, -0.75))
 		_bx(Vector3(l, 0.03, _rng.randf_range(0.14, 0.22)), p, _charred(), Vector3(_rng.randf_range(-3.0, 3.0), _rng.randf() * 180.0, _rng.randf_range(-4.0, 4.0)))
-	_flush(_tex("board_weathered.png", 1.2, 0.97), true)
+	_flush(_vmat(0.95, 0.0, false, "log"), true)
 
 	var moon := OmniLight3D.new()
 	moon.light_color = Color(0.55, 0.64, 0.86)
@@ -409,7 +409,7 @@ func _build_hearth() -> void:
 	for s in [-1.0, 1.0]:
 		_bx(Vector3(0.56, 1.04, 0.04), Vector3(face - 0.27, 0.52, s * 0.56), Color(0.025, 0.022, 0.02))
 	_bx(Vector3(0.56, 0.04, 1.1), Vector3(face - 0.27, 1.0, 0), Color(0.018, 0.016, 0.014))
-	_flush(_vmat(0.98))
+	_flush(_vmat(0.98, 0.0, false, "concrete"))
 
 	var beam := Color(0.13, 0.1, 0.08)
 	_bx(Vector3(0.2, 0.17, 2.3), Vector3(face + 0.03, 1.46, 0), beam)
@@ -420,7 +420,7 @@ func _build_hearth() -> void:
 	for k in range(18):
 		var p := Vector3(face - 0.25 + _rng.randf_range(-0.18, 0.24), 0.05, _rng.randf_range(-0.44, 0.44))
 		_bl(Vector3(_rng.randf_range(0.1, 0.22), _rng.randf_range(0.04, 0.13), _rng.randf_range(0.1, 0.22)), p, ash.darkened(_rng.randf_range(0.0, 0.45)))
-	_flush(_vmat(1.0))
+	_flush(_vmat(1.0, 0.0, false, "concrete"))
 	var bone := Color(0.62, 0.58, 0.48)
 	for k in range(9):
 		var a := Vector3(face - 0.3 + _rng.randf_range(-0.14, 0.26), 0.13 + _rng.randf_range(0.0, 0.1), _rng.randf_range(-0.42, 0.42))
@@ -472,7 +472,7 @@ func _build_dead_trees() -> void:
 		_branch(Vector3.ZERO, Vector3(_rng.randf_range(-0.12, 0.12), 1.0, _rng.randf_range(-0.12, 0.12)).normalized(), _rng.randf_range(2.5, 3.3), _rng.randf_range(0.17, 0.25), 4, _base)
 		_base = Transform3D.IDENTITY
 		_solid(pos + Vector3(0, 1.0, 0), Vector3(0.42, 2.0, 0.42))
-	_flush(_vmat(0.96), true)
+	_flush(_vmat(0.96, 0.0, false, "log"), true)
 
 
 func _branch(from: Vector3, dir: Vector3, length: float, r: float, depth: int, world: Transform3D) -> void:

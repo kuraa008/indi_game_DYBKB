@@ -388,7 +388,7 @@ func _update_scene(delta: float) -> void:
 	_update_overlay()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _finished or _t < 0.6:
+	if _finished or _t < 0.1:
 		return
 	var skip := event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel")
 	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_START:
@@ -817,7 +817,10 @@ func _finish() -> void:
 		GameManager.intro_cutscene_played = true
 		GameManager.active_map_path = "res://scenes/1level.json" if _epilogue_only else "res://scenes/Шоссе.json"
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	if GameManager:
+		GameManager.change_scene_fast("res://scenes/Main.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Движение машины: 20 м/с, торможение после сигнала, занос влево в валун

@@ -69,7 +69,10 @@ func _ready() -> void:
 	_setup_nav_region()
 	_load_map()
 	_setup_house_switches_and_lights()
+	var kit := preload("res://scripts/ApartmentKit.gd")
+	kit.cache_begin("%s_%s" % [map_json_path, GameManager.wake_in_basement])
 	_spawn_player()
+	kit.cache_end()
 	if has_enemy_spawn:
 		_spawn_enemy()
 	if has_lumberjack_spawn:
