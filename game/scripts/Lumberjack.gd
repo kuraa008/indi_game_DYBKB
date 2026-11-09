@@ -10,7 +10,7 @@ extends CharacterBody3D
 #  • Реалистичные звуки: шаги, взвод курка, выстрел двустволки, помпа перезарядки
 # ══════════════════════════════════════════════════════════════════════════════
 
-enum State { PATROL, INVESTIGATE, CHASE, AIMING, SHOOT, RELOAD, STAKEOUT_HIDING }
+enum State { PATROL, INVESTIGATE, CHASE, AIMING, SHOOT, RELOAD, STAKEOUT_HIDING, ACTIVITY, MELEE }
 var current_state: State = State.PATROL
 var stakeout_target_spot: Variant = null
 var stakeout_timer: float = 0.0
@@ -20,7 +20,9 @@ var hiding_spot_cooldowns: Dictionary = {}
 # ── Параметры перемещения ──
 const WALK_SPEED: float = 1.68
 const INVESTIGATE_SPEED: float = 2.22
-const CHASE_SPEED: float = 3.37
+const CHASE_SPEED: float = 4.35
+const WINDED_SPEED: float = 3.0
+const RUN_STAMINA: float = 7.5
 const RELOAD_SPEED: float = 2.87
 const GRAVITY: float = 18.0
 
@@ -54,8 +56,17 @@ var indoor_anchors: Array[Vector3] = [
 ]
 
 # ── Стрельба, преследование и прицеливание ──
-const AIM_DURATION: float = 0.35
-const RELOAD_DURATION: float = 1.9
+const AIM_DURATION: float = 0.55
+const RELOAD_DURATION: float = 2.4
+const SHELLS: int = 2
+const SHOT_PAUSE: float = 1.3
+# Вблизи не стреляет, а бьёт: ружьё дальнего боя, и он старается догнать
+const SHOOT_MIN_RANGE: float = 8.0
+const MELEE_RANGE: float = 2.0
+const GRAB_RANGE: float = 1.7
+const MELEE_DAMAGE: float = 34.0
+const MELEE_WINDUP: float = 0.32
+const MELEE_TOTAL: float = 0.85
 const SHOT_DAMAGE: float = 40.0
 const SIGHT_MAX_DIST: float = 30.0
 const SIGHT_DARK: float = 16.0
@@ -63,13 +74,29 @@ const SIGHT_LIT: float = 26.0
 const FOV_CALM: float = 58.0
 const FOV_ALERT: float = 110.0
 const REACTION_TIME: float = 0.6
-const MAX_SHOOT_RANGE: float = 30.0
+const MAX_SHOOT_RANGE: float = 24.0
 
 var aim_timer: float = 0.0
 var aim_lost_sight_timer: float = 0.0
 var reload_timer: float = 0.0
 var shotgun_loaded: bool = true
 var melee_cooldown: float = 0.0
+var shells_left: int = SHELLS
+var shot_pause: float = 0.0
+var run_stamina: float = RUN_STAMINA
+var is_winded: bool = false
+var melee_timer: float = 0.0
+var _melee_hit_done: bool = false
+# Быт: чем занят, когда никого нет
+var activity: Dictionary = {}
+var activity_phase: String = ""
+var activity_timer: float = 0.0
+var activity_cooldowns: Dictionary = {}
+var _getup_timer: float = 0.0
+var _furniture: Array[Node3D] = []
+var _furniture_scan: float = 0.0
+var _model_rest: Transform3D = Transform3D()
+var _model_anchor: Variant = null
 var chase_memory_timer: float = 0.0
 var time_since_last_seen: float = 999.0
 var last_known_player_pos: Vector3 = Vector3.ZERO
@@ -149,6 +176,7 @@ func _ready() -> void:
 	# Первый выбор целевой комнаты внутри дома
 	call_deferred("_pick_new_patrol_target")
 	call_deferred("_discover_indoor_points")
+	call_deferred("_scan_furniture")
 
 func _build_collision() -> void:
 	var col = CollisionShape3D.new()
@@ -166,6 +194,7 @@ func _build_visual_sprite() -> void:
 	model.name = "LumberjackModel"
 	model.rotation.y = PI
 	add_child(model)
+	_model_rest = model.transform
 
 	# Налобный фонарик охотника — светит ярким желтым пучком вперед по направлению взгляда
 	headlamp = SpotLight3D.new()
@@ -258,6 +287,16 @@ func _physics_process(delta: float) -> void:
 	_check_flashlight_illumination(delta)
 	melee_cooldown = maxf(0.0, melee_cooldown - delta)
 
+	# Встаёт с дивана или заканчивает дело: это занимает время
+	if _getup_timer > 0.0:
+		_getup_timer -= delta
+		velocity.x = move_toward(velocity.x, 0.0, delta * 12.0)
+		velocity.z = move_toward(velocity.z, 0.0, delta * 12.0)
+		_animate(delta)
+		move_and_slide()
+		return
+
+	_tick_combat(delta)
 	# Проверка укрытия рядом при обычном патрулировании, поиске или погоне
 	if current_state in [State.PATROL, State.INVESTIGATE, State.CHASE] and current_state != State.STAKEOUT_HIDING:
 		var p_node = GameManager.player_ref
@@ -291,6 +330,10 @@ func _physics_process(delta: float) -> void:
 			_process_reload(delta)
 		State.STAKEOUT_HIDING:
 			_process_stakeout_hiding(delta)
+		State.ACTIVITY:
+			_process_activity(delta)
+		State.MELEE:
+			_process_melee(delta)
 
 	_animate(delta)
 	_try_step(Vector3(velocity.x, 0, velocity.z) * delta)
@@ -351,12 +394,13 @@ func _update_player_line_of_sight() -> void:
 	var dist = head_pos.distance_to(p_center)
 
 	# Пока лесоруб спокоен, он видит ближе и уже. В темноте и на корточках игрока заметить труднее
-	var calm: bool = current_state in [State.PATROL, State.INVESTIGATE]
+	var calm: bool = current_state in [State.PATROL, State.INVESTIGATE, State.ACTIVITY]
 	var max_sight: float = SIGHT_MAX_DIST
 	if calm:
 		max_sight = SIGHT_LIT if player.get("flashlight_on") == true else SIGHT_DARK
 		if player.get("is_crouching") == true:
 			max_sight *= 0.65
+		max_sight *= _activity_attention()
 	if dist > max_sight:
 		_lose_sight()
 		return
@@ -420,7 +464,7 @@ func _update_player_line_of_sight() -> void:
 		if calm:
 			# Заметить можно не сразу: вблизи за долю секунды, издалека дольше
 			var need: float = lerpf(0.2, 1.4, clampf((dist - 3.0) / maxf(max_sight - 3.0, 1.0), 0.0, 1.0))
-			detect_level += 0.10 / need
+			detect_level += 0.10 / need * _activity_attention()
 			suspect_pos = spotted_point
 			if detect_level < 1.0:
 				player_in_sight = false
@@ -450,6 +494,9 @@ func _on_player_spotted(p_pos: Vector3) -> void:
 	chase_memory_timer = 9.0
 
 	# При обнаружении игрока лесопил начинает активную ПОГОНЮ!
+	if current_state == State.ACTIVITY:
+		_end_activity(false)
+		current_state = State.PATROL
 	if current_state in [State.PATROL, State.INVESTIGATE]:
 		current_state = State.CHASE
 		reaction_timer = REACTION_TIME
@@ -479,6 +526,8 @@ func _process_patrol(delta: float) -> void:
 
 	var dist_to_target = global_position.distance_to(current_target_pos)
 	if dist_to_target < 1.3:
+		if _try_start_activity():
+			return
 		wait_timer = randf_range(1.5, 3.0)
 		_pick_new_patrol_target()
 	elif nav_agent and nav_agent.is_navigation_finished() and dist_to_target > 2.5:
@@ -552,7 +601,11 @@ func _process_chase(delta: float) -> void:
 	# ПРОВЕРКА ВОЗМОЖНОСТИ ВЫСТРЕЛА:
 	# Если игрок в поле зрения, ружье заряжено и есть прямая линия огня:
 	# СТРЕЛЯЕМ! В том числе когда цель далеко (до MAX_SHOOT_RANGE = 30м)!
-	if player_in_sight and shotgun_loaded and dist <= MAX_SHOOT_RANGE and has_clear_shot_to_player():
+	if player_in_sight and dist <= MELEE_RANGE and melee_cooldown <= 0.0:
+		_start_melee()
+		return
+	# Издалека стреляет. Ближе старается догнать: на бегу с ружьём не попасть
+	if player_in_sight and shotgun_loaded and shot_pause <= 0.0 and dist >= SHOOT_MIN_RANGE and dist <= MAX_SHOOT_RANGE and has_clear_shot_to_player():
 		current_state = State.AIMING
 		aim_timer = AIM_DURATION
 		aim_lost_sight_timer = 0.0
@@ -566,7 +619,11 @@ func _process_chase(delta: float) -> void:
 		_set_nav_target(last_known_player_pos)
 
 	# Быстрое и неумолимое преследование
-	_navigate_towards_target(CHASE_SPEED, delta)
+	# Бежит, пока хватает дыхания
+	run_stamina = maxf(0.0, run_stamina - delta)
+	if run_stamina <= 0.0:
+		is_winded = true
+	_navigate_towards_target(WINDED_SPEED if is_winded else CHASE_SPEED, delta)
 	_check_stuck(delta)
 
 	# Если потерял игрока из виду и добежал до последней точки
@@ -721,6 +778,10 @@ func _process_aiming(delta: float) -> void:
 	# Поворот лицом к игроку
 	_look_towards(player.global_position, delta * 16.0)
 
+	if global_position.distance_to(player.global_position) <= MELEE_RANGE and melee_cooldown <= 0.0:
+		_start_melee()
+		return
+
 	# Если игрок скрылся за капитальной стеной — даем буфер 0.45с, чтобы мелкие препятствия не срывали выстрел издалека
 	if not has_clear_shot_to_player():
 		aim_lost_sight_timer += delta
@@ -737,12 +798,22 @@ func _process_aiming(delta: float) -> void:
 
 func _process_shoot(_delta: float) -> void:
 	_fire_shotgun()
+	shells_left -= 1
+	if shells_left > 0:
+		shot_pause = SHOT_PAUSE
+		current_state = State.CHASE
+		return
 	shotgun_loaded = false
 	current_state = State.RELOAD
 	reload_timer = RELOAD_DURATION
 
 func _process_reload(delta: float) -> void:
 	reload_timer -= delta
+
+	var melee_player = GameManager.player_ref
+	if melee_cooldown <= 0.0 and player_in_sight and is_instance_valid(melee_player) and global_position.distance_to(melee_player.global_position) <= MELEE_RANGE:
+		_start_melee()
+		return
 
 	# ВО ВРЕМЯ ПЕРЕЗАРЯДКИ ЛЕСОПИЛ НЕ СТОИТ, А ПРОДОЛЖАЕТ ПРЕСЛЕДОВАТЬ ИГРОКА!
 	var player = GameManager.player_ref
@@ -760,9 +831,10 @@ func _process_reload(delta: float) -> void:
 
 	if reload_timer <= 0.0:
 		shotgun_loaded = true
+		shells_left = SHELLS
 		_play_sound(sfx_cock, gun_audio, -1.0)
 		var dist = global_position.distance_to(last_known_player_pos)
-		if player_in_sight and dist <= MAX_SHOOT_RANGE and has_clear_shot_to_player():
+		if player_in_sight and dist >= SHOOT_MIN_RANGE and dist <= MAX_SHOOT_RANGE and has_clear_shot_to_player():
 			current_state = State.AIMING
 			aim_timer = 0.30
 			aim_lost_sight_timer = 0.0
@@ -775,23 +847,280 @@ func _check_close_melee() -> void:
 	var player = GameManager.player_ref
 	if not player or not is_instance_valid(player) or player.get("is_dead") == true or player.get("is_hiding") == true:
 		return
-
 	if start_grace > 0.0 or player.get("is_in_cutscene") == true:
 		return
 	var dist = global_position.distance_to(player.global_position)
-	# Вплотную подошёл к ничего не подозревающему лесорубу: сначала он замечает, а потом бьёт
-	if dist <= 1.4 and current_state in [State.PATROL, State.INVESTIGATE]:
+	# Вплотную подошёл к ничего не подозревающему лесорубу: сначала он вздрагивает
+	if dist <= 1.4 and current_state in [State.PATROL, State.INVESTIGATE, State.ACTIVITY]:
 		_on_player_spotted(player.global_position + Vector3(0, 1.15, 0))
 		melee_cooldown = maxf(melee_cooldown, REACTION_TIME + 0.3)
+
+# ─────────────────────────────────────────
+#  Рукопашная: хватает и бьёт прикладом
+# ─────────────────────────────────────────
+func _tick_combat(delta: float) -> void:
+	shot_pause = maxf(0.0, shot_pause - delta)
+	if current_state != State.CHASE:
+		run_stamina = minf(RUN_STAMINA, run_stamina + delta * 0.9)
+	if is_winded:
+		run_stamina = minf(RUN_STAMINA, run_stamina + delta * 1.6)
+		if run_stamina >= RUN_STAMINA * 0.45:
+			is_winded = false
+
+func _start_melee() -> void:
+	current_state = State.MELEE
+	melee_timer = 0.0
+	_melee_hit_done = false
+	if model:
+		model.melee_strike()
+
+func _process_melee(delta: float) -> void:
+	velocity.x = move_toward(velocity.x, 0.0, delta * 20.0)
+	velocity.z = move_toward(velocity.z, 0.0, delta * 20.0)
+	melee_timer += delta
+	var player = GameManager.player_ref
+	if not player or not is_instance_valid(player) or player.get("is_dead") == true or player.get("is_hiding") == true:
+		melee_cooldown = 1.0
+		current_state = State.CHASE
 		return
-	if dist <= 1.4 and melee_cooldown <= 0.0:
-		melee_cooldown = 1.15
-		if player.has_method("take_damage"):
-			player.call("take_damage", 25.0, self)
-		if player is CharacterBody3D:
-			var push_dir = (player.global_position - global_position).normalized()
-			push_dir.y = 0.0
-			player.velocity += push_dir * 4.5
+	_look_towards(player.global_position, delta * 14.0)
+	var offset: Vector3 = player.global_position - global_position
+	offset.y = 0.0
+	# Схватил: на замахе подтягивает к себе, вырваться можно только после удара
+	if melee_timer < MELEE_WINDUP and offset.length() <= GRAB_RANGE and offset.length() > 1.05 and player is CharacterBody3D and not GameManager.is_godmode:
+		player.move_and_collide(-offset.normalized() * minf(delta * 3.2, offset.length() - 1.05))
+	if not _melee_hit_done and melee_timer >= MELEE_WINDUP:
+		_melee_hit_done = true
+		if offset.length() <= MELEE_RANGE + 0.35:
+			_play_sound(sfx_impact, gun_audio, 3.0)
+			VHSOverlay.glitch(0.9)
+			if player.has_method("take_damage"):
+				player.call("take_damage", MELEE_DAMAGE, self)
+			if player is CharacterBody3D:
+				player.velocity += offset.normalized() * 5.5
+		else:
+			_play_sound(sfx_step, gun_audio, -6.0, 0.7)
+	if melee_timer >= MELEE_TOTAL:
+		melee_cooldown = 1.1
+		current_state = State.RELOAD if not shotgun_loaded else State.CHASE
+		if not shotgun_loaded:
+			reload_timer = maxf(reload_timer, 0.8)
+
+# ─────────────────────────────────────────
+#  Быт: пока никого нет, он ведёт себя как обычный человек
+# ─────────────────────────────────────────
+func _activity_attention() -> float:
+	if current_state != State.ACTIVITY or activity_phase != "do":
+		return 1.0
+	match str(activity.get("kind", "")):
+		"lie": return 0.4
+		"sit", "tv": return 0.7
+		"exercise", "stretch": return 0.8
+	return 1.0
+
+func _scan_furniture() -> void:
+	_furniture.clear()
+	var scene := get_tree().current_scene
+	if not is_instance_valid(scene):
+		return
+	for node in scene.find_children("*", "Node3D", true, false):
+		if node.has_meta("prefab_type") and str(node.get_meta("prefab_type")) in ["prop_sofa", "prop_armchair", "prop_bed", "prop_tv", "prop_crt_tv"]:
+			_furniture.append(node)
+
+func _furniture_kind(node: Node3D) -> String:
+	return str(node.get_meta("prefab_type", ""))
+
+func _try_start_activity() -> bool:
+	var now := Time.get_ticks_msec() * 0.001
+	if now < float(activity_cooldowns.get("any", 0.0)) or randf() > 0.7:
+		return false
+	if now >= _furniture_scan:
+		_scan_furniture()
+		_furniture_scan = now + 20.0
+	var options: Array[Dictionary] = []
+	for node in _furniture:
+		if not is_instance_valid(node) or global_position.distance_to(node.global_position) > 30.0:
+			continue
+		if now < float(activity_cooldowns.get(node.get_instance_id(), 0.0)):
+			continue
+		var nav_map := get_world_3d().navigation_map
+		if nav_map.is_valid() and NavigationServer3D.map_get_iteration_id(nav_map) > 0:
+			var near_node: Vector3 = NavigationServer3D.map_get_closest_point(nav_map, node.global_position)
+			if near_node.distance_to(node.global_position) > 3.0 or not _nav_reachable(nav_map, near_node):
+				continue
+		match _furniture_kind(node):
+			"prop_sofa":
+				options.append({"kind": "sit", "node": node, "weight": 2.0})
+				options.append({"kind": "lie", "node": node, "weight": 1.5})
+			"prop_armchair":
+				options.append({"kind": "sit", "node": node, "weight": 2.0})
+			"prop_bed":
+				options.append({"kind": "lie", "node": node, "weight": 1.5})
+			"prop_tv", "prop_crt_tv":
+				options.append({"kind": "tv", "node": node, "weight": 3.0})
+	for kind in ["exercise", "stretch", "look", "check"]:
+		if now >= float(activity_cooldowns.get(kind, 0.0)):
+			options.append({"kind": kind, "node": null, "weight": 1.0})
+	if options.is_empty():
+		return false
+	var total := 0.0
+	for o in options:
+		total += float(o.weight)
+	var roll := randf() * total
+	for o in options:
+		roll -= float(o.weight)
+		if roll <= 0.0:
+			return _begin_activity(o)
+	return false
+
+# Куда встать и как разместить тело на мебели
+func _begin_activity(option: Dictionary) -> bool:
+	var kind: String = option.kind
+	var node: Variant = option.node
+	var entry := {"kind": kind, "node": node, "tv": null}
+	var now := Time.get_ticks_msec() * 0.001
+	if node == null:
+		activity_cooldowns[kind] = now + 45.0
+		entry["approach"] = global_position
+		entry["facing"] = global_position - global_transform.basis.z
+		entry["duration"] = {"exercise": randf_range(14.0, 22.0), "stretch": randf_range(7.0, 11.0), "look": randf_range(4.0, 7.0), "check": randf_range(5.0, 8.0)}[kind]
+	else:
+		activity_cooldowns[node.get_instance_id()] = now + 70.0
+		if kind == "tv":
+			var seat: Variant = _seat_near_tv(node)
+			entry["tv"] = node
+			if seat != null:
+				entry["node"] = seat
+				node = seat
+				entry["sit_tv"] = true
+		var bas: Basis = node.global_transform.basis
+		var front: Vector3 = bas.z.normalized()
+		var side: Vector3 = bas.x.normalized()
+		if kind == "tv" and not entry.has("sit_tv"):
+			entry["approach"] = node.global_position + front * 2.3
+			entry["facing"] = node.global_position
+		elif _furniture_kind(node) == "prop_bed":
+			entry["approach"] = node.global_position + side * 1.25
+			entry["facing"] = node.global_position
+		else:
+			entry["approach"] = node.global_position + front * 1.3
+			entry["facing"] = node.global_position + front * 3.0
+		entry["duration"] = randf_range(16.0, 30.0)
+	activity_cooldowns["any"] = now + randf_range(4.0, 10.0)
+	activity = entry
+	activity_phase = "go"
+	activity_timer = 16.0
+	current_state = State.ACTIVITY
+	_set_nav_target(entry.approach)
+	return true
+
+func _seat_near_tv(tv: Node3D) -> Variant:
+	var best: Variant = null
+	var best_dist := 6.0
+	for node in _furniture:
+		if not is_instance_valid(node) or not _furniture_kind(node) in ["prop_sofa", "prop_armchair"]:
+			continue
+		var d: float = node.global_position.distance_to(tv.global_position)
+		var to_tv: Vector3 = (tv.global_position - node.global_position).normalized()
+		if d < best_dist and node.global_transform.basis.z.dot(to_tv) > 0.2:
+			best_dist = d
+			best = node
+	return best
+
+func _process_activity(delta: float) -> void:
+	if detect_level >= 0.25:
+		_look_towards(suspect_pos, delta * 3.0)
+	if activity_phase == "go":
+		activity_timer -= delta
+		_navigate_towards_target(WALK_SPEED, delta)
+		_check_stuck(delta)
+		if current_state != State.ACTIVITY or activity.is_empty():
+			return
+		var approach: Vector3 = activity.approach
+		var flat := Vector2(approach.x - global_position.x, approach.z - global_position.z)
+		# Навигация останавливает его чуть раньше цели: подойти вплотную не обязательно
+		var nav_done: bool = nav_agent != null and nav_agent.is_navigation_finished()
+		if flat.length() < 0.7 or (nav_done and flat.length() < 2.2):
+			_begin_activity_pose()
+		elif activity_timer <= 0.0 or nav_done:
+			_end_activity(true)
+		return
+	velocity.x = move_toward(velocity.x, 0.0, delta * 10.0)
+	velocity.z = move_toward(velocity.z, 0.0, delta * 10.0)
+	_look_towards(activity.facing, delta * 5.0)
+	activity_timer -= delta
+	if activity_timer <= 0.0:
+		_end_activity(true)
+
+func _begin_activity_pose() -> void:
+	activity_phase = "do"
+	activity_timer = float(activity.duration)
+	var node: Variant = activity.node
+	var kind: String = activity.kind
+	if is_instance_valid(activity.get("tv")):
+		_set_tv(activity.tv, true)
+	if kind == "lie" and is_instance_valid(node):
+		_model_anchor = _lie_transform(node)
+	elif (kind == "sit" or activity.has("sit_tv")) and is_instance_valid(node):
+		_model_anchor = _sit_transform(node)
+	if headlamp and kind == "lie":
+		headlamp.visible = false
+
+func _sit_transform(node: Node3D) -> Transform3D:
+	var bas: Basis = node.global_transform.basis
+	var front: Vector3 = Vector3(bas.z.x, 0, bas.z.z).normalized()
+	var offset := randf_range(-0.45, 0.45) if _furniture_kind(node) == "prop_sofa" else 0.0
+	var pos: Vector3 = node.global_position + front * 0.1 + bas.x.normalized() * offset + Vector3.UP * -0.06
+	return Transform3D(Basis(Vector3.UP.cross(front).normalized(), Vector3.UP, front), pos)
+
+# Лежит на спине: ноги у одного края, голова у другого, лицо вверх
+func _lie_transform(node: Node3D) -> Transform3D:
+	var bas: Basis = node.global_transform.basis
+	var along: Vector3
+	var feet: Vector3
+	var top: float
+	if _furniture_kind(node) == "prop_bed":
+		along = -bas.z.normalized()
+		feet = node.global_position - along * 0.98
+		top = 0.6
+	else:
+		along = bas.x.normalized()
+		feet = node.global_position - along * 0.98 + bas.z.normalized() * 0.08
+		top = 0.5
+	var up := Vector3.UP
+	var pos: Vector3 = feet + up * top
+	# Ось Y модели идёт от ног к голове, ось Z (лицо) смотрит в потолок
+	return Transform3D(Basis(along.cross(up).normalized(), along, up), pos)
+
+func _set_tv(node: Node, on: bool) -> void:
+	if "is_on" in node:
+		node.set("is_on", on)
+		if node.has_method("_update_tv_state"):
+			node.call("_update_tv_state")
+		return
+	for child in node.get_children():
+		_set_tv(child, on)
+
+# calm: закончил сам, спокойно. Иначе его отвлекли, и он просто встаёт.
+func _end_activity(calm: bool) -> void:
+	var was_doing := activity_phase == "do"
+	var kind := str(activity.get("kind", ""))
+	if calm and was_doing and is_instance_valid(activity.get("tv")):
+		_set_tv(activity.tv, false)
+	_model_anchor = null
+	if headlamp:
+		headlamp.visible = true
+	if was_doing:
+		_getup_timer = 0.95 if kind in ["lie", "sit", "tv"] else 0.25
+		if kind == "lie":
+			_getup_timer = 1.5
+	activity = {}
+	activity_phase = ""
+	if current_state == State.ACTIVITY:
+		current_state = State.PATROL
+		if calm:
+			wait_timer = randf_range(0.5, 1.5)
+			_pick_new_patrol_target()
 
 # ── Выстрел из ружья ──
 func _fire_shotgun() -> void:
@@ -839,13 +1168,16 @@ func _fire_shotgun() -> void:
 	if not tree_root:
 		tree_root = get_parent()
 
+	# Издалека дробь разлетается шире: на бегу от него можно уйти
+	var shot_range: float = barrel_pos.distance_to(base_target)
+	var spread_scale: float = clampf(shot_range / 9.0, 1.0, 2.8)
 	# Спавним 5 видимых светящихся дробинок с легким конусом разброса
-	var pellet_damage = 18.0
+	var pellet_damage = 14.0
 	for i in range(5):
 		var spread_dir = aim_dir
-		if i > 0:
-			var spread_x = randf_range(-0.045, 0.045)
-			var spread_y = randf_range(-0.035, 0.035)
+		if i > 0 or shot_range > 12.0:
+			var spread_x = randf_range(-0.045, 0.045) * spread_scale
+			var spread_y = randf_range(-0.035, 0.035) * spread_scale
 			var right_vec = global_transform.basis.x
 			var up_vec = global_transform.basis.y
 			spread_dir = (aim_dir + right_vec * spread_x + up_vec * spread_y).normalized()
@@ -983,9 +1315,10 @@ func _pick_new_patrol_target() -> void:
 
 	# 1. Пробуем получить случайную точку из навигационной сетки (в радиусе 32м по дому или двору)
 	if map.is_valid() and NavigationServer3D.map_get_iteration_id(map) > 0:
-		for i in range(16):
+		# Случайная точка сетки часто лежит на улице или на верху стены: берём только достижимую
+		for i in range(80):
 			var rnd_pt = NavigationServer3D.map_get_random_point(map, 1, true)
-			if rnd_pt.distance_to(global_position) > 4.0 and rnd_pt.distance_to(global_position) < 32.0:
+			if rnd_pt.distance_to(global_position) > 4.0 and rnd_pt.distance_to(global_position) < 32.0 and _nav_reachable(map, rnd_pt):
 				valid_pt = rnd_pt
 				found = true
 				break
@@ -1006,6 +1339,10 @@ func _pick_new_patrol_target() -> void:
 	if found:
 		_set_nav_target(valid_pt)
 
+func _nav_reachable(map: RID, point: Vector3) -> bool:
+	var route := NavigationServer3D.map_get_path(map, global_position, point, true)
+	return route.size() >= 2 and route[-1].distance_to(point) < 0.9
+
 func _pick_search_points_near(origin: Vector3) -> void:
 	search_points.clear()
 	search_points.append(origin)
@@ -1018,7 +1355,7 @@ func _pick_search_points_near(origin: Vector3) -> void:
 			var pt = origin + Vector3(cos(a), 0, sin(a)) * radius
 			if map.is_valid() and NavigationServer3D.map_get_iteration_id(map) > 0:
 				var snapped = NavigationServer3D.map_get_closest_point(map, pt)
-				if snapped.distance_to(pt) < 3.0:
+				if snapped.distance_to(pt) < 3.0 and _nav_reachable(map, snapped):
 					search_points.append(snapped)
 			else:
 				search_points.append(pt)
@@ -1048,6 +1385,12 @@ func _on_noise_made(noise_pos: Vector3, radius: float = 30.0, _source_type: Stri
 	if start_grace > 0.0:
 		return
 	var dist = global_position.distance_to(noise_pos)
+	if _is_tv_noise(noise_pos):
+		return
+	if current_state == State.MELEE:
+		return
+	# Занятый делом человек слышит хуже
+	radius *= _activity_attention()
 	# Слышит только то, что громко настолько, чтобы долететь до него
 	if dist <= radius:
 		if current_state == State.STAKEOUT_HIDING:
@@ -1060,10 +1403,18 @@ func _on_noise_made(noise_pos: Vector3, radius: float = 30.0, _source_type: Stri
 		# Шум сам по себе не даёт понять, где игрок: лесоруб идёт проверить примерное место
 		if current_state == State.CHASE:
 			last_known_player_pos = _rough_noise_point(noise_pos, dist)
-		elif current_state in [State.PATROL, State.INVESTIGATE]:
+		elif current_state in [State.PATROL, State.INVESTIGATE, State.ACTIVITY]:
+			_end_activity(false)
 			current_state = State.INVESTIGATE
 			search_points.clear()
 			_set_nav_target(_rough_noise_point(noise_pos, dist))
+
+# Телевизор шумит сам по себе: это не повод каждый раз идти проверять
+func _is_tv_noise(noise_pos: Vector3) -> bool:
+	for node in _furniture:
+		if is_instance_valid(node) and _furniture_kind(node) in ["prop_tv", "prop_crt_tv"] and node.global_position.distance_to(noise_pos) < 2.2:
+			return true
+	return false
 
 func _rough_noise_point(noise_pos: Vector3, dist: float) -> Vector3:
 	var spread: float = minf(dist * 0.22, 4.0)
@@ -1082,6 +1433,8 @@ func alert_player_cough(cough_pos: Vector3) -> void:
 		stakeout_timer = 99.0
 		return
 	_play_sound(sfx_cock, gun_audio, 1.0)
+	if current_state == State.ACTIVITY:
+		_end_activity(false)
 	# Кашель выдаёт примерное место, но нападает он, только когда увидит
 	if current_state in [State.PATROL, State.INVESTIGATE]:
 		current_state = State.INVESTIGATE
@@ -1096,8 +1449,12 @@ func _on_door_altered(door: Node3D, is_open_now: bool) -> void:
 	if start_grace > 0.0:
 		return
 	var dist = global_position.distance_to(door.global_position)
-	if dist < 12.0 and is_open_now:
-		if current_state in [State.PATROL, State.INVESTIGATE]:
+	# Рядом с ним дверь открыл он сам
+	if dist < 2.6:
+		return
+	if dist < 12.0 * _activity_attention() and is_open_now:
+		if current_state in [State.PATROL, State.INVESTIGATE, State.ACTIVITY]:
+			_end_activity(false)
 			current_state = State.INVESTIGATE
 			_set_nav_target(door.global_position)
 
@@ -1114,9 +1471,26 @@ func _animate(delta: float) -> void:
 			mode = "aim"
 		State.RELOAD:
 			mode = "reload"
+		State.MELEE:
+			mode = "melee"
+		State.ACTIVITY:
+			if is_moving:
+				mode = "walk"
+			elif activity_phase == "do":
+				var activity_kind := str(activity.get("kind", ""))
+				if activity.has("sit_tv"):
+					mode = "sit"
+				elif activity_kind in ["sit", "lie", "exercise", "stretch", "look", "check"]:
+					mode = activity_kind
+				elif activity_kind == "tv":
+					mode = "look"
 		_:
 			if is_moving:
-				mode = "run" if (current_state == State.CHASE and move_vel > 2.6) else "walk"
+				if current_state == State.CHASE and is_winded:
+					mode = "winded"
+				else:
+					mode = "run" if (current_state == State.CHASE and move_vel > 2.6) else "walk"
+	_update_model_placement(delta)
 	# Далёкий лесоруб анимируется реже
 	var cam_far := get_viewport().get_camera_3d() if is_inside_tree() else null
 	var dist_sq: float = global_position.distance_squared_to(cam_far.global_position) if cam_far else 0.0
@@ -1155,6 +1529,15 @@ func _animate(delta: float) -> void:
 # ══════════════════════════════════════════════════════════════════════════════
 #  Генерация процедурных звуковых эффектов
 # ══════════════════════════════════════════════════════════════════════════════
+# Садясь и ложась, тело плавно перемещается на мебель; сам лесоруб стоит рядом
+func _update_model_placement(delta: float) -> void:
+	if _model_anchor != null:
+		model.global_transform = model.global_transform.interpolate_with(_model_anchor, minf(1.0, delta * 3.5))
+	elif not model.transform.is_equal_approx(_model_rest):
+		model.transform = model.transform.interpolate_with(_model_rest, minf(1.0, delta * 6.0))
+		if model.transform.origin.distance_to(_model_rest.origin) < 0.01:
+			model.transform = _model_rest
+
 func _generate_sound_effects() -> void:
 	if ResourceLoader.exists("res://assets/audio/shotgun_shot.mp3"):
 		sfx_shot = load("res://assets/audio/shotgun_shot.mp3")
@@ -1263,6 +1646,14 @@ func reset_ai() -> void:
 	silence_timer = 0.0
 	hiding_spot_cooldowns.clear()
 	witnessed_hiding_spot = null
+	activity = {}
+	activity_phase = ""
+	_getup_timer = 0.0
+	_model_anchor = null
+	shells_left = SHELLS
+	shotgun_loaded = true
+	run_stamina = RUN_STAMINA
+	is_winded = false
 	if GameManager.ui_ref and GameManager.ui_ref.has_method("show_flashlight_warning"):
 		GameManager.ui_ref.call("show_flashlight_warning", false, 0.0)
 	_pick_new_patrol_target()

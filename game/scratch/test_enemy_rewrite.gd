@@ -23,27 +23,20 @@ func box(pos: Vector3, size: Vector3) -> StaticBody3D:
 
 func drive(goal: Vector3, frames: int = 1500) -> bool:
 	enemy.navigator.clear()
-	enemy._progress_anchor = enemy.global_position
+	enemy._path.clear()
+	enemy._path_target = Vector3.INF
 	for i in range(frames):
 		await get_tree().physics_frame
 		var dt := 1.0 / 60.0
 		enemy.navigator.tick(dt)
 		enemy.world_actions.tick(dt)
-		enemy._retreat_cooldown = maxf(0.0, enemy._retreat_cooldown - dt)
-		if enemy._retreat_time > 0.0:
-			enemy._do_retreat(dt)
-		else:
-			enemy._nav_move_to(goal, 3.5, dt)
+		enemy._go(goal, 3.5, dt)
 		enemy.velocity.y = -0.5 if enemy.is_on_floor() else enemy.velocity.y - 18.0 * dt
 		enemy._try_step(Vector3(enemy.velocity.x, 0, enemy.velocity.z) * dt)
 		enemy.move_and_slide()
-		enemy._update_progress(dt)
 		if enemy.global_position.distance_to(goal) < 0.65:
 			return true
-		if enemy.navigator.failed and not enemy.navigator.partial:
-			print("route failed: ", enemy.global_position, " expanded=", enemy.navigator.attempts)
-			return false
-	print("route timeout: ", enemy.global_position, " pending=", enemy.navigator.pending, " cursor=", enemy.navigator.cursor, " path=", enemy.navigator.path)
+	print("route timeout: ", enemy.global_position, " pending=", enemy.navigator.pending, " path=", enemy._path)
 	return false
 
 func _ready() -> void:
@@ -77,9 +70,6 @@ func _ready() -> void:
 		enemy.global_position = contact
 		enemy.velocity = Vector3.ZERO
 		enemy.navigator.blocked_spots.clear()
-		enemy._retreat_time = 0.0
-		enemy._retreat_cooldown = 0.0
-		enemy._safe_trail.clear()
 		await get_tree().physics_frame
 		var destination := Vector3(-4, 0.03, 0) if contact.x >= 0.0 else Vector3(4, 0.03, 0)
 		check(await drive(destination), "Escapes wall contact at " + str(contact))
@@ -98,7 +88,6 @@ func _ready() -> void:
 	enemy.global_position = Vector3(0, 0.03, -3)
 	enemy.velocity = Vector3.ZERO
 	enemy.navigator.blocked_spots.clear()
-	enemy._retreat_time = 0.0
 	await get_tree().physics_frame
 	check(await drive(Vector3(0, 0.03, -9)), "Enemy opens and crosses a closed house door")
 	check(controller.get("is_open") == true, "Door root and leaf use the same controller")
@@ -109,17 +98,18 @@ func _ready() -> void:
 	# Chasing memory depends on vision, not repeated hearing events.
 	enemy._set_state(enemy.State.HUNT)
 	enemy.last_known_player_pos = Vector3(-4, 0.03, 0)
-	enemy.time_since_last_seen = 9.99
-	enemy.on_noise_heard(enemy.global_position, 30.0)
+	enemy.time_since_last_seen = enemy.HUNT_MEMORY - 0.01
+	# Звук уточняет цель погони, но не продлевает память
+	enemy.on_noise_heard(Vector3(-6, 0.03, 0), 30.0)
 	enemy._do_hunt(0.01)
-	check(enemy.state == enemy.State.HUNT, "At 9.99 seconds it still follows the last sighting")
-	enemy.time_since_last_seen = 10.01
+	check(enemy.state == enemy.State.HUNT, "Just before memory runs out it still follows the last sighting")
+	enemy.time_since_last_seen = enemy.HUNT_MEMORY + 0.01
 	enemy._do_hunt(0.01)
-	check(enemy.state == enemy.State.SEARCH, "At ten seconds without sight it switches to searching")
-	enemy.state_timer = 18.1
+	check(enemy.state == enemy.State.SEARCH, "When memory runs out it switches to searching")
+	enemy.state_timer = 60.0
 	enemy._do_search(0.01)
 	check(enemy.state == enemy.State.PATROL, "Unsuccessful search ends and the enemy calms down")
-	check(enemy.uses_fixed_behavior() and enemy.speed_hunt == 4.8, "Polygon profiles do not change the new enemy")
+	check(enemy.uses_fixed_behavior() and enemy.speed_hunt == enemy.SPEED_HUNT, "Polygon profiles do not change the new enemy")
 	# Free a player while mirrors/UI still have access to GameManager.
 	player.queue_free()
 	await get_tree().physics_frame
