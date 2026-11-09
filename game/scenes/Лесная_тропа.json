@@ -1,0 +1,67 @@
+{
+ "boundary": [],
+ "generator": "MapForge",
+ "meta": {
+  "rotations": "градусы (X,Y,Z)",
+  "units": "метры",
+  "up": "Y"
+ },
+ "objects": [
+  {
+   "color": "1a1c16ff",
+   "comment": "Лес главы 4",
+   "id": 7100,
+   "lock_id": 0,
+   "name": "Лес: основание земли",
+   "position": [
+    90,
+    -1.4,
+    15
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    480,
+    1.0,
+    380
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "8a8378ff",
+   "comment": "Лес главы 4",
+   "id": 7101,
+   "lock_id": 0,
+   "name": "Лес: начало тропы",
+   "position": [
+    177.0,
+    0.2,
+    23.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.8,
+    1.8,
+    0.8
+   ],
+   "type": "marker_player",
+   "visible": true
+  }
+ ],
+ "sceneComment": "Лесная тропа: глава 4, ведёт к дому Крейна",
+ "sceneSize": [
+  480,
+  20,
+  380
+ ],
+ "trails": [],
+ "version": 1
+}

@@ -1,0 +1,67 @@
+{
+ "boundary": [],
+ "generator": "MapForge",
+ "meta": {
+  "rotations": "градусы (X,Y,Z)",
+  "units": "метры",
+  "up": "Y"
+ },
+ "objects": [
+  {
+   "color": "1a1c16ff",
+   "comment": "Поляна дома Крейна",
+   "id": 7000,
+   "lock_id": 0,
+   "name": "Дом Крейна: основание земли",
+   "position": [
+    0,
+    -0.8,
+    0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    220,
+    1.0,
+    220
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "8a8378ff",
+   "comment": "Поляна дома Крейна",
+   "id": 7001,
+   "lock_id": 0,
+   "name": "Дом Крейна: Итан выходит на поляну",
+   "position": [
+    13.0,
+    0.2,
+    1.2
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.8,
+    1.8,
+    0.8
+   ],
+   "type": "marker_player",
+   "visible": true
+  }
+ ],
+ "sceneComment": "Дом Крейна: главы 4 и 5",
+ "sceneSize": [
+  220,
+  16,
+  220
+ ],
+ "trails": [],
+ "version": 1
+}

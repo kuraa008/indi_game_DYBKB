@@ -1023,6 +1023,9 @@ func _spawn_player() -> void:
 		# Звонок с неизвестного номера → кат-сцена «Звонок» → улица (Jan-ky)
 		add_child(preload("res://scripts/cutscenes/ApartmentCall.gd").new())
 
+	if _is_crane_house():
+		add_child(load("res://scripts/CraneHouseMap.gd").new())
+
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
 		# Объявления и посадка в машину → дорога и авария (Jan-ky)
@@ -1400,8 +1403,11 @@ func _is_street() -> bool:
 	return "улица" in map_json_path.to_lower()
 
 # Карты пролога: без предметов, выхода и выключателей общей сцены
+func _is_crane_house() -> bool:
+	return "крейна" in map_json_path.to_lower() or "лесная" in map_json_path.to_lower()
+
 func _is_prologue_map() -> bool:
-	return _is_apartment() or _is_street()
+	return _is_apartment() or _is_street() or _is_crane_house()
 
 func _is_highway() -> bool:
 	return highway_map or "шоссе" in map_json_path.to_lower()
