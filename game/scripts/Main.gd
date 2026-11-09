@@ -1016,12 +1016,15 @@ func _spawn_player() -> void:
 		add_child(ActDressing.new())
 
 	if _is_highway():
+		var starts_in_basement: bool = GameManager.wake_in_basement
 		add_child(HighwayChapter.new())
+		if starts_in_basement:
+			add_child(preload("res://scripts/BasementChapter.gd").new())
 
 	if _is_apartment():
 		add_child(preload("res://scripts/ApartmentScene.gd").new())
-		# Звонок с неизвестного номера → кат-сцена «Звонок» → улица (Jan-ky)
-		add_child(preload("res://scripts/cutscenes/ApartmentCall.gd").new())
+		# «Обычный день»: задачи, диван, звонок через телефон → кат-сцена «Звонок» → улица
+		add_child(preload("res://scripts/PrologueApartment.gd").new())
 
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
