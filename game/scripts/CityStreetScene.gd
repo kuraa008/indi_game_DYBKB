@@ -25,6 +25,7 @@ void vertex() { w = VERTEX; }
 void fragment() {
 	vec2 p = w.xz;
 	float grain = n(p * 34.0) * 0.5 + n(p * 90.0) * 0.5;
+	grain = mix(0.5, grain, 1.0 - smoothstep(0.3, 1.0, fwidth(p.x) * 60.0));
 	float wet = smoothstep(0.56, 0.68, n(p * 0.42) * 0.65 + n(p * 1.3) * 0.35);
 	vec3 c = vec3(0.075, 0.075, 0.08) * (0.75 + 0.55 * grain);
 	ALBEDO = c * mix(1.0, 0.55, wet);
@@ -48,9 +49,11 @@ void fragment() {
 	p.x += 0.5 * floor(p.y);
 	vec2 id = floor(p);
 	vec2 d = min(fract(p), 1.0 - fract(p)) * 0.5;
-	float joint = smoothstep(0.003, 0.009, min(d.x, d.y));
+	float px = fwidth(w.x) + fwidth(w.z);
+	float joint = smoothstep(0.003, 0.009 + px, min(d.x, d.y));
+	joint = mix(joint, 0.9, smoothstep(0.02, 0.07, px));
 	float wet = smoothstep(0.55, 0.7, n(w.xz * 0.5) * 0.65 + n(w.xz * 1.7) * 0.35);
-	vec3 c = vec3(0.2, 0.195, 0.18) * (0.78 + 0.34 * h(id)) * (0.85 + 0.3 * n(w.xz * 22.0));
+	vec3 c = vec3(0.2, 0.195, 0.18) * (0.78 + 0.34 * h(id)) * (0.85 + 0.3 * mix(0.5, n(w.xz * 22.0), 1.0 - smoothstep(0.3, 1.0, px * 22.0)));
 	ALBEDO = mix(vec3(0.035), c * mix(1.0, 0.6, wet), joint);
 	ROUGHNESS = mix(0.95, mix(0.8, 0.46, wet), joint);
 }
@@ -69,6 +72,7 @@ void vertex() { w = VERTEX; }
 void fragment() {
 	vec2 p = w.xz;
 	float blades = n(p * 80.0) * 0.55 + n(p * 210.0) * 0.45;
+	blades = mix(0.5, blades, 1.0 - smoothstep(0.3, 1.0, fwidth(p.x) * 120.0));
 	float patches = n(p * 0.8) * 0.6 + n(p * 3.1) * 0.4;
 	vec3 grass = mix(vec3(0.05, 0.075, 0.025), vec3(0.11, 0.13, 0.04), blades);
 	vec3 dirt = vec3(0.075, 0.055, 0.035) * (0.7 + 0.6 * blades);
@@ -156,6 +160,7 @@ func _ready() -> void:
 	_build_entrance()
 	_build_yard()
 	_build_street_furniture()
+	_build_district()
 	_build_poles()
 	_build_posters()
 	_build_car()
@@ -237,23 +242,22 @@ func _plate(x0: float, x1: float, z0: float, z1: float, y: float = 0.0) -> void:
 # ── Земля: асфальт, плитка, газоны, дорога ──
 func _build_ground() -> void:
 	var far := 112.0
-	_plate(-far, far, YARD_END, CURB, 0.012)
-	_plate(-far, far, SOUTH_WALK, 40.0, 0.012)
-	_plate(-34.0, 34.0, 0.0, 2.6, 0.012)
-	_plate(-1.6, 1.6, 2.6, YARD_END, 0.012)
+	_plate(-far, far, YARD_END, CURB, 0.05)
+	_plate(-far, far, SOUTH_WALK, 40.0, 0.05)
+	_plate(-34.0, 34.0, 0.0, 2.6, 0.03)
+	_plate(-1.6, 1.6, 2.6, YARD_END, 0.03)
 	_flush(_shader(PAVER_SHADER))
 
-	_plate(14.0, 34.0, 2.6, YARD_END, 0.008)
-	_plate(-far, far, CURB, SOUTH_WALK, -0.004)
+	_plate(14.0, 34.0, 2.6, YARD_END, 0.024)
 	_flush(_shader(ASPHALT_SHADER))
 
-	_plate(-34.0, -1.6, 2.6, YARD_END, 0.006)
-	_plate(1.6, 14.0, 2.6, YARD_END, 0.006)
+	_plate(-34.0, -1.6, 2.6, YARD_END, 0.02)
+	_plate(1.6, 14.0, 2.6, YARD_END, 0.02)
 	_flush(_shader(GRASS_SHADER))
 
 	var road := Node3D.new()
 	add_child(road)
-	road.position = Vector3(0, 0.006, ROAD_Z)
+	road.position = Vector3(0, 0.02, ROAD_Z)
 	road.rotation_degrees = Vector3(0, 90, 0)
 	RoadKit.add_road(road, -112.0, 112.0, 0.0, 0.0, 12.0, 0.03, -0.012, false)
 
@@ -293,11 +297,11 @@ func _block(x0: float, x1: float, z0: float, z1: float, h: float) -> void:
 
 # ── Дома ──
 func _build_blocks() -> void:
-	_block(-34.0, 34.0, -12.0, 0.0, 15.0)
+	_block(-34.0, 40.0, -12.0, 0.0, 15.0)
 	_block(-46.0, -34.0, -12.0, YARD_END, 15.0)
-	_block(-112.0, -46.0, 8.0, 22.0, 15.0)
+	_block(-112.0, -46.0, -12.0, 22.0, 15.0)
 	_flush(_facade(Color(0.3, 0.285, 0.25)))
-	_block(44.0, 112.0, 8.0, 22.0, 12.0)
+	_block(40.0, 112.0, -12.0, 22.0, 12.0)
 	_block(-112.0, 112.0, 40.0, 52.0, 12.0)
 	_flush(_facade(Color(0.25, 0.235, 0.22)))
 
@@ -317,7 +321,7 @@ func _build_blocks() -> void:
 				_bx(Vector3(0.05, 0.95, 1.0), Vector3(x + s * 1.22, y + 0.56, 0.5), rail)
 		x += bay
 	# Карнизы
-	_bx(Vector3(68.4, 0.3, 12.4), Vector3(0, 15.15, -6.0), concrete.darkened(0.2))
+	_bx(Vector3(74.4, 0.3, 12.4), Vector3(3.0, 15.15, -6.0), concrete.darkened(0.2))
 	_bx(Vector3(12.4, 0.3, 36.4), Vector3(-40.0, 15.15, 6.0), concrete.darkened(0.2))
 	_flush(_vmat(0.9))
 
@@ -329,11 +333,18 @@ func _build_blocks() -> void:
 		_bx(Vector3(0.05, 2.1, 3.1), Vector3(33.98, 1.08, z + 1.95), metal.lightened(float(k % 3) * 0.05))
 		_bx(Vector3(0.03, 2.0, 0.03), Vector3(33.95, 1.08, z + 1.95), metal.darkened(0.4))
 		_bx(Vector3(6.3, 0.14, 4.0), Vector3(37.0, 2.57, z + 1.95), Color(0.14, 0.14, 0.15))
+	# Трансформаторная будка закрывает проход между домом и гаражами
+	var booth := Color(0.36, 0.35, 0.32)
+	_bx(Vector3(6.0, 2.5, 3.2), Vector3(37.0, 1.25, 1.5), booth)
+	_bx(Vector3(6.3, 0.14, 3.3), Vector3(37.0, 2.57, 1.5), Color(0.14, 0.14, 0.15))
+	_bx(Vector3(0.05, 2.0, 1.1), Vector3(33.98, 1.05, 1.5), metal.darkened(0.15))
+	_bx(Vector3(0.012, 0.3, 0.3), Vector3(33.95, 1.55, 1.5), Color(0.68, 0.56, 0.12), Vector3(45, 0, 0))
+	_bx(Vector3(0.05, 0.08, 0.05), Vector3(33.94, 1.05, 1.96), Color(0.1, 0.1, 0.11))
 	_flush(_vmat(0.65, 0.3))
 
-	_solid(Vector3(0, 7.5, -6.0), Vector3(68.0, 15.0, 12.0))
+	_solid(Vector3(3.0, 7.5, -6.0), Vector3(74.0, 15.0, 12.0))
 	_solid(Vector3(-40.0, 7.5, 6.0), Vector3(12.0, 15.0, 36.0))
-	_solid(Vector3(37.0, 1.5, 13.0), Vector3(6.0, 3.0, 22.0))
+	_solid(Vector3(37.0, 1.5, 12.0), Vector3(6.0, 3.0, 24.4))
 	_solid(Vector3(0, 7.5, 46.0), Vector3(224.0, 15.0, 12.0))
 	# Улицу перекрыли ремонтом: дальше игрок не проходит
 	for s in [-1.0, 1.0]:
@@ -364,18 +375,61 @@ func _build_entrance() -> void:
 	_pipe(Vector3(-0.14, 0.95, 0.15), Vector3(-0.14, 1.3, 0.15), 0.012, steel)
 	_pipe(Vector3(-0.14, 1.28, 0.09), Vector3(-0.14, 1.28, 0.15), 0.009, steel)
 	_pipe(Vector3(-0.14, 0.97, 0.09), Vector3(-0.14, 0.97, 0.15), 0.009, steel)
-	# Домофон справа от двери
-	_bx(Vector3(0.17, 0.3, 0.03), Vector3(1.0, 1.45, 0.105), steel.darkened(0.25))
-	for row in range(4):
-		for col in range(3):
-			_cy(0.012, 0.012, 0.006, Vector3(0.95 + float(col) * 0.05, 1.42 - float(row) * 0.05, 0.123), Color(0.14, 0.14, 0.15), Vector3(90, 0, 0), 8)
 	_cy(0.04, 0.048, 0.01, Vector3(0, 2.76, 1.0), steel)
 	_flush(_vmat(0.34, 0.6))
 
+	_build_intercom(Vector3(1.0, 1.44, 0.09))
 	_solid(Vector3(0, 1.1, 0.06), Vector3(2.4, 2.2, 0.12))
 	_solid(Vector3(-1.55, 1.4, 1.85), Vector3(0.18, 2.8, 0.18))
 	_solid(Vector3(1.55, 1.4, 1.85), Vector3(0.18, 2.8, 0.18))
 	_posters.append([Vector3(0.37, 1.55, 0.102), 0.0, 3.0])
+
+
+# Домофон: стальная панель на тёмной рамке, камера, решётка динамика, табло, кнопки с цифрами
+func _build_intercom(at: Vector3) -> void:
+	var steel := Color(0.5, 0.51, 0.53)
+	var dark := Color(0.05, 0.05, 0.06)
+	var key := Color(0.68, 0.69, 0.71)
+	_base = _xf(at)
+	_bx(Vector3(0.2, 0.4, 0.016), Vector3(0, 0, 0.008), dark)
+	_bx(Vector3(0.176, 0.376, 0.012), Vector3(0, 0, 0.022), steel)
+	for sx in [-0.076, 0.076]:
+		for sy in [-0.176, 0.176]:
+			_cy(0.005, 0.0055, 0.003, Vector3(sx, sy, 0.0295), steel.darkened(0.4), Vector3(90, 0, 0), 8)
+	# Кольцо камеры и прорези динамика
+	_cy(0.02, 0.022, 0.006, Vector3(0, 0.15, 0.031), Color(0.1, 0.1, 0.11), Vector3(90, 0, 0), 16)
+	for k in range(5):
+		_bx(Vector3(0.09 - absf(float(k) - 2.0) * 0.012, 0.0035, 0.002), Vector3(0, 0.116 - float(k) * 0.0085, 0.0285), dark)
+	# Рамка табло
+	_bx(Vector3(0.128, 0.042, 0.003), Vector3(0, 0.052, 0.029), dark)
+	# Кнопки: тёмное углубление и выпуклая клавиша
+	var labels := ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
+	var spots := []
+	for row in range(4):
+		for col in range(3):
+			var pos := Vector2(-0.044 + float(col) * 0.044, 0.008 - float(row) * 0.04)
+			_bx(Vector3(0.037, 0.033, 0.002), Vector3(pos.x, pos.y, 0.0285), dark)
+			_bx(Vector3(0.031, 0.027, 0.006), Vector3(pos.x, pos.y, 0.031), key)
+			spots.append(pos)
+	# Кнопка вызова с красным ободком
+	_torus(0.015, 0.02, Vector3(0, -0.158, 0.03), Color(0.5, 0.08, 0.06), Vector3(90, 0, 0), Vector3(1, 0.4, 1))
+	_cy(0.0145, 0.0155, 0.007, Vector3(0, -0.158, 0.032), key, Vector3(90, 0, 0), 14)
+	_flush(_vmat(0.42, 0.55))
+	_base = _xf(at)
+	_cy(0.011, 0.011, 0.002, Vector3(0, 0.15, 0.0345), Color(0.02, 0.025, 0.04), Vector3(90, 0, 0), 14)
+	_flush(_vmat(0.06))
+	var screen := StandardMaterial3D.new()
+	screen.albedo_color = Color(0.015, 0.05, 0.05)
+	screen.emission_enabled = true
+	screen.emission = Color(0.05, 0.3, 0.27)
+	screen.emission_energy_multiplier = 0.5
+	CutsceneKit.box(self, Vector3(0.114, 0.03, 0.002), at + Vector3(0, 0.052, 0.0312), screen, Vector3.ZERO, false)
+	var hint := CutsceneKit.text3d(self, "НАБЕРИТЕ КВ.", at + Vector3(0, 0.052, 0.0335), Vector3.ZERO, 0.0003, Color(0.5, 1.0, 0.9), 44)
+	hint.shaded = false
+	hint.visibility_range_end = 4.0
+	for k in range(labels.size()):
+		var l := CutsceneKit.text3d(self, labels[k], at + Vector3(spots[k].x, spots[k].y, 0.0345), Vector3.ZERO, 0.00042, Color(0.06, 0.06, 0.07), 44)
+		l.visibility_range_end = 4.0
 
 
 func _bench(pos: Vector3, yaw: float) -> void:
@@ -483,33 +537,39 @@ func _build_yard() -> void:
 		_solid(Vector3(mid, 0.6, YARD_END), Vector3(b - a, 1.2, 0.08))
 	_flush(_vmat(0.55, 0.4))
 
-	# Две скромные машины соседей на парковке
-	_neighbour_car(Vector3(18.0, 0.0, 16.0), 0.0, Color(0.28, 0.32, 0.36))
-	_neighbour_car(Vector3(25.0, 0.0, 16.5), 4.0, Color(0.36, 0.33, 0.26))
+	# Машины соседей на разметке парковки
+	var row_z := 15.0
+	var lot := [[0, Color(0.27, 0.32, 0.37), 180.0], [1, Color(0.44, 0.4, 0.3), 180.0], [3, Color(0.17, 0.2, 0.17), 180.0], [4, Color(0.56, 0.55, 0.52), 180.0], [5, Color(0.3, 0.13, 0.11), 180.0]]
+	for q in lot:
+		_parked_car(Vector3(17.4 + float(q[0]) * 2.8, 0.008, row_z + _rng.randf_range(-0.15, 0.15)), float(q[2]) + _rng.randf_range(-2.0, 2.0), q[1])
 
 
-# Простой седан из гладких частей: стоит дальше, чем машина Итана
-func _neighbour_car(pos: Vector3, yaw: float, col: Color) -> void:
-	_base = _xf(pos, Vector3(0, yaw, 0))
-	_softbox(Vector3(1.72, 0.62, 4.3), _xf(Vector3(0, 0.62, 0)), col, 0.22, 0.04, 0.3)
-	_softbox(Vector3(1.46, 0.54, 2.05), _xf(Vector3(0, 1.14, -0.1)), col, 0.2, 0.05, 0.1)
-	_flush(_vmat(0.28, 0.25))
-	_base = _xf(pos, Vector3(0, yaw, 0))
-	var glass := Color(0.09, 0.11, 0.13)
-	_bx(Vector3(1.475, 0.28, 1.66), Vector3(0, 1.17, -0.1), glass)
-	for dz in [-1.035, 0.835]:
-		_bx(Vector3(1.22, 0.3, 0.03), Vector3(0, 1.17, dz), glass)
-	_flush(_vmat(0.12))
-	_base = _xf(pos, Vector3(0, yaw, 0))
-	for sx in [-0.77, 0.77]:
-		for sz in [-1.35, 1.35]:
-			_cy(0.32, 0.32, 0.2, Vector3(sx, 0.32, sz), Color(0.03, 0.03, 0.035), Vector3(0, 0, 90), 16)
-			_cy(0.13, 0.13, 0.205, Vector3(sx, 0.32, sz), Color(0.26, 0.27, 0.29), Vector3(0, 0, 90), 12)
-	for sx in [-0.58, 0.58]:
-		_bx(Vector3(0.3, 0.1, 0.02), Vector3(sx, 0.64, -2.15), Color(0.7, 0.68, 0.6))
-		_bx(Vector3(0.32, 0.09, 0.02), Vector3(sx, 0.66, 2.15), Color(0.32, 0.05, 0.04))
-	_flush(_vmat(0.5))
-	_solid(pos + Vector3(0, 0.7, 0), Vector3(1.75, 1.4, 4.3))
+# Та же модель, что у Итана, в другом цвете. Перед машины смотрит вдоль -Z
+func _parked_car(pos: Vector3, yaw: float, col: Color) -> void:
+	var car := EthanCar.new()
+	car._mats["paint"].albedo_color = col
+	car._mats["paint2"].albedo_color = col.darkened(0.3)
+	add_child(car)
+	car.position = pos
+	car.rotation_degrees = Vector3(0, yaw, 0)
+	_lighten_car(car)
+	var along_x := absf(sin(deg_to_rad(yaw))) > 0.7
+	_solid(pos + Vector3(0, 0.65, 0), Vector3(3.75, 1.3, 1.66) if along_x else Vector3(1.66, 1.3, 3.75))
+
+
+# Стоящим машинам не нужны лампочка приборов и тени, а салон и колёса вдали не видны
+func _lighten_car(car: Node3D) -> void:
+	for light in car.find_children("*", "Light3D", true, false):
+		light.free()
+	for mi: MeshInstance3D in car.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var root: Node3D = mi
+		while root.get_parent() != car:
+			root = root.get_parent()
+		if root.name == "Body" or root.name == "Hood":
+			continue
+		var is_wheel: bool = absf(root.position.x) > 0.5 and root.position.y < 0.6
+		mi.visibility_range_end = 40.0 if is_wheel else 11.0
 
 
 # ── На улице: остановка, урны, скамья, дорожные ограждения ──
@@ -529,7 +589,9 @@ func _build_street_furniture() -> void:
 	_bx(Vector3(4.0, 2.05, 0.012), Vector3(0, 1.32, -1.2), Color(0.34, 0.4, 0.44))
 	_flush(_vmat(0.06, 0.1))
 	_bench(at + Vector3(0.0, 0.0, -0.75), 0.0)
-	_solid(at + Vector3(0, 1.25, -1.2), Vector3(4.0, 2.5, 0.1))
+	_solid(at + Vector3(0, 1.25, -1.2), Vector3(4.1, 2.5, 0.24))
+	for sx in [-2.0, 2.0]:
+		_solid(at + Vector3(sx, 1.25, 0.4), Vector3(0.16, 2.5, 0.16))
 	_posters.append([at + Vector3(-1.0, 1.55, -1.19), 0.0, -2.0])
 	_posters.append([at + Vector3(0.7, 1.5, -1.19), 0.0, 3.0])
 
@@ -550,6 +612,226 @@ func _build_street_furniture() -> void:
 				_bx(Vector3(0.04, 0.22, 0.34), Vector3(0, 0.86, -0.85 + 0.17 + float(k) * 0.34 - 0.17), red if k % 2 == 0 else white)
 			z += 2.4
 	_flush(_vmat(0.6))
+
+
+# ── Район: разметка, переход, знаки, тумба, контейнеры, кусты, листья, мелочи на домах ──
+func _road_y(z: float) -> float:
+	var k := (z - ROAD_Z) / 6.0
+	return 0.02 + 0.03 * (1.0 - k * k)
+
+
+func _build_district() -> void:
+	# Разметка парковки и бетонные упоры
+	var paint := Color(0.62, 0.6, 0.54)
+	for k in range(7):
+		_bx(Vector3(0.1, 0.006, 5.2), Vector3(16.0 + float(k) * 2.8, 0.027, 15.0), paint)
+	# Пешеходный переход напротив дорожки во двор
+	var z := CURB + 0.75
+	while z < SOUTH_WALK - 0.4:
+		_bx(Vector3(3.2, 0.03, 0.5), Vector3(0, _road_y(z), z), paint)
+		z += 1.0
+	_flush(_vmat(0.82))
+	_base = Transform3D.IDENTITY
+	for k in range(6):
+		_bx(Vector3(1.9, 0.12, 0.22), Vector3(17.4 + float(k) * 2.8, 0.08, 12.0), Color(0.42, 0.41, 0.38))
+	_flush(_vmat(0.9))
+
+	# Машины вдоль бордюров
+	_parked_car(Vector3(-11.5, 0.0, 29.5), 90.0, Color(0.33, 0.36, 0.33))
+	_parked_car(Vector3(20.5, 0.0, 29.5), 90.0, Color(0.14, 0.19, 0.3))
+	_parked_car(Vector3(13.0, 0.0, 35.5), -90.0, Color(0.5, 0.48, 0.42))
+	_parked_car(Vector3(-27.0, 0.0, 35.5), -90.0, Color(0.34, 0.17, 0.1))
+
+	# Люки на дороге и тротуаре
+	for q in [[-8.0, 33.2], [15.0, 31.0], [28.0, 34.0]]:
+		_cy(0.36, 0.36, 0.02, Vector3(q[0], _road_y(q[1]), q[1]), Color(0.05, 0.05, 0.055), Vector3.ZERO, 20)
+		_cy(0.3, 0.3, 0.024, Vector3(q[0], _road_y(q[1]), q[1]), Color(0.11, 0.1, 0.1), Vector3.ZERO, 20)
+	_cy(0.3, 0.3, 0.024, Vector3(-30.0, 0.05, 26.0), Color(0.12, 0.11, 0.1), Vector3.ZERO, 20)
+	_flush(_vmat(0.55, 0.4))
+
+	# Знаки: пешеходный переход и остановка
+	_sign(Vector3(-2.3, 0.0, 27.5), Color(0.1, 0.24, 0.5), 90.0)
+	_sign(Vector3(2.3, 0.0, 37.5), Color(0.1, 0.24, 0.5), -90.0)
+	_sign(Vector3(-17.3, 0.0, 27.6), Color(0.62, 0.55, 0.14), 90.0)
+
+	# Рекламная тумба с объявлениями о пропаже
+	var at := Vector3(-10.0, 0.012, 25.5)
+	var drum := Color(0.42, 0.4, 0.34)
+	_base = _xf(at)
+	_loft([
+		_rg(0.6, 0.6, 0.6, 0.0), _rg(0.6, 0.6, 0.6, 0.22), _rg(0.54, 0.54, 0.54, 0.26), _rg(0.54, 0.54, 0.54, 2.45), _rg(0.66, 0.66, 0.66, 2.52),
+		_rg(0.66, 0.66, 0.66, 2.62), _rg(0.42, 0.42, 0.42, 2.95), _rg(0.0, 0.0, 0.0, 3.08),
+	], drum, Transform3D.IDENTITY, 6, [drum.darkened(0.3), drum.darkened(0.3), drum, drum, drum.darkened(0.25), drum.darkened(0.25), drum.darkened(0.45), drum.darkened(0.5)])
+	# Рваные старые афиши
+	var shreds := [Color(0.52, 0.2, 0.15), Color(0.2, 0.3, 0.42), Color(0.58, 0.52, 0.3), Color(0.32, 0.36, 0.3)]
+	for k in range(9):
+		var a := float(k) * TAU / 9.0 + 0.3
+		var h := _rng.randf_range(0.5, 0.95)
+		var y := _rng.randf_range(0.65, 1.85)
+		_bx(Vector3(0.24, h, 0.012), Vector3(sin(a) * 0.54, y, cos(a) * 0.54), shreds[k % shreds.size()].darkened(_rng.randf_range(0.0, 0.3)), Vector3(0, rad_to_deg(a), 0))
+	_flush(_vmat(0.85))
+	_solid(at + Vector3(0, 1.4, 0), Vector3(1.1, 2.8, 1.1))
+	for yaw in [180.0, 90.0, -90.0, 0.0]:
+		var a := deg_to_rad(yaw)
+		_posters.append([at + Vector3(sin(a) * 0.565, 1.5 + _rng.randf_range(-0.1, 0.12), cos(a) * 0.565), yaw, _rng.randf_range(-4.0, 4.0)])
+
+	# Контейнеры для мусора на площадке за парковкой
+	var bin_at := Vector3(31.0, 0.008, 21.2)
+	var wall := Color(0.44, 0.43, 0.4)
+	_base = _xf(bin_at)
+	_bx(Vector3(4.2, 1.5, 0.14), Vector3(0, 0.75, 1.2), wall)
+	for s_x in [-2.1, 2.1]:
+		_bx(Vector3(0.14, 1.5, 2.4), Vector3(s_x, 0.75, 0), wall)
+	var metal := Color(0.16, 0.25, 0.2)
+	for s_x in [-1.05, 1.05]:
+		_bx(Vector3(1.55, 1.05, 1.1), Vector3(s_x, 0.62, 0.3), metal.darkened(_rng.randf_range(0.0, 0.25)), Vector3(0, _rng.randf_range(-4.0, 4.0), 0))
+		_bx(Vector3(1.62, 0.07, 1.16), Vector3(s_x, 1.2, 0.3), Color(0.08, 0.1, 0.09), Vector3(_rng.randf_range(-7.0, 3.0), 0, 0))
+		for side in [-0.55, 0.55]:
+			_cy(0.08, 0.08, 0.05, Vector3(s_x + side, 0.08, -0.12), Color(0.04, 0.04, 0.04), Vector3(90, 0, 0), 10)
+	_flush(_vmat(0.65, 0.2))
+	_base = _xf(bin_at)
+	for k in range(5):
+		_softbox(Vector3(_rng.randf_range(0.42, 0.62), _rng.randf_range(0.32, 0.46), _rng.randf_range(0.42, 0.62)), _xf(Vector3(_rng.randf_range(-1.5, 1.5), 0.2, _rng.randf_range(-1.05, -0.5))), Color(0.05, 0.05, 0.055), 0.72, 0.1, 0.15, 8)
+	_flush(_vmat(0.5))
+	_solid(bin_at + Vector3(0, 0.75, 0.1), Vector3(4.3, 1.5, 2.3))
+
+	_build_hedge()
+
+	# Опавшие листья на газонах и у бордюров
+	var leaf_cols := [Color(0.3, 0.17, 0.06), Color(0.4, 0.27, 0.08), Color(0.2, 0.11, 0.05)]
+	for k in range(620):
+		var lx := _rng.randf_range(-34.0, 34.0)
+		var lz := _rng.randf_range(2.8, 27.8)
+		if lx > 14.0 and lz < 24.0 and _rng.randf() < 0.75:
+			continue
+		var size := _rng.randf_range(0.04, 0.085)
+		_bx(Vector3(size, 0.002, size * 0.7), Vector3(lx, 0.058 if lz > YARD_END else 0.034, lz), leaf_cols[k % 3].darkened(_rng.randf_range(0.0, 0.3)), Vector3(_rng.randf_range(-8.0, 8.0), _rng.randf() * 180.0, 0))
+	_flush(_vmat(0.95))
+
+	_dress_facade()
+
+
+# Кусты из листвы: сквозь них можно пройти, столкновений нет
+func _build_hedge() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for span in [[-31.0, -10.0], [3.5, 12.5]]:
+		var x: float = span[0]
+		while x < float(span[1]):
+			var w := _rng.randf_range(0.72, 1.1)
+			var h := _rng.randf_range(0.66, 1.02)
+			_leaf_ball(st, Vector3(x, h * 0.54, 23.15 + _rng.randf_range(-0.1, 0.1)), Vector3(w, h * 0.56, 0.62), int(78.0 * w))
+			x += w * 1.3
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load("res://assets/textures/nature/leaf_cluster.png")
+	m.albedo_color = Color(2.6, 2.6, 2.3)
+	m.vertex_color_use_as_albedo = true
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	m.alpha_scissor_threshold = 0.4
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.roughness = 0.95
+	m.metallic_specular = 0.15
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+
+
+func _leaf_ball(st: SurfaceTool, c: Vector3, radii: Vector3, count: int) -> void:
+	var green := Color(0.36, 0.42, 0.2)
+	var dry := Color(0.46, 0.38, 0.16)
+	for k in range(count):
+		var dir := Vector3(_rng.randf_range(-1.0, 1.0), _rng.randf_range(-0.45, 1.0), _rng.randf_range(-1.0, 1.0)).normalized()
+		var depth := pow(_rng.randf(), 0.42)
+		var pos := c + Vector3(dir.x * radii.x, dir.y * radii.y, dir.z * radii.z) * depth
+		pos.y = maxf(pos.y, 0.12)
+		var size := _rng.randf_range(0.26, 0.46)
+		var n := (dir + Vector3(_rng.randf_range(-0.6, 0.6), _rng.randf_range(-0.3, 0.6), _rng.randf_range(-0.6, 0.6))).normalized()
+		var a := n.cross(Vector3.UP if absf(n.y) < 0.9 else Vector3.RIGHT).normalized()
+		var b := n.cross(a)
+		var spin := _rng.randf() * TAU
+		var ax := a * cos(spin) + b * sin(spin)
+		var ay := b * cos(spin) - a * sin(spin)
+		var shade := lerpf(0.34, 1.0, depth) * lerpf(0.55, 1.06, clampf((pos.y - 0.1) / (radii.y * 1.7), 0.0, 1.0))
+		var col := green.lerp(dry, pow(_rng.randf(), 3.0) * 0.8)
+		col = Color(col.r * shade, col.g * shade, col.b * shade)
+		var normal := (dir + Vector3.UP * 0.55).normalized()
+		var corners := [pos - ax * size - ay * size, pos + ax * size - ay * size, pos + ax * size + ay * size, pos - ax * size + ay * size]
+		var uvs := [Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]
+		for idx in [0, 1, 2, 0, 2, 3]:
+			st.set_color(col)
+			st.set_normal(normal)
+			st.set_uv(uvs[idx])
+			st.add_vertex(corners[idx])
+
+
+func _sign(pos: Vector3, col: Color, yaw: float) -> void:
+	_base = _xf(pos, Vector3(0, yaw, 0))
+	var steel := Color(0.42, 0.43, 0.45)
+	_cy(0.032, 0.036, 2.55, Vector3(0, 1.28, 0), steel, Vector3.ZERO, 8)
+	_flush(_vmat(0.45, 0.5))
+	_base = _xf(pos, Vector3(0, yaw, 0))
+	_bx(Vector3(0.62, 0.62, 0.02), Vector3(0, 2.36, 0.04), Color(0.72, 0.72, 0.68))
+	_bx(Vector3(0.55, 0.55, 0.004), Vector3(0, 2.36, 0.052), col)
+	_bx(Vector3(0.3, 0.3, 0.004), Vector3(0, 2.34, 0.056), Color(0.76, 0.76, 0.72), Vector3(0, 0, 45))
+	_bx(Vector3(0.05, 0.2, 0.004), Vector3(0, 2.35, 0.059), Color(0.05, 0.05, 0.06), Vector3(0, 0, 8))
+	_bl(Vector3(0.036, 0.036, 0.003), Vector3(0.02, 2.47, 0.059), Color(0.05, 0.05, 0.06))
+	_flush(_vmat(0.5))
+	_base = Transform3D.IDENTITY
+	_solid(pos + Vector3(0, 1.25, 0), Vector3(0.1, 2.5, 0.1))
+
+
+# Жильцы: водосточные трубы, бельё на балконах, коробки, антенны, ворота гаражей
+func _dress_facade() -> void:
+	var pipe := Color(0.36, 0.36, 0.35)
+	var px := -27.2
+	while px < 28.0:
+		if absf(px) > 4.0:
+			_cy(0.05, 0.05, 15.0, Vector3(px, 7.5, 0.1), pipe, Vector3.ZERO, 8)
+			for y in [1.5, 5.0, 8.0, 11.0, 14.0]:
+				_bx(Vector3(0.14, 0.03, 0.12), Vector3(px, y, 0.06), pipe.darkened(0.25))
+		px += 13.6
+	_flush(_vmat(0.55, 0.3))
+
+	var laundry := [Color(0.72, 0.7, 0.64), Color(0.42, 0.18, 0.15), Color(0.2, 0.27, 0.4), Color(0.56, 0.5, 0.26), Color(0.62, 0.62, 0.62)]
+	for q in [[-22.1, 1], [-15.3, 3], [-8.5, 2], [5.1, 1], [11.9, 3], [18.7, 2], [25.5, 4]]:
+		var x: float = q[0]
+		var y := float(q[1]) * 3.0
+		_bx(Vector3(2.3, 0.008, 0.008), Vector3(x, y + 2.05, 0.82), Color(0.5, 0.5, 0.5))
+		var cx := x - 0.95
+		while cx < x + 0.8:
+			var w := _rng.randf_range(0.26, 0.5)
+			var h := _rng.randf_range(0.42, 0.85)
+			_bx(Vector3(w, h, 0.012), Vector3(cx + w * 0.5, y + 2.05 - h * 0.5, 0.82 + _rng.randf_range(-0.01, 0.01)), laundry[_rng.randi_range(0, laundry.size() - 1)], Vector3(0, _rng.randf_range(-6.0, 6.0), _rng.randf_range(-2.5, 2.5)))
+			cx += w + _rng.randf_range(0.06, 0.22)
+	for q in [[-18.7, 2], [-5.1, 4], [8.5, 2], [22.1, 1], [-22.1, 4]]:
+		var y := float(q[1]) * 3.0
+		_bx(Vector3(0.6, 0.45, 0.42), Vector3(float(q[0]) + _rng.randf_range(-0.6, 0.6), y + 0.32, 0.45), Color(0.4, 0.3, 0.2).darkened(_rng.randf_range(0.0, 0.3)), Vector3(0, _rng.randf_range(-15.0, 15.0), 0))
+	# Ворота гаражей: засовы, петли, ржавые потёки
+	var iron := Color(0.1, 0.1, 0.11)
+	for k in range(5):
+		var z := 3.0 + float(k) * 4.2 + 1.95
+		_bx(Vector3(0.05, 0.06, 0.42), Vector3(33.94, 1.1, z), iron)
+		_bx(Vector3(0.06, 0.13, 0.09), Vector3(33.91, 1.08, z + 0.1), Color(0.5, 0.42, 0.2))
+		for side in [-1.0, 1.0]:
+			for y in [0.45, 1.7]:
+				_bx(Vector3(0.05, 0.1, 0.2), Vector3(33.95, y, z + side * 1.5), iron)
+		for r in range(3):
+			var w := _rng.randf_range(0.08, 0.26)
+			var h := _rng.randf_range(0.4, 1.3)
+			_bx(Vector3(0.008, h, w), Vector3(33.95, 2.1 - h * 0.5, z + _rng.randf_range(-1.3, 1.3)), Color(0.28, 0.16, 0.08))
+	_flush(_vmat(0.72, 0.2))
+
+	# Спутниковые тарелки на нескольких балконах
+	var dish := Color(0.66, 0.66, 0.63)
+	for q in [[-15.3, 2], [8.5, 3], [18.7, 1]]:
+		var y := float(q[1]) * 3.0
+		_base = _xf(Vector3(float(q[0]) + 0.95, y + 1.28, 1.05), Vector3(62, 0, 0))
+		_loft([_rg(0.28, 0.28, 0.28, 0.1), _rg(0.18, 0.18, 0.18, 0.04), _rg(0.0, 0.0, 0.0, 0.0)], dish, Transform3D.IDENTITY, 7)
+		_pipe(Vector3(0, 0.05, 0), Vector3(0, 0.32, -0.2), 0.008, Color(0.3, 0.3, 0.32))
+	_flush(_vmat(0.45, 0.2, true))
 
 
 # ── Столбы с проводами и фонарями ──

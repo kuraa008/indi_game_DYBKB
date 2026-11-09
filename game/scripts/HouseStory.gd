@@ -11,6 +11,7 @@ const GY := 0.16   # пол первого этажа
 
 
 static func build(chapter: Node3D) -> void:
+	chapter.add_child(load("res://scripts/FatherYard.gd").new())
 	_names_and_blood(chapter)
 	_claw_marks(chapter, Vector3(-58.84, GY + 2.3, -226.6), 90.0)
 	_claw_marks(chapter, Vector3(-53.16, GY + 2.4, -223.4), -90.0)
@@ -24,25 +25,22 @@ static func _names_and_blood(chapter: Node3D) -> void:
 	var pencil := Color(0.24, 0.22, 0.2)
 	_label(chapter, "СЭМ", Vector3(-70.62, FY + 0.3, wall_z), 0.0, 5.0, pencil, 40, 0.0022, false)
 	_label(chapter, "ИТАН", Vector3(-70.38, FY + 0.19, wall_z), 0.0, -4.0, pencil, 40, 0.0022, false)
-	var blood := Color(0.42, 0.02, 0.02)
-	_label(chapter, "ИТАН, ЕСЛИ ТЫ\nЭТО ЧИТАЕШЬ —\nБЕГИ\nОНО ИДЁТ", Vector3(-69.4, FY + 0.95, wall_z), 0.0, -3.0,
-		blood, 56, 0.0019, true)
-	# Потёки крови вниз от букв
-	var drip_mat := StandardMaterial3D.new()
-	drip_mat.albedo_color = Color(0.32, 0.01, 0.01)
-	drip_mat.roughness = 0.35
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1994
-	for i in range(9):
-		var len := rng.randf_range(0.08, 0.32)
-		var q := MeshInstance3D.new()
-		var qm := QuadMesh.new()
-		qm.size = Vector2(rng.randf_range(0.006, 0.012), len * 0.7)
-		qm.material = drip_mat
-		q.mesh = qm
-		chapter.add_child(q)
-		q.global_position = Vector3(rng.randf_range(-69.75, -69.05), FY + 0.72 - len * 0.35 + rng.randf_range(-0.04, 0.04), wall_z + 0.002)
-		q.rotation_degrees = Vector3.ZERO
+	# Надпись нарисована пальцем: неровные мазки, засохшие края, потёки вниз
+	var blood := StandardMaterial3D.new()
+	blood.albedo_texture = load("res://assets/textures/house/blood_message.png")
+	blood.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	blood.roughness = 0.62
+	blood.metallic_specular = 0.35
+	blood.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	var sheet := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.92, 0.6)
+	quad.material = blood
+	sheet.mesh = quad
+	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	chapter.add_child(sheet)
+	sheet.global_position = Vector3(-69.4, FY + 0.9, wall_z + 0.002)
+	sheet.rotation_degrees = Vector3(0.0, 0.0, -2.0)
 
 
 static func _label(chapter: Node3D, text: String, at: Vector3, yaw: float, roll: float, col: Color, size: int, px: float, outline: bool) -> void:
@@ -66,24 +64,20 @@ static func _label(chapter: Node3D, text: String, at: Vector3, yaw: float, roll:
 	l.rotation_degrees = Vector3(0.0, yaw, roll)
 
 
-# Четыре длинные борозды от когтей, наискось
+# Следы когтей: глубокие рваные борозды, щепки по краям и засохшая кровь
 static func _claw_marks(chapter: Node3D, at: Vector3, yaw: float) -> void:
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0.09, 0.06, 0.04)
-	dark.roughness = 1.0
-	var light := StandardMaterial3D.new()
-	light.albedo_color = Color(0.55, 0.42, 0.3)
-	light.roughness = 1.0
-	var side := Vector3(0.0, 0.0, 1.0) if absf(yaw) == 90.0 else Vector3(1.0, 0.0, 0.0)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = load("res://assets/textures/house/claw_marks.png")
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.95
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	var mark := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.42, 0.58)
+	quad.material = mat
+	mark.mesh = quad
+	mark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	chapter.add_child(mark)
 	var out := Vector3(1.0 if yaw > 0.0 else -1.0, 0.0, 0.0)
-	for k in range(4):
-		var off := side * (k * 0.07 - 0.1) + Vector3.UP * (k * 0.03)
-		for layer in [[dark, Vector2(0.018, 0.75), 0.004], [light, Vector2(0.03, 0.78), 0.002]]:
-			var q := MeshInstance3D.new()
-			var qm := QuadMesh.new()
-			qm.size = layer[1]
-			qm.material = layer[0]
-			q.mesh = qm
-			chapter.add_child(q)
-			q.global_position = at + off + out * layer[2]
-			q.rotation_degrees = Vector3(0.0, yaw, 22.0)
+	mark.global_position = at + out * 0.003
+	mark.rotation_degrees = Vector3(0.0, yaw, fposmod(at.z * 37.0, 14.0) - 7.0)

@@ -3,7 +3,7 @@ extends Node3D
 const TextureHelper = preload("res://scripts/TextureHelper.gd")
 
 # При каждом выпуске новой сборки увеличить GAME_BUILD и число в файле VERSION
-const GAME_BUILD: int = 10
+const GAME_BUILD: int = 11
 const VERSION_URL: String = "https://raw.githubusercontent.com/kuraa008/indi_game_DYBKB/main/VERSION"
 const DOWNLOAD_URL: String = "https://github.com/kuraa008/indi_game_DYBKB/raw/main/game/release.zip"
 
