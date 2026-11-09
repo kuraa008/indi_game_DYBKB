@@ -16,6 +16,16 @@ const GAITS := {
 	"stalk":  {"amp": 0.34, "hunch": 0.72, "lean": 0.06, "swing": 0.14, "out": 0.3,  "raise": 0.42, "jaw": 0.26, "curl": 0.75, "knee": 0.62, "limp": 0.22},
 	"run":    {"amp": 0.95, "hunch": 0.5,  "lean": 0.3,  "swing": 0.95, "out": 0.2,  "raise": 0.1,  "jaw": 0.6,  "curl": 0.25, "knee": 0.3,  "limp": 0.0},
 	"twitch": {"amp": 0.0,  "hunch": 0.38, "lean": 0.04, "swing": 0.0,  "out": 0.2,  "raise": 0.15, "jaw": 0.25, "curl": 0.7,  "knee": 0.2,  "limp": 0.0},
+	# Прислушивается: замер, голова склонена набок
+	"listen": {"amp": 0.0,  "hunch": 0.34, "lean": 0.02, "swing": 0.0,  "out": 0.16, "raise": 0.12, "jaw": 0.18, "curl": 0.62, "knee": 0.28, "limp": 0.0},
+	# Затаился: глубокий присед, руки сложены перед собой
+	"lurk":   {"amp": 0.0,  "hunch": 1.02, "lean": 0.12, "swing": 0.0,  "out": 0.34, "raise": 0.62, "jaw": 0.12, "curl": 0.82, "knee": 2.25, "limp": 0.0},
+	# Крадётся низко и беззвучно
+	"creep":  {"amp": 0.24, "hunch": 0.95, "lean": 0.1,  "swing": 0.06, "out": 0.36, "raise": 0.55, "jaw": 0.2,  "curl": 0.8,  "knee": 1.05, "limp": 0.1},
+	# Рывок на огромной скорости: тело вытянуто вперёд, пасть раскрыта
+	"dash":   {"amp": 1.2,  "hunch": 0.9,  "lean": 0.55, "swing": 1.15, "out": 0.42, "raise": 0.18, "jaw": 1.0,  "curl": 0.12, "knee": 0.55, "limp": 0.0},
+	# Встал как вкопанный после рывка и смотрит
+	"recover":{"amp": 0.0,  "hunch": 0.85, "lean": 0.2,  "swing": 0.0,  "out": 0.46, "raise": 0.2,  "jaw": 0.85, "curl": 0.2,  "knee": 0.7,  "limp": 0.0},
 }
 
 static var _mesh: ArrayMesh = null
@@ -47,6 +57,12 @@ var _gait := "idle"
 var _hands_on := true
 var _stoop := 0.0
 var _stoop_target := 0.0
+var _tilt := 0.0
+var _tilt_side := 1.0
+var _eye_level := 1.0
+var _eye_scale := 1.0
+var _blink := 0.0
+var _next_blink := 4.0
 
 
 func _init() -> void:
@@ -119,18 +135,28 @@ func update_motion(delta: float, gait: String, move_speed: float, rage: float = 
 	_t += delta
 	_stoop = lerpf(_stoop, _stoop_target, minf(1.0, delta * 7.0))
 	var tg: Dictionary = GAITS[_gait]
-	var k := minf(1.0, delta * 3.2)
+	# Рывок и резкая остановка не должны плавно перетекать
+	var k := minf(1.0, delta * (12.0 if _gait in ["dash", "recover"] else 3.2))
 	for key in tg:
 		_p[key] = lerpf(_p[key], tg[key], k)
 	_p["rage"] = lerpf(_p["rage"], rage, k)
 	# Скорость шага считаем от реальной скорости, чтобы ступни не скользили по полу
 	var target_rate := 0.0
 	if move_speed > 0.2:
-		target_rate = minf(move_speed / (maxf(float(_p["amp"]), 0.2) * 0.9 * MODEL_SCALE), 9.5)
+		target_rate = minf(move_speed / (maxf(float(_p["amp"]), 0.2) * 0.9 * MODEL_SCALE), 14.0)
 	_rate = lerpf(_rate, target_rate, minf(1.0, delta * 8.0))
 	phase += delta * _rate
 	_tick_events(delta)
+	var tilt_target := 0.0
+	if _gait == "listen":
+		tilt_target = 0.5 * _tilt_side
+	elif _gait == "lurk":
+		tilt_target = 0.16 * _tilt_side
+	else:
+		_tilt_side = -1.0 if randf() < 0.5 else 1.0
+	_tilt = lerpf(_tilt, tilt_target, minf(1.0, delta * 5.0))
 	_apply_pose(_loco_pose(delta))
+	_update_eyes(delta)
 
 
 func set_look_target(world_point: Variant) -> void:
@@ -145,6 +171,23 @@ func set_look_target(world_point: Variant) -> void:
 # Высота свободного места над полом: если монстр не помещается, он пригибается
 func set_clearance(height: float) -> void:
 	_stoop_target = clampf((FULL_HEIGHT + 0.08 - height) / 0.55, 0.0, 1.0)
+
+
+# Яркость глаз: затаившегося монстра можно заметить только по ним
+func set_eye_glow(level: float) -> void:
+	_eye_level = level
+
+
+func _update_eyes(delta: float) -> void:
+	_eye_scale = lerpf(_eye_scale, _eye_level, minf(1.0, delta * 4.0))
+	_next_blink -= delta
+	if _next_blink <= 0.0:
+		_next_blink = randf_range(2.5, 7.0)
+		_blink = 0.11
+	_blink = maxf(0.0, _blink - delta)
+	for h in halos:
+		h.visible = _blink <= 0.0
+		h.scale = Vector3.ONE * _eye_scale
 
 
 func get_top_height() -> float:
@@ -266,7 +309,18 @@ func _loco_pose(delta: float) -> Dictionary:
 	pz.neck = -(hunch + lean) * 0.85 + 0.08
 	pz.hx = (0.12 if _gait == "stalk" else 0.02) - lean * 0.1
 	pz.hy = sin(_t * 0.45) * 0.2 + _snap + _look_yaw - float(pz.twist) * 0.75
-	pz.hz = sin(_t * 0.7) * 0.07 + 0.06 + _snap * 0.28
+	pz.hz = sin(_t * 0.7) * 0.07 + 0.06 + _snap * 0.28 + _tilt
+	if _gait == "lurk":
+		# Смотрит исподлобья и почти не двигается, только дышит
+		pz.hx = float(pz.hx) + 0.16
+		pz.hy = float(pz.hy) * 0.35 + _look_yaw * 0.65
+		pz.pitch = float(pz.pitch) + sin(_t * 1.15) * 0.022
+	elif _gait == "listen":
+		pz.hx = float(pz.hx) + 0.08
+		pz.hy = float(pz.hy) * 0.3 + _look_yaw * 0.7
+	elif _gait == "recover":
+		pz.hy = _look_yaw
+		pz.hx = float(pz.hx) + 0.1
 	pz.jaw = _p["jaw"]
 	pz.curl_l = _p["curl"]
 	pz.curl_r = float(_p["curl"]) + 0.08
@@ -279,8 +333,9 @@ func _loco_pose(delta: float) -> Dictionary:
 	# Руки болтаются по инерции: у каждой пружина с запаздыванием
 	var swing: float = _p["swing"]
 	var raise: float = _p["raise"]
-	var stf := 80.0 if _gait == "run" else 42.0
-	var dmp := 11.0 if _gait == "run" else 6.5
+	var fast_arms := _gait in ["run", "dash"]
+	var stf := 80.0 if fast_arms else 42.0
+	var dmp := 11.0 if fast_arms else 6.5
 	var dt := minf(delta, 0.05)
 	for i in 2:
 		var ps := s if i == 0 else -s
@@ -294,7 +349,7 @@ func _loco_pose(delta: float) -> Dictionary:
 	pz.rsx = _arm_s[1]
 	pz.lex = _arm_e[0]
 	pz.rex = _arm_e[1]
-	if _gait == "twitch":
+	if _gait in ["twitch", "listen"]:
 		pz.finger_tw = 0.22 * maxf(0.0, sin(_t * 8.5))
 	var gl := _glitch > 0.0 or _gait == "twitch"
 	pz.glitch = gl

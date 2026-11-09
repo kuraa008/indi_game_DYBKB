@@ -4,6 +4,9 @@ const MOVABLE := ["prop_chair", "prop_crate", "prop_barrel", "prop_trash_bin", "
 var actor: CharacterBody3D
 var jobs: Array[Dictionary] = []
 var movable: Array[Node3D] = []
+# Предметы, за которыми можно затаиться. Кусты проходимы: в них прячется целиком.
+const COVER := ["prop_bush_foliage", "prop_bush_dead", "prop_wardrobe", "prop_bookshelf", "prop_fridge", "prop_dresser", "prop_sofa", "prop_armchair", "prop_bed", "prop_crate", "prop_barrel", "prop_tree", "prop_tree_pine", "prop_tree_dead"]
+var cover: Array[Node3D] = []
 var door_timer := 0.0
 var push_timer := 0.0
 
@@ -13,12 +16,15 @@ func _init(owner_body: CharacterBody3D) -> void:
 func scan() -> void:
 	jobs.clear()
 	movable.clear()
+	cover.clear()
 	var scene := actor.get_tree().current_scene
 	if not is_instance_valid(scene):
 		return
 	for node in scene.find_children("*", "Node3D", true, false):
 		if node.has_meta("prefab_type"):
 			var prefab_kind := str(node.get_meta("prefab_type"))
+			if prefab_kind in COVER:
+				cover.append(node)
 			if prefab_kind in MOVABLE:
 				var parts := node.find_children("*", "PhysicsBody3D", true, false)
 				if not parts.is_empty():

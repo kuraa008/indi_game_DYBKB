@@ -127,6 +127,20 @@ func play_creepy_voice(specific_type: String = "") -> void:
 	voice_audio.pitch_scale = randf_range(0.90, 1.05)
 	voice_audio.play()
 
+# Крик, когда заметил игрока: перебивает любой другой звук
+func scream() -> void:
+	if not voice_audio:
+		return
+	var snd: AudioStream = _try_load_res("res://assets/audio/monster/monster_growl.wav")
+	if snd == null:
+		return
+	voice_audio.stop()
+	voice_audio.stream = snd
+	voice_audio.pitch_scale = randf_range(1.25, 1.4)
+	voice_audio.volume_db = 7.0
+	voice_audio.unit_size = 12.0
+	voice_audio.play()
+
 func _try_load_res(path: String) -> Resource:
 	if ResourceLoader.exists(path):
 		return load(path)
@@ -165,11 +179,20 @@ func _animate(delta: float) -> void:
 	var is_hiding_focus := state in [State.INSPECT_HIDING, State.STAKEOUT_HIDING]
 	var working := state == State.ROUTINE and _job_started
 
+	var is_searching := state in [State.SEARCH, State.ALERT, State.INVESTIGATE_BASEMENT]
 	var gait := "idle"
-	if is_moving:
-		if is_hunting and move_vel > 2.6:
+	if state == State.DASH:
+		gait = "recover" if _dash_recover > 0.0 and not is_moving else "dash"
+	elif state == State.LURK:
+		gait = "creep" if is_moving else "lurk"
+	elif state == State.LISTEN:
+		gait = "listen"
+	elif is_moving:
+		if is_hunting and move_vel > 7.3:
+			gait = "dash"
+		elif is_hunting and move_vel > 2.6:
 			gait = "run"
-		elif is_hiding_focus:
+		elif is_hiding_focus or is_searching:
 			gait = "stalk"
 		else:
 			gait = "walk"
@@ -177,6 +200,8 @@ func _animate(delta: float) -> void:
 		gait = "twitch"
 	elif working or is_hunting:
 		gait = "stalk"
+	elif is_searching:
+		gait = "listen"
 
 	_clearance_timer -= delta
 	if _clearance_timer <= 0.0:
@@ -198,7 +223,10 @@ func _animate(delta: float) -> void:
 	var near_cam := false
 	if cam:
 		near_cam = global_position.distance_squared_to(cam.global_position) < 196.0
-		model.set_look_target(cam.global_position if near_cam else null)
+		if state == State.LISTEN and _listen_heard:
+			model.set_look_target(_listen_pos)
+		else:
+			model.set_look_target(cam.global_position if near_cam else null)
 	model.set_hands_animated(near_cam)
 
 	# Шаг на каждый полуоборот цикла походки
@@ -206,7 +234,11 @@ func _animate(delta: float) -> void:
 		var step_phase := int(model.phase / PI)
 		if step_phase != last_step_phase:
 			last_step_phase = step_phase
-			_play_footstep()
+			# Крадётся беззвучно, в рывке топает так, что слышно по всему дому
+			if not _silent:
+				if step_audio:
+					step_audio.volume_db = 2.0 if state == State.DASH else (-11.0 if is_searching else -3.0)
+				_play_footstep()
 
 	# Красный взгляд и свечение глаз следуют за головой
 	var head_pos := to_local(model.get_head_position())
@@ -215,9 +247,17 @@ func _animate(delta: float) -> void:
 	if eye_glow and is_instance_valid(eye_glow):
 		eye_glow.position = head_pos
 
+	# Затаившись, гасит красный свет: выдают его только сами глаза
+	var hiding_light := state == State.LURK
+	model.set_eye_glow(5.0 if hiding_light and not is_moving else (2.6 if hiding_light else 1.0))
+	if eye_spot and is_instance_valid(eye_spot):
+		eye_spot.visible = not hiding_light
 	# Пульсация и яркость красного света глаз и луча взгляда
 	if eye_glow and is_instance_valid(eye_glow):
-		if is_hunting:
+		eye_glow.omni_range = 0.9 if hiding_light else 2.8
+		if hiding_light:
+			eye_glow.light_energy = 0.3
+		elif is_hunting or state == State.DASH:
 			eye_glow.light_energy = 2.2 + sin(anim_t * 6.0) * 0.5
 			if eye_spot and is_instance_valid(eye_spot):
 				eye_spot.light_energy = 3.2
@@ -227,7 +267,8 @@ func _animate(delta: float) -> void:
 				eye_spot.light_energy = 2.4
 
 	# Периодические зловещие звуки скинвокера («тем ближе тем громче»)
-	creepy_timer -= delta
+	if not hiding_light:
+		creepy_timer -= delta
 	if creepy_timer <= 0.0:
 		creepy_timer = randf_range(8.0, 16.0)
 		play_creepy_voice()

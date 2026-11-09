@@ -3,7 +3,8 @@ extends RefCounted
 ## Accumulates knowledge about the player across the session and escalates
 ## difficulty over time.  Attached to EnemyBehavior as `brain`.
 ##
-## Intelligence grows from 0 → 1 over ~60 min of gameplay.
+## Intelligence grows from 0 → 1 over ~25 min of gameplay.
+## It learns only from what the monster has seen or heard.
 ## At low intelligence the monster behaves normally (current baseline).
 ## At high intelligence it patrols hot-zones, checks proven hiding spots,
 ## ignores decoys, predicts player movement and takes shortcuts / flanks.
@@ -12,7 +13,7 @@ extends RefCounted
 const CELL_SIZE := 2.0          # heat-map resolution (metres)
 const HEAT_SAMPLE_INTERVAL := 0.4
 const HEAT_DECAY_RATE := 0.002  # per second — slow fade, hot zones stay
-const MAX_INTELLIGENCE_TIME := 3600.0  # seconds to reach full intelligence
+const MAX_INTELLIGENCE_TIME := 1500.0  # seconds to reach full intelligence
 const PREDICTION_HISTORY := 40  # position snapshots for movement prediction
 const NOISE_MEMORY_TTL := 120.0 # how long we remember a noise event
 const SHORTCUT_COOLDOWN := 4.0  # seconds between shortcut attempts
@@ -43,6 +44,7 @@ var player_trail: Array[Vector3] = []      # recent positions
 var player_velocity_avg := Vector3.ZERO    # smoothed velocity
 var predicted_player_pos := Vector3.ZERO   # where we think the player will be
 var _trail_timer := 0.0
+var _trail_gap := true
 
 # ── Shortcut / flanking ─────────────────────────────────────────────────────
 var shortcut_target := Vector3.ZERO
@@ -117,10 +119,14 @@ func _cell_key(pos: Vector3) -> Vector2i:
 
 func _sample_heat_map() -> void:
 	var player: Variant = _player()
-	if player == null:
+	if player == null or not actor.get("_visible"):
 		return
-	var key := _cell_key(player.global_position)
-	heat_map[key] = float(heat_map.get(key, 0.0)) + 1.0
+	note_player_evidence(player.global_position, 1.0)
+
+## Монстр увидел или услышал игрока в этой точке.
+func note_player_evidence(pos: Vector3, weight: float = 1.0) -> void:
+	var key := _cell_key(pos)
+	heat_map[key] = float(heat_map.get(key, 0.0)) + weight
 
 func _decay_heat_map(elapsed: float) -> void:
 	var decay := HEAT_DECAY_RATE * elapsed
@@ -305,8 +311,13 @@ func get_skepticism_percent() -> float:
 
 func _sample_player_trail() -> void:
 	var player: Variant = _player()
-	if player == null:
+	if player == null or not actor.get("_visible"):
+		_trail_gap = true
 		return
+	# После перерыва старые точки дали бы ложную скорость
+	if _trail_gap:
+		_trail_gap = false
+		player_trail.clear()
 	player_trail.append(player.global_position)
 	if player_trail.size() > PREDICTION_HISTORY:
 		player_trail.pop_front()
@@ -446,7 +457,7 @@ func get_smart_search_points(origin: Vector3, count: int = 6) -> Array[Vector3]:
 
 ## How much faster the monster gets with intelligence (multiplier on speed).
 func speed_multiplier() -> float:
-	return lerpf(1.0, 1.12, intelligence)
+	return lerpf(1.0, 1.06, intelligence)
 
 ## Extra sight range from being more alert.
 func sight_bonus() -> float:
@@ -454,7 +465,7 @@ func sight_bonus() -> float:
 
 ## How long the monster remembers the last seen position (replaces LOST_SIGHT_SECONDS).
 func hunt_memory_time() -> float:
-	return lerpf(10.0, 18.0, intelligence)
+	return lerpf(7.0, 12.0, intelligence)
 
 ## How long the monster searches after losing sight.
 func search_time() -> float:
@@ -519,6 +530,7 @@ func reset() -> void:
 	total_decoys = 0
 	total_real_noises = 0
 	player_trail.clear()
+	_trail_gap = true
 	player_velocity_avg = Vector3.ZERO
 	predicted_player_pos = Vector3.ZERO
 	shortcut_active = false

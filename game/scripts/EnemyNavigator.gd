@@ -8,6 +8,8 @@ const MAX_NODES := 12000
 const NEIGHBORS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]
 var body: CharacterBody3D
 var shape := CapsuleShape3D.new()
+# Тело монстра тоньше капсулы планирования: для шага вперёд хватает тонкой проверки
+var move_shape := CapsuleShape3D.new()
 var path := PackedVector3Array()
 var cursor := 0
 var pending := false
@@ -37,6 +39,19 @@ func _init(actor: CharacterBody3D) -> void:
 	body = actor
 	shape.radius = 0.31
 	shape.height = 1.58
+	move_shape.radius = 0.22
+	move_shape.height = 1.5
+
+# Карта проходимости состоит из островов: пол дома, улица, верх стен. Через остров не дойти.
+func reachable_point(target: Vector3, tolerance: float = 0.9) -> bool:
+	var map := body.get_world_3d().navigation_map
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) <= 0:
+		return true
+	var route := NavigationServer3D.map_get_path(map, body.global_position, target, true)
+	# Сетки здесь нет вообще: судить не о чем
+	if route.size() < 2:
+		return true
+	return route[-1].distance_to(target) < tolerance
 
 func clear() -> void:
 	path.clear()
@@ -83,19 +98,19 @@ func body_clear(pos: Vector3, planning: bool = true) -> bool:
 	q.exclude = door_excluded
 	return body.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
 
-func segment_clear(a: Vector3, b: Vector3, planning: bool = true) -> bool:
+func segment_clear(a: Vector3, b: Vector3, planning: bool = true, thin: bool = false) -> bool:
 	if planning and not _memory_clear(a, b):
 		return false
 	if absf(b.y - a.y) > STEP + 0.15 and a.distance_to(b) < 0.8:
 		return false
 	var q := PhysicsShapeQueryParameters3D.new()
-	q.shape = shape
+	q.shape = move_shape if thin else shape
 	q.transform = Transform3D(Basis.IDENTITY, a + Vector3.UP * 1.14)
 	q.motion = b - a
 	q.collision_mask = 1
 	q.exclude = door_excluded
 	var result := body.get_world_3d().direct_space_state.cast_motion(q)
-	if result[0] < 0.995 or not body_clear(b, planning):
+	if result[0] < 0.995 or not (thin or body_clear(b, planning)):
 		return false
 	# A clear capsule sweep alone would allow shortcuts across pits/stair voids.
 	var previous := a
@@ -121,7 +136,25 @@ func request(target: Vector3, force_grid: bool = false) -> void:
 	goal = target
 	failed = false
 	partial = false
-	cooldown = 0.65
+	cooldown = 0.4
+	# Цель за стеной на другом острове: идти туда бессмысленно, подходит как можно ближе
+	var island_route := _route_to_closest_point(target)
+	if not island_route.is_empty():
+		var floor_target: Variant = floor_at(target)
+		# Цель на том же уровне и недалеко: возможно, туда ведёт дверь, которой нет в навмеше
+		if floor_target != null and absf(floor_target.y - body.global_position.y) < 0.6 and body.global_position.distance_to(target) < 32.0 and body_clear(floor_target):
+			goal = floor_target
+			path.clear()
+			cursor = 0
+			_begin_search(body.global_position)
+			return
+		pending = false
+		path = island_route
+		cursor = 1
+		partial = true
+		failed = true
+		cooldown = 2.0
+		return
 	var grounded: Variant = _approachable_goal(target)
 	# A sound/interaction marker can be inside a wall or over a void.
 	# Reject it immediately instead of searching thousands of impossible cells.
@@ -154,7 +187,7 @@ func request(target: Vector3, force_grid: bool = false) -> void:
 					valid = false
 					break
 				candidate[i] = p
-				if not segment_clear(candidate[i - 1], candidate[i]):
+				if not segment_clear(candidate[i - 1], candidate[i], false, true):
 					valid = false
 					break
 			if valid:
@@ -163,6 +196,16 @@ func request(target: Vector3, force_grid: bool = false) -> void:
 				pending = false
 				return
 	_begin_search(start)
+
+func _route_to_closest_point(target: Vector3) -> PackedVector3Array:
+	var map := body.get_world_3d().navigation_map
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) <= 0:
+		return PackedVector3Array()
+	var route := NavigationServer3D.map_get_path(map, body.global_position, target, true)
+	if route.size() < 2 or route[-1].distance_to(target) < 2.5:
+		return PackedVector3Array()
+	route[0] = body.global_position
+	return route
 
 func _is_furniture_or_door(col: Object) -> bool:
 	if not is_instance_valid(col):
@@ -218,8 +261,6 @@ func _key(pos: Vector3) -> Vector3i:
 	return Vector3i(roundi(pos.x / CELL), roundi(pos.y / STEP), roundi(pos.z / CELL))
 
 func _begin_search(start: Vector3) -> void:
-	path.clear()
-	cursor = 0
 	frontier.clear()
 	points.clear()
 	costs.clear()
@@ -327,6 +368,17 @@ func _finish(key: Vector3i, reached_goal: bool = true) -> void:
 	pending = false
 	failed = false
 
+func is_last_point() -> bool:
+	return cursor >= path.size() - 1
+
+# Насколько резко поворачивает маршрут после текущей точки: 1 прямо, -1 разворот
+func next_turn(direction: Vector3) -> float:
+	if cursor + 1 >= path.size():
+		return 1.0
+	var after := path[cursor + 1] - path[cursor]
+	after.y = 0.0
+	return direction.dot(after.normalized()) if after.length_squared() > 0.001 else 1.0
+
 func next_point() -> Vector3:
 	while cursor < path.size() and body.global_position.distance_to(path[cursor]) < 0.22:
 		cursor += 1
@@ -381,3 +433,17 @@ func _heap_pop() -> Vector3i:
 		i = child
 	frontier[i] = tail
 	return answer
+
+# Пока ищется путь, не стоять столбом: первая точка пути по навмешу
+func quick_step(target: Vector3) -> Variant:
+	var map := body.get_world_3d().navigation_map
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) <= 0:
+		return null
+	var route := NavigationServer3D.map_get_path(map, body.global_position, target, true)
+	# Навмеш туда не ведёт: такой шаг упрётся в стену, лучше подождать сетку
+	if route.size() < 2 or route[-1].distance_to(target) > 1.5:
+		return null
+	for p in route:
+		if Vector2(p.x - body.global_position.x, p.z - body.global_position.z).length() > 0.35:
+			return p
+	return null

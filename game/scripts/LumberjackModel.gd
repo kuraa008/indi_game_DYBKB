@@ -22,6 +22,15 @@ const GUN_POSES := {
 	"run":    {"p": Vector3(0.03, -0.1, 0.22),   "r": Vector3(-0.62, -0.98, 0.55)},
 	"aim":    {"p": Vector3(0.135, 0.085, 0.17), "r": Vector3.ZERO},
 	"reload": {"p": Vector3(0.1, -0.2, 0.24),    "r": Vector3(0.95, -0.4, 0.45)},
+	"winded": {"p": Vector3(0.13, -0.26, 0.2),   "r": Vector3(0.5, -0.62, 0.25)},
+	# Быт: ружьё лежит на коленях, на груди или висит за спиной
+	"sit":      {"p": Vector3(0.0, -0.32, 0.26),  "r": Vector3(0.0, 1.5, 0.0)},
+	"lie":      {"p": Vector3(0.0, -0.1, 0.17),   "r": Vector3(0.0, 1.42, 0.0)},
+	"exercise": {"p": Vector3(0.06, -0.04, -0.21),  "r": Vector3(-1.25, 1.57, 0.0)},
+	"stretch":  {"p": Vector3(0.06, -0.04, -0.21),  "r": Vector3(-1.25, 1.57, 0.0)},
+	"look":     {"p": Vector3(0.13, -0.26, 0.2),  "r": Vector3(0.42, -0.62, 0.25)},
+	"check":    {"p": Vector3(0.1, -0.1, 0.3),    "r": Vector3(0.75, -0.25, 0.1)},
+	"melee":    {"p": Vector3(0.16, 0.12, 0.1),   "r": Vector3(-1.2, -0.3, 0.5)},
 }
 const GAITS := {
 	"idle":   {"amp": 0.0,  "pitch": 0.04, "lean": 0.0,  "knee": 0.1,  "head": 0.0},
@@ -29,6 +38,14 @@ const GAITS := {
 	"run":    {"amp": 0.56, "pitch": 0.24, "lean": 0.18, "knee": 0.36, "head": 0.0},
 	"aim":    {"amp": 0.0,  "pitch": 0.14, "lean": 0.0,  "knee": 0.24, "head": 0.28},
 	"reload": {"amp": 0.0,  "pitch": 0.22, "lean": 0.0,  "knee": 0.2,  "head": 0.32},
+	"winded": {"amp": 0.32, "pitch": 0.36, "lean": 0.08, "knee": 0.24, "head": 0.0},
+	"sit":      {"amp": 0.0, "pitch": -0.05, "lean": 0.0, "knee": 0.1,  "head": 0.0},
+	"lie":      {"amp": 0.0, "pitch": 0.0,   "lean": 0.0, "knee": 0.1,  "head": 0.0},
+	"exercise": {"amp": 0.0, "pitch": 0.06,  "lean": 0.0, "knee": 0.12, "head": 0.0},
+	"stretch":  {"amp": 0.0, "pitch": -0.08, "lean": 0.0, "knee": 0.08, "head": 0.0},
+	"look":     {"amp": 0.0, "pitch": 0.03,  "lean": 0.0, "knee": 0.1,  "head": 0.0},
+	"check":    {"amp": 0.0, "pitch": 0.24,  "lean": 0.0, "knee": 0.14, "head": 0.3},
+	"melee":    {"amp": 0.0, "pitch": 0.2,   "lean": 0.1, "knee": 0.32, "head": 0.0},
 }
 
 static var _mesh: ArrayMesh = null
@@ -54,6 +71,10 @@ var _rec_v := 0.0
 var _flash_a := 0.0
 var _reload_t := 0.0
 var _look_yaw := 0.0
+var _seat := 0.0
+var _lie := 0.0
+var _free_arms := 0.0
+var _melee_t := -1.0
 
 
 func _init() -> void:
@@ -138,9 +159,23 @@ func update_motion(delta: float, mode: String, move_speed: float) -> void:
 	_rate = lerpf(_rate, target_rate, minf(1.0, delta * 8.0))
 	phase += delta * _rate
 	var gt: Dictionary = GUN_POSES[_mode]
-	var gk := minf(1.0, delta * (7.0 if _mode == "aim" else 4.5))
-	_gp = _gp.lerp(gt.p, gk)
-	_gr = _gr.lerp(gt.r, gk)
+	var gun_p: Vector3 = gt.p
+	var gun_r: Vector3 = gt.r
+	var gun_rate := 7.0 if _mode == "aim" else 4.5
+	# Замах занимает треть секунды, затем удар прикладом вперёд
+	if _mode == "melee" and _melee_t >= 0.0:
+		_melee_t += delta
+		gun_rate = 14.0
+		if _melee_t > 0.3:
+			gun_p = Vector3(0.08, 0.02, 0.46)
+			gun_r = Vector3(1.75, -0.4, 0.2)
+			gun_rate = 24.0
+	var gk := minf(1.0, delta * gun_rate)
+	_gp = _gp.lerp(gun_p, gk)
+	_gr = _gr.lerp(gun_r, gk)
+	_seat = lerpf(_seat, 1.0 if _mode == "sit" else 0.0, minf(1.0, delta * 3.5))
+	_lie = lerpf(_lie, 1.0 if _mode == "lie" else 0.0, minf(1.0, delta * 3.5))
+	_free_arms = lerpf(_free_arms, 1.0 if _mode in ["exercise", "stretch"] else 0.0, minf(1.0, delta * 3.5))
 	_rec_v += (-_recoil * 140.0 - _rec_v * 15.0) * minf(delta, 0.033)
 	_recoil += _rec_v * minf(delta, 0.033)
 	_flash_a = maxf(0.0, _flash_a - delta * (30.0 if _flash_a > 0.6 else 14.0))
@@ -149,6 +184,10 @@ func update_motion(delta: float, mode: String, move_speed: float) -> void:
 		flash.scale = Vector3.ONE * (0.6 + _flash_a * 0.6)
 	_reload_t = _reload_t + delta if _mode == "reload" else 0.0
 	_apply(delta)
+
+
+func melee_strike() -> void:
+	_melee_t = 0.0
 
 
 func kick() -> void:
@@ -209,6 +248,21 @@ func _grip(sfx: String, side: float, point: Vector3, hand: Basis) -> void:
 	var fore_q := _ik(sfx, side, wrist)
 	skeleton.set_bone_pose_rotation(_b["hand" + sfx], fore_q.inverse() * Quaternion(hand.orthonormalized()))
 
+# Ружьё за спиной, руки свободны
+func _free_hand(sfx: String, side: float) -> void:
+	var target: Vector3
+	if _mode == "stretch":
+		target = Vector3(side * 0.17, 0.6, 0.02 + sin(_t * 0.9) * 0.06)
+	elif fmod(_t, 16.0) < 8.0:
+		# Приседая, вытягивает руки вперёд
+		target = Vector3(side * 0.19, 0.06, 0.2 + 0.32 * (0.5 - 0.5 * cos(_t * 2.1)))
+	else:
+		# Махи руками
+		target = Vector3(side * 0.3, 0.2 + sin(_t * 2.4) * 0.34, 0.14 + cos(_t * 2.4) * 0.26)
+	var fore_q := _ik(sfx, side, target)
+	skeleton.set_bone_pose_rotation(_b["hand" + sfx], fore_q.inverse())
+
+
 func _apply(_delta: float) -> void:
 	var amp: float = _p["amp"]
 	var knee: float = _p["knee"]
@@ -220,10 +274,27 @@ func _apply(_delta: float) -> void:
 	var br := sin(_t * 1.4)
 
 	var pitch: float = float(_p["pitch"]) + lean + br * 0.006 + absf(s) * 0.012 * k
+	# Зарядка: приседания сменяются махами руками
+	var ex_round := fmod(_t, 16.0) < 8.0
+	var squat := 0.0
+	if _mode == "exercise" and ex_round:
+		squat = (0.5 - 0.5 * cos(_t * 2.1)) * _free_arms
+	knee += squat * 1.55
+	pitch += squat * 0.34
 	var lth := -s * amp - lean * 0.5 - knee * 0.42
 	var rth := s * amp - lean * 0.5 - knee * 0.42
 	var lkn := knee + amp * 1.3 * pow(maxf(0.0, c), 1.3)
 	var rkn := knee + amp * 1.3 * pow(maxf(0.0, -c), 1.3)
+	if _seat > 0.001:
+		lth = lerpf(lth, -1.42, _seat)
+		rth = lerpf(rth, -1.46, _seat)
+		lkn = lerpf(lkn, 1.42, _seat)
+		rkn = lerpf(rkn, 1.5, _seat)
+	if _lie > 0.001:
+		lth = lerpf(lth, -0.06, _lie)
+		rth = lerpf(rth, -0.34, _lie)
+		lkn = lerpf(lkn, 0.14, _lie)
+		rkn = lerpf(rkn, 0.62, _lie)
 	var drop_l := THIGH * cos(lth) + SHIN * cos(lth + lkn)
 	var drop_r := THIGH * cos(rth) + SHIN * cos(rth + rkn)
 	skeleton.set_bone_pose_position(_b["hips"], Vector3(s * 0.03 * k, maxf(drop_l, drop_r) + 0.135, 0.0))
@@ -234,7 +305,12 @@ func _apply(_delta: float) -> void:
 		twist -= 0.22
 	elif _mode == "reload":
 		twist += 0.1
+	elif _mode == "melee":
+		twist += -0.5 if _melee_t < 0.3 else 0.6
 	var roll := s * 0.026 * k
+	if _mode == "stretch":
+		roll += sin(_t * 0.9) * 0.2 * _free_arms
+		twist += sin(_t * 0.45) * 0.22 * _free_arms
 	_rot("spineA", pitch * 0.55, twist * 0.5, roll * 0.5)
 	_rot("chest", pitch * 0.45 - _recoil * 0.5, twist * 0.5, roll * 0.5)
 
@@ -252,6 +328,14 @@ func _apply(_delta: float) -> void:
 		scan = sin(_t * 0.35) * 0.42 + sin(_t * 1.1) * 0.05
 	elif _mode == "walk":
 		scan = sin(_t * 0.55) * 0.26
+	elif _mode == "look":
+		scan = sin(_t * 0.7) * 0.85
+	elif _mode == "sit":
+		scan = sin(_t * 0.22) * 0.2
+	elif _mode == "lie":
+		scan = sin(_t * 0.12) * 0.1
+	elif _mode == "check":
+		scan = sin(_t * 0.4) * 0.08
 	_rot("neck", -pitch * 0.75 + 0.05 + head_aim * 0.45)
 	_rot("head", -0.02 + br * 0.004 - aim_w * 0.1, (scan + _look_yaw) * (1.0 - aim_w) - twist * (1.0 - aim_w) + aim_w * 0.3, -aim_w * 0.2 + sin(_t * 0.7) * 0.018)
 
@@ -272,8 +356,12 @@ func _apply(_delta: float) -> void:
 	# Правая ладонь справа на шейке приклада, пальцы вниз; левая снизу под цевьём
 	var right_hand := Basis(gy.cross(-gx), gy, -gx)
 	var left_hand := Basis((-gx).cross(gy), -gx, gy)
-	_grip("R", 1.0, grip, right_hand)
-	_grip("L", -1.0, fore, left_hand)
+	if _free_arms < 0.5:
+		_grip("R", 1.0, grip, right_hand)
+		_grip("L", -1.0, fore, left_hand)
+	else:
+		_free_hand("R", 1.0)
+		_free_hand("L", -1.0)
 
 # ══════════════════════════════════════════════
 #  Постройка геометрии (использует лофт из SkinwalkerModel)
