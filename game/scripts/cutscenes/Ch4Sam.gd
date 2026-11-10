@@ -9,7 +9,7 @@ extends Cutscene
 
 const WORDS := "ПОЗДНО.\nОНО ИДЁТ.\nОГОНЬ — ОЧАГ."
 const SAM_SEAT := CraneHouse.ELDER
-const SAM_WALL := Vector3(-2.62, 0.0, 1.2)
+const SAM_WALL := Vector3(-2.62, 0.0, 1.62)    # у стены рядом с очагом (очаг Досыма шириной ±1.05 по z)
 const C_ENTER := Vector3(2.35, 1.62, 1.45)
 const C_ACROSS := Vector3(0.1, 1.56, 1.3)
 const C_KNEEL := Vector3(-1.65, 0.98, 1.6)
