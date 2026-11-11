@@ -15,7 +15,7 @@ static func tex(file: String) -> Texture2D:
 
 
 static func wood_mat(file: String, tint: Color = Color.WHITE, scale_uv: float = 1.3, rough: float = 0.82) -> StandardMaterial3D:
-	var key := "wood_%s_%s_%.2f" % [file, tint.to_html(false), scale_uv]
+	var key := "wood_%s_%s_%.2f_%s" % [file, tint.to_html(false), scale_uv, TextureHelper.upgrades_on]
 	if _mats.has(key):
 		return _mats[key]
 	var m := StandardMaterial3D.new()
@@ -374,14 +374,14 @@ static func _dressed_material(src: StandardMaterial3D) -> StandardMaterial3D:
 	elif c.h < 0.14 or c.h > 0.97:
 		if c.v < 0.75 and c.s > 0.28 and c.s < 0.92:
 			file = "wood_furniture.png"
-			tint = Color(c.r * 1.3, c.g * 1.22, c.b * 1.15)
+			tint = Color(c.r * 1.3, c.g * 1.22, c.b * 1.15) if TextureHelper.upgrades_on else Color(c.r * 1.35, c.g * 1.35, c.b * 1.35)
 		else:
 			file = "fabric.png"
 			uv = 7.0
 	else:
 		file = "fabric.png"
 		uv = 7.0
-	var key := "dress_%s_%s_%.1f_%.1f_%.0f" % [file, tint.to_html(false), rough, metal, uv]
+	var key := "dress_%s_%s_%.1f_%.1f_%.0f_%s" % [file, tint.to_html(false), rough, metal, uv, TextureHelper.upgrades_on]
 	if _mats.has(key):
 		return _mats[key]
 	var m := StandardMaterial3D.new()

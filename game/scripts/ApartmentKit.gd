@@ -571,6 +571,8 @@ static var _vmats := {}
 
 
 func _vmat(rough: float, metal: float = 0.0, two_sided: bool = false, kind: String = "") -> StandardMaterial3D:
+	if not TextureHelper.upgrades_on:
+		kind = "none"
 	if kind == "":
 		if metal >= 0.25:
 			kind = "metal"

@@ -176,7 +176,8 @@ func _build_walls() -> void:
 				if l > 0.08:
 					var r := LOG_R * _rng.randf_range(0.94, 1.05)
 					_cy(r, r, l, Vector3((float(c[0]) + float(c[1])) * 0.5, y, z), _charred(), Vector3(0, 0, 90), 9)
-	var along_z := {W: [[DOOR.z - 0.5, DOOR.z + 0.5, 0.0, 2.0]], -W: []}
+	# В западной стене проём под каменный очаг и трубу: камень идёт сквозь стену наружу
+	var along_z := {W: [[DOOR.z - 0.5, DOOR.z + 0.5, 0.0, 2.0]], -W: [[-1.08, 1.08, -1.0, 1.42], [-0.68, 0.68, 1.42, 9.0]]}
 	for x in along_z.keys():
 		for y in _log_rows(LOG_R * 2.0):
 			for c in _cut(-D - over, D + over, along_z[x], y):
@@ -221,6 +222,10 @@ func _build_roof() -> void:
 			var reach := _rng.randf_range(0.48, 0.72) if s < 0.0 else _rng.randf_range(0.2, 0.42)
 			var l := slope_len * reach
 			var c := eave + dir * l * 0.5 + Vector3(0, 0.06, z + w * 0.5)
+			# Над трубой в крыше дыра: доски обходят камень
+			if s < 0.0 and z < 0.72 and z + w > -0.72:
+				z += w
+				continue
 			_bx(Vector3(l, 0.03, w - 0.012), c, _charred().darkened(0.1), Vector3(0, 0, -s * deg + _rng.randf_range(-1.2, 1.2)))
 			z += w
 	# Балка конька обломана с двух сторон
@@ -235,7 +240,10 @@ func _build_roof() -> void:
 			var reach := 0.55 if s < 0.0 else 0.32
 			var bottom := Vector3(s * (W + 0.3), WALL_H + 0.08, z)
 			var top := bottom + Vector3(-s * cos(angle), sin(angle), 0) * slope_len * reach
-			_pipe(bottom, top + Vector3(0, -0.02, _rng.randf_range(-0.04, 0.04)), 0.058, _charred())
+			var wobble := _rng.randf_range(-0.04, 0.04)
+			if s < 0.0 and absf(z) < 0.72:
+				continue
+			_pipe(bottom, top + Vector3(0, -0.02, wobble), 0.058, _charred())
 		k += 1
 		z += D * 0.5
 	# Рухнувшие балки и доски лежат у двери
@@ -390,7 +398,7 @@ func _build_hearth() -> void:
 			var mid := z + w * 0.5
 			if not (absf(mid) < open_half and y < open_top):
 				var near_fire := 1.0 - smoothstep(0.0, 0.95, Vector2(absf(mid) - open_half * 0.6, maxf(y - open_top * 0.6, 0.0)).length())
-				_stone(Vector3(face - 0.27, y, mid), Vector3(0.56, 0.2, w - 0.018), near_fire * 0.8)
+				_stone(Vector3(face - 0.39, y, mid), Vector3(0.8, 0.2, w - 0.018), near_fire * 0.8)
 			z += w
 		y += 0.215
 		row += 1

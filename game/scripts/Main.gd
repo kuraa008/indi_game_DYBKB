@@ -64,6 +64,8 @@ func _ready() -> void:
 		GameManager.active_map_path = map_json_path
 
 	GameManager.reset_state()
+	# На «Шоссе» и во дворе остаются прежние текстуры
+	TextureHelper.upgrades_on = not _is_highway()
 	_setup_world()
 
 	_setup_nav_region()

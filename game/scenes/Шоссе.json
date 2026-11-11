@@ -4665,30 +4665,6 @@
    "visible": true
   },
   {
-   "color": "4a0f0fff",
-   "comment": "",
-   "id": 1196,
-   "lock_id": 0,
-   "name": "Кровь на полу",
-   "position": [
-    -62.6,
-    0.172,
-    -222.9
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "scale": [
-    1.5,
-    0.04,
-    1.5
-   ],
-   "type": "prop_blood_puddle",
-   "visible": true
-  },
-  {
    "color": "6b5d4fff",
    "comment": "",
    "id": 1197,
@@ -4931,30 +4907,6 @@
    "visible": true
   },
   {
-   "color": "4a0f0fff",
-   "comment": "",
-   "id": 1207,
-   "lock_id": 0,
-   "name": "Кровь на плитке",
-   "position": [
-    -68.2,
-    1.5,
-    -225.21
-   ],
-   "rotation": [
-    0.0,
-    180.0,
-    0.0
-   ],
-   "scale": [
-    0.8,
-    1.2,
-    0.05
-   ],
-   "type": "prop_blood_wall",
-   "visible": true
-  },
-  {
    "color": "3d2a22ff",
    "comment": "",
    "id": 1208,
@@ -4976,30 +4928,6 @@
     0.4
    ],
    "type": "prop_bookshelf",
-   "visible": true
-  },
-  {
-   "color": "6b4a2bff",
-   "comment": "",
-   "id": 1209,
-   "lock_id": 0,
-   "name": "Коробка с кассетами",
-   "position": [
-    -54.0,
-    3.83,
-    -230.2
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "scale": [
-    0.8,
-    0.7,
-    0.8
-   ],
-   "type": "prop_crate",
    "visible": true
   },
   {
@@ -5292,30 +5220,6 @@
    "visible": true
   },
   {
-   "color": "2a0f0fff",
-   "comment": "",
-   "id": 1222,
-   "lock_id": 0,
-   "name": "Находки Сэма",
-   "position": [
-    -68.3,
-    3.48,
-    -228.2
-   ],
-   "rotation": [
-    0.0,
-    45.0,
-    0.0
-   ],
-   "scale": [
-    1.0,
-    1.0,
-    0.7
-   ],
-   "type": "prop_occult_altar",
-   "visible": true
-  },
-  {
    "color": "ffe099ff",
    "comment": "",
    "id": 1223,
@@ -5361,54 +5265,6 @@
     0.08
    ],
    "type": "prop_painting_moon",
-   "visible": true
-  },
-  {
-   "color": "6b4a2bff",
-   "comment": "",
-   "id": 1225,
-   "lock_id": 0,
-   "name": "Ящик с плёнками",
-   "position": [
-    -60.0,
-    3.78,
-    -225.8
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "scale": [
-    0.7,
-    0.6,
-    0.7
-   ],
-   "type": "prop_crate",
-   "visible": true
-  },
-  {
-   "color": "63d6c4ff",
-   "comment": "ключ от калитки за домом",
-   "id": 1226,
-   "lock_id": 1,
-   "name": "Ключ от калитки",
-   "position": [
-    -66.5,
-    4.3,
-    -230.3
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "scale": [
-    0.8,
-    1.8,
-    0.8
-   ],
-   "type": "item_key_gold",
    "visible": true
   },
   {
@@ -5901,30 +5757,6 @@
     0.65
    ],
    "type": "prop_trash_bin",
-   "visible": true
-  },
-  {
-   "color": "63d6c4ff",
-   "comment": "лом",
-   "id": 1257,
-   "lock_id": 0,
-   "name": "Лом",
-   "position": [
-    -50.8,
-    1.2,
-    -204.8
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "scale": [
-    0.8,
-    1.8,
-    0.8
-   ],
-   "type": "item_crowbar",
    "visible": true
   },
   {

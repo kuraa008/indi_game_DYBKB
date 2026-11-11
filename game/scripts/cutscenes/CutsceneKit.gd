@@ -30,7 +30,7 @@ static func mat(col: Color, rough: float = 0.85, metal: float = 0.0) -> Standard
 # Текстура с трипланарной проекцией: не тянется на коробках любого размера
 static func tmat(file: String, tint: Color = Color.WHITE, uv: float = 1.0, rough: float = 0.85, normal_file: String = "") -> StandardMaterial3D:
 	var path := file if file.begins_with("res://") else HOUSE + file
-	var key := "t|%s|%s|%.3f|%.2f" % [path, tint.to_html(), uv, rough]
+	var key := "t|%s|%s|%.3f|%.2f|%s" % [path, tint.to_html(), uv, rough, TextureHelper.upgrades_on]
 	if _mats.has(key):
 		return _mats[key]
 	var m := StandardMaterial3D.new()

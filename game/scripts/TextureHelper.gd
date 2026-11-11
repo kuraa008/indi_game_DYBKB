@@ -26,7 +26,7 @@ const UPGRADES := {
 # Подменяет старую текстуру материала на новую из assets/textures/surface
 static func upgrade_material(m: StandardMaterial3D, file: String) -> void:
 	var key := file.get_file()
-	if not UPGRADES.has(key):
+	if not upgrades_on or not UPGRADES.has(key):
 		return
 	var u: Array = UPGRADES[key]
 	var base: String = u[0]
@@ -38,6 +38,53 @@ static func upgrade_material(m: StandardMaterial3D, file: String) -> void:
 	m.normal_enabled = true
 	m.normal_texture = get_texture(SURFACE + normal + ".png")
 	m.normal_scale = u[1]
+
+
+# Старые варианты стен: на карте «Шоссе» новые текстуры не используются
+const LEGACY_WALLS := {
+	"plaster": {
+		"path": "res://assets/textures/house/plaster.png",
+		"triplanar_scale": Vector3(0.3, 0.3, 0.3),
+		"name": "Штукатурка",
+	},
+	"wallpaper_vintage": {
+		"name": "Винтажные обои",
+		"icon": "📜",
+		"path": "res://assets/textures/wallpaper_vintage.png",
+		"roughness": 0.80,
+		"metallic": 0.0,
+		"triplanar_scale": Vector3(0.6, 0.6, 0.6)
+	},
+	"concrete_floor": {
+		"path": "res://assets/textures/house/concrete.png",
+		"triplanar_scale": Vector3(0.25, 0.25, 0.25),
+		"name": "Бетон",
+	},
+	"wood_planks": {
+		"name": "Деревянные доски",
+		"icon": "🪵",
+		"path": "res://assets/textures/wood_planks.png",
+		"normal": "res://assets/textures/nature/wood_planks_n.png",
+		"roughness": 0.75,
+		"metallic": 0.0,
+		"triplanar_scale": Vector3(0.5, 0.5, 0.5)
+	},
+	"concrete_grunge": {
+		"name": "Бетон и штукатурка",
+		"icon": "🏛",
+		"path": "res://assets/textures/concrete_grunge.png",
+		"normal": "res://assets/textures/nature/concrete_grunge_n.png",
+		"roughness": 0.95,
+		"metallic": 0.02,
+		"triplanar_scale": Vector3(0.4, 0.4, 0.4)
+	},
+	"board_weathered": {
+		"path": "res://assets/textures/house/board_weathered.png",
+		"triplanar_scale": Vector3(0.5, 0.5, 0.5),
+		"name": "Старые доски",
+	},
+}
+static var upgrades_on := true
 
 
 const WALL_TEXTURES = {
@@ -220,7 +267,7 @@ static func create_wall_material(texture_key: String, tint_color: Color = Color.
 		mat.albedo_color = tint_color
 		return mat
 
-	var t_info = WALL_TEXTURES.get(texture_key)
+	var t_info = LEGACY_WALLS.get(texture_key) if not upgrades_on and LEGACY_WALLS.has(texture_key) else WALL_TEXTURES.get(texture_key)
 	var t_path = ""
 	if t_info:
 		t_path = t_info["path"]
@@ -255,7 +302,7 @@ static func apply_wall_texture_to_node(node: Node, texture_key: String, tint_col
 	if node == null:
 		return
 	# Один материал на текстуру и оттенок: одинаковые стены рисуются инстансингом
-	var mat_key := "wall|%s|%s" % [texture_key, tint_color.to_html()]
+	var mat_key := "wall|%s|%s|%s" % [texture_key, tint_color.to_html(), upgrades_on]
 	var mat = _wall_mats.get(mat_key)
 	if mat == null:
 		mat = create_wall_material(texture_key, tint_color)

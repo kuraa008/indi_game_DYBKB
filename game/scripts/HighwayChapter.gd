@@ -1,22 +1,19 @@
 class_name HighwayChapter
 extends Node3D
 
-# Пролог на карте «Шоссе»: от аварии до камеры 04.
-# Итан приходит в себя у пикапа, идёт на голос через старый дом и лес,
-# у камеры падает и оборачивается. После скримера начинается 1-й уровень.
+# Глава 1 «Возвращение домой» на карте «Шоссе», по сюжету Досыма.
+# Итан приходит в себя у разбитой машины и идёт к дому отца. На двери полицейская лента,
+# он зовёт в темноту. Комната отца: пустая кровать и улики. Комната Сэма, «наше место»
+# с надписью кровью. Копыта: выключить фонарик и затаиться в углу. Тихий побег, гараж,
+# выглянуть из-за угла, дойти до другого угла — кат-сцена Jan-ky Ch1Corner и подвал.
 
 const WRECK_POS := Vector3(-7.2, 0.0, -247.1)
 const WRECK_ROT := Vector3(-4.0, 34.0, 3.0)    # поворот «Машины Итана» на карте — та же поза, что во вступлении
 const HOUSE_DIR_POS := Vector3(-60.0, 2.0, -225.0)
-const CAMERA_POS := Vector3(-7.4, 0.0, -312.0)
-const NEXT_MAP := "res://scenes/1level.json"
 const BASEMENT_WAKE := Vector3(-58.0, -4.15, -227.5)   # пол подвала под домом, глава 2
 const BASEMENT_LOOK := Vector3(-54.4, -4.15, -221.0)   # взгляд на лестницу к двери
 const FOG_COLOR := Color(0.062, 0.082, 0.125)
-const LOOK_SENS := 0.0022
 
-const NOTE_SAM := "«Ол дыбысты естиді. Ол дауысты қайталайды. Артыңа қарама.»\n\nОно слышит звук. Оно повторяет голос. Не оборачивайся.\n\nКамера 04 стоит на ели у шоссе, за калиткой. Ключ оставляю на столе.\nЕсли ты это читаешь, Итан, уезжай.\n\n— Сэм"
-const NOTE_HALL := "Холлис предупреждал: по ночам дорогу лучше не переходить.\nТой ночью я слышал, как мама зовёт меня из леса.\nМама умерла двенадцать лет назад."
 
 var _player: CharacterBody3D
 var _head: Node3D
@@ -30,18 +27,13 @@ var _warn: Label
 var _sub_tween: Tween
 var _horn: AudioStreamPlayer3D
 var _steam_audio: AudioStreamPlayer3D
-var _heart: AudioStreamPlayer
 var _steam: CPUParticles3D
 var _car_light: SpotLight3D
 var _ethan_car: Node
-var _cam_led: MeshInstance3D
-var _led_light: OmniLight3D
 var _flicker_lights: Array[Light3D] = []
 var _tv_light: OmniLight3D
 var _tv_strip: MeshInstance3D
 var _ending := false
-var _turn_active := false
-var _turned := 0.0
 var _boundary_cd := 0.0
 var _interior: Array = []
 var _interior_on := true
@@ -54,6 +46,24 @@ var _map: Dictionary = {}
 var _segments: Array = []
 var _house_lights: Array[Node3D] = []
 var _candle: OmniLight3D
+
+# Глава 1
+const StorySpot := preload("res://scripts/StorySpot.gd")
+const FRONT_DOOR := Vector3(-53.0, 0.16, -225.0)
+const SAM_DOOR := Vector3(-59.0, 3.48, -228.0)
+const SAM_WARDROBE := Vector3(-70.48, 3.48, -229.85)   # шкаф в углу комнаты Сэма: в нём Итан прячется от существа
+const GARAGE_PEEK := Vector3(-53.6, 0.2, -204.6)
+const CREATURE_WAIT := Vector3(-46.5, 0.0, -199.6)
+const FATHER_LINE := "Прости меня, пап… Я обещал, что буду приезжать. Каждый раз говорил себе: в следующие выходные. А потом перестал даже звонить. Ты ждал меня, а я так и не приехал. Теперь мне некому сказать «прости»."
+const SAM_LINE := "Эх, брат… Ты остался здесь один, а я сбежал. Ты взял всё на себя, а я даже не спросил, как ты. Где же ты, Сэм?.."
+const RULES := "Увидишь чёрного оленя — не останавливайся.\nПозовут по имени — не отзывайся.\nИдёт следом — не оборачивайся."
+var _clues := 0
+var _hide_watch := false
+var _caught := false
+var _creature: Node3D
+var _creature_gait := "idle"
+var _creature_speed := 0.0
+var _spots: Array = []
 
 
 func _ready() -> void:
@@ -70,12 +80,13 @@ func _ready() -> void:
 	_build_trails()
 	_build_crash_effects()
 	_build_house_lights()
-	_build_camera04()
 	_dress_house()
 	preload("res://scripts/HouseStory.gd").build(self)
+	_build_chapter_props()
 	_build_forest()
 	_build_grass()
 	_set_items_still()
+	_open_front_door.call_deferred()
 	_setup_interior()
 	_setup_missions()
 	if _basement_mode:
@@ -284,14 +295,17 @@ func _setup_missions() -> void:
 		add_child(_missions)
 		return
 	_missions.setup([
-		{"text": "Найди хижину", "done": func(): return _pl_pos().x < -38.0},
-		{"text": "Проверь дверь хижины", "done": func(): return _done.has("porch") or GameManager.has_crowbar},
-		{"text": "Найди лом в гараже рядом с хижиной", "done": func(): return GameManager.has_crowbar},
-		{"text": "Сорви доски с парадной двери", "done": func(): return _door_flag(-53.0, -225.0, "door_boards_broken")},
-		{"text": "Войди в хижину", "done": func(): return _done.has("inside")},
-		{"text": "Найди ключ в комнате Сэма на втором этаже", "done": func(): return GameManager.has_key_id(1)},
-		{"text": "Открой калитку в заборе за хижиной", "done": func(): return _door_flag(-60.0, -262.0, "is_open") or _pl_pos().z < -263.0},
-		{"text": "Иди по тропе через лес", "done": func(): return _ending},
+		{"text": "Дойди до дома отца", "done": func(): return _done.has("porch")},
+		{"text": "Позови у двери", "done": func(): return _done.has("called")},
+		{"text": "Поднимись в комнату отца", "done": func(): return _done.has("father")},
+		{"text": "Зайди в комнату Сэма", "done": func(): return _done.has("sam")},
+		{"text": "Найди ваше с Сэмом место", "done": func(): return _done.has("names")},
+		{"text": "Спрячься в шкаф в комнате Сэма", "done": func(): return _done.has("hidden")},
+		{"text": "Не шевелись", "done": func(): return _done.has("creature_gone")},
+		{"text": "Тихо выйди из дома", "done": func(): return _done.has("tripped")},
+		{"text": "Спрячься за гаражом", "done": func(): return _done.has("at_garage")},
+		{"text": "Выгляни из-за угла", "done": func(): return _done.has("peeked")},
+		{"text": "Иди вдоль стены к другому углу", "done": func(): return _ending},
 	])
 	add_child(_missions)
 
@@ -713,10 +727,6 @@ func _build_house_lights() -> void:
 	# Свеча на столе в гостиной
 	_candle = _add_candle(Vector3(-65.6, 0.72, -222.3))
 
-	# Записки: одна в прихожей, вторая на столе Сэма
-	_add_note(Vector3(-53.5, 1.03, -230.0), NOTE_HALL)
-	_add_note(Vector3(-65.5, 4.30, -230.3), NOTE_SAM)
-
 
 func _ceiling_lamp(top: Vector3, on: bool, energy: float) -> void:
 	var cord := MeshInstance3D.new()
@@ -881,70 +891,6 @@ func _add_note(pos: Vector3, text: String) -> void:
 	area.global_position = pos
 
 
-# Камера Сэма на ели у обочины: голый ствол, чтобы лапы не закрывали корпус
-func _build_camera04() -> void:
-	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.27
-	trunk_mesh.bottom_radius = 0.31
-	trunk_mesh.height = 3.6
-	trunk_mesh.radial_segments = 10
-	trunk_mesh.rings = 1
-	trunk_mesh.material = NatureKit._bark_mat()
-	var trunk := StaticBody3D.new()
-	var trunk_mi := MeshInstance3D.new()
-	trunk_mi.mesh = trunk_mesh
-	trunk.add_child(trunk_mi)
-	var col := CollisionShape3D.new()
-	var shape := CylinderShape3D.new()
-	shape.radius = 0.3
-	shape.height = 3.6
-	col.shape = shape
-	trunk.add_child(col)
-	add_child(trunk)
-	trunk.global_position = CAMERA_POS + Vector3.UP * 1.8
-	NatureKit.add_spruce_chunk(self, [[CAMERA_POS + Vector3.UP * 2.7, Vector3(6.5, 13.0, 6.5), 0.6]], true, 0, Color.WHITE, 60.0, 95.0)
-
-	var cam := Node3D.new()
-	add_child(cam)
-	cam.global_position = CAMERA_POS + Vector3(0.36, 1.5, 0.0)
-	cam.rotation_degrees.y = 0.0
-	var case_mat := StandardMaterial3D.new()
-	case_mat.albedo_color = Color(0.16, 0.17, 0.14)
-	case_mat.roughness = 0.8
-	var case_mesh := BoxMesh.new()
-	case_mesh.size = Vector3(0.16, 0.34, 0.24)
-	case_mesh.material = case_mat
-	var case_mi := MeshInstance3D.new()
-	case_mi.mesh = case_mesh
-	cam.add_child(case_mi)
-	var number := Label3D.new()
-	number.text = "04"
-	number.font_size = 40
-	number.pixel_size = 0.004
-	number.outline_size = 8
-	number.modulate = Color(0.92, 0.93, 0.88)
-	number.position = Vector3(0.085, -0.08, 0.0)
-	number.rotation_degrees.y = 90.0
-	cam.add_child(number)
-	var led_mat := StandardMaterial3D.new()
-	led_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	led_mat.albedo_color = Color(1.0, 0.08, 0.05)
-	var led_mesh := SphereMesh.new()
-	led_mesh.radius = 0.016
-	led_mesh.height = 0.032
-	led_mesh.radial_segments = 8
-	led_mesh.rings = 4
-	led_mesh.material = led_mat
-	_cam_led = MeshInstance3D.new()
-	_cam_led.mesh = led_mesh
-	_cam_led.position = Vector3(0.085, 0.12, 0.07)
-	cam.add_child(_cam_led)
-	_led_light = OmniLight3D.new()
-	_led_light.light_color = Color(1.0, 0.1, 0.06)
-	_led_light.light_energy = 0.7
-	_led_light.omni_range = 2.4
-	_led_light.position = Vector3(0.2, 0.12, 0.07)
-	cam.add_child(_led_light)
 
 
 # ─── События ──────────────────────────────────────────────────────────────────
@@ -974,7 +920,7 @@ func _run_start() -> void:
 	await tw.finished
 	_head.rotation = Vector3.ZERO
 	_player.set("is_in_cutscene", false)
-	_say("ИТАН", "…Сэм?", 2.0)
+	_say("ИТАН", "Я знаю эти места… Отцовский дом совсем рядом.", 3.2)
 
 
 # Глава 2: Итан приходит в себя на холодном полу подвала и ничего не помнит
@@ -1009,6 +955,10 @@ func _process(delta: float) -> void:
 	_update_flicker()
 	if is_instance_valid(_player):
 		_update_interior(_player.global_position)
+	if is_instance_valid(_creature):
+		_creature.call("update_motion", delta, _creature_gait, _creature_speed)
+	if _hide_watch and not _caught and is_instance_valid(_player) and not _is_hidden():
+		_on_caught()
 	if _ending or not is_instance_valid(_player) or _player.get("is_in_cutscene") == true:
 		return
 	var pos := _player.global_position
@@ -1037,51 +987,36 @@ func _update_flicker() -> void:
 			_flicker_lights[1].light_energy = 1.1 * n
 	if is_instance_valid(_candle):
 		_candle.light_energy = 1.0 + 0.18 * sin(_t * 11.0) + 0.1 * sin(_t * 27.0)
-	var led_on := fmod(_t, 1.0) < 0.5
-	if is_instance_valid(_cam_led):
-		_cam_led.visible = led_on
-		_led_light.visible = led_on
 
 
 func _update_story(pos: Vector3) -> void:
-	# Сигнал смолкает сам собой, и в тишине лес зовёт по имени
+	# Сигнал смолкает сам собой, дальше только лес
 	if _t > 8.0 and _once("horn_stop"):
 		if is_instance_valid(_horn):
 			_horn.finished.disconnect(_horn.play)
 			_horn.stop()
 			_horn.queue_free()
 			_sound_at("res://assets/audio/intro/horn_die.wav", WRECK_POS + Vector3.UP, -3.0)
-	if _t > 10.0 and _once("voice_1"):
-		_sound_at("res://assets/audio/intro/voice_call.wav", HOUSE_DIR_POS, 0.0)
-		_say("ГОЛОС ИЗ ЛЕСА", "«Итан!.. Итан, я здесь!»", 3.0)
-	if _t > 16.0 and _once("thought_1"):
-		_say("ИТАН", "Это голос Сэма. Вон там тропа и свет в окне.", 3.2)
+	if pos.x < -46.0 and absf(pos.z + 225.0) < 4.0 and pos.y < 2.0 and _once("porch"):
+		_say("ИТАН", "Полицейская лента… Дверь не заперта: здесь уже побывала полиция.", 3.6)
 
-	if pos.x < -20.0 and _once("voice_2"):
-		_say("ГОЛОС ИЗ ДОМА", "«Сюда… Иди ко мне, Итан».", 2.8)
-	if pos.x > -52.6 and pos.x < -49.0 and absf(pos.z + 225.0) < 3.8 and _once("porch"):
-		if not GameManager.has_crowbar:
-			_say("ИТАН", "Дверь заколочена. Нужен лом… В гараже горит свет.", 3.4)
+	var inside := pos.x > -71.0 and pos.x < -53.2 and pos.z > -231.0 and pos.z < -219.0
+	if inside and not _done.has("called") and pos.x < -54.5:
+		_done["called"] = true
+	if inside and pos.y > 2.8 and pos.x < -59.3 and pos.z > -225.0 and _once("father_room"):
+		_say("ИТАН", "Комната отца…", 1.8)
+	if _done.has("father") and inside and pos.y > 2.8 and pos.x < -59.4 and pos.z < -225.3 and _once("sam"):
+		_say("ИТАН", SAM_LINE, 7.2)
+	if _done.has("sam") and inside and pos.y > 2.8 and pos.x > -61.4 and pos.z < -226.6 and pos.z > -229.4 and _t > 0.0 and _once("memory"):
+		_say("ИТАН", "Постой… Наше место. Мы с Сэмом написали там имена — в углу, где никто не заметит.", 4.6)
 
-	# В доме
-	var inside := pos.x > -71.0 and pos.x < -53.0 and pos.z > -231.0 and pos.z < -219.0
-	if inside and _once("inside"):
-		_say("ИТАН", "Сэм?! Это я!", 2.0)
-	if inside and pos.y > 2.8 and _once("upstairs"):
-		_sound_at("res://assets/audio/tv_static.wav", Vector3(-70.3, 4.6, -226.3), -8.0, 0.8, true)
-
-	# Ключ наверху: дом вырубается, а голос теперь звучит прямо за стеной
-	if GameManager.has_key_id(1) and _once("key_taken"):
-		_on_key_taken()
-
-	if pos.z < -264.0 and _once("past_gate"):
-		_say("ГОЛОС ИЗ ЛЕСА", "«Итан!.. Не бойся, иди по тропе».", 3.0)
-	if pos.z < -283.0 and _once("figure"):
-		_flash_figure()
-
-	if pos.z < -300.0 and Vector2(pos.x - CAMERA_POS.x, pos.z - CAMERA_POS.z).length() < 4.2 and _once("ending"):
-		_run_ending()
-
+	# Побег: снаружи Итан бежит и спотыкается
+	if _done.has("creature_gone") and pos.x > -50.0 and pos.y < 1.5 and absf(pos.z + 223.0) < 8.0 and _once("tripped"):
+		_run_trip()
+	if _done.has("tripped") and pos.x > -55.4 and pos.x < -53.2 and pos.z > -212.6 and pos.z < -204.0 and _once("at_garage"):
+		_say("ИТАН", "Сердце колотится… Надо увидеть, что это.", 3.0)
+	if _done.has("peeked") and pos.z < -212.4 and pos.x > -55.4 and pos.x < -52.6 and _once("corner"):
+		_run_corner()
 
 func _update_boundary_hints(pos: Vector3) -> void:
 	if _boundary_cd > 0.0:
@@ -1095,168 +1030,23 @@ func _update_boundary_hints(pos: Vector3) -> void:
 		var a := Vector2(seg[0].x, seg[0].z)
 		var b := Vector2(seg[1].x, seg[1].z)
 		if Geometry2D.get_closest_point_to_segment(p2, a, b).distance_to(p2) < 2.0:
-			_say("ИТАН", "Туда нельзя. Сэм где-то рядом с домом.", 2.4)
+			_say("ИТАН", "Не туда. Сначала дом отца.", 2.4)
 			_boundary_cd = 8.0
 			return
 
 
-func _on_key_taken() -> void:
-	_tv_light.visible = false
-	_tv_strip.visible = false
-	_interior.erase(_tv_light)
-	for n in _house_lights:
-		if is_instance_valid(n):
-			n.visible = false
-			_interior.erase(n)
-	if _flicker_lights.size() > 1:
-		_flicker_lights[1].visible = false
-	_sound("res://assets/audio/monster/basement_door_open.wav", -8.0, 0.8)
-	await get_tree().create_timer(1.4, false).timeout
-	_say("ШЁПОТ", "«Ты нашёл ключ, Итан. Калитка за домом».", 3.2)
-	await get_tree().create_timer(4.2, false).timeout
-	_say("ИТАН", "Сэм так никогда не говорил.", 2.6)
 
 
-# Красные глаза между стволами: появились и пропали
-func _flash_eyes(at: Vector3) -> void:
-	var holder := Node3D.new()
-	add_child(holder)
-	holder.global_position = at
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(1.0, 0.1, 0.05)
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.05
-	mesh.height = 0.1
-	mesh.radial_segments = 8
-	mesh.rings = 4
-	mesh.material = mat
-	for s in [-1.0, 1.0]:
-		var eye := MeshInstance3D.new()
-		eye.mesh = mesh
-		eye.position = Vector3(0.0, 0.0, s * 0.09)
-		holder.add_child(eye)
-	await get_tree().create_timer(1.1, false).timeout
-	holder.queue_free()
 
 
-# Силуэт переходит тропу вдали и исчезает в темноте
-func _flash_figure() -> void:
-	var figure := SkinwalkerModel.new()
-	get_tree().current_scene.add_child(figure)
-	var from := Vector3(-36.0, 0.0, -300.0)
-	var to := Vector3(-22.0, 0.0, -292.0)
-	figure.global_position = from
-	figure.look_at(to, Vector3.UP, true)
-	var light := OmniLight3D.new()
-	light.light_color = Color(0.55, 0.68, 1.0)
-	light.light_energy = 3.0
-	light.omni_range = 8.0
-	figure.add_child(light)
-	light.position = Vector3(0.0, 3.0, 2.0)
-	var tw := create_tween()
-	tw.tween_property(figure, "global_position", to, 2.2)
-	await tw.finished
-	figure.queue_free()
 
 
-func _run_ending() -> void:
-	_ending = true
-	_player.set("is_in_cutscene", true)
-	_player.velocity = Vector3.ZERO
-	# Итан подходит взглядом к камере
-	var to_cam := CAMERA_POS + Vector3(0.36, 1.5, 0.0) - _head.global_position
-	var yaw := atan2(-to_cam.x, -to_cam.z)
-	var tw := create_tween().set_parallel()
-	tw.tween_property(_player, "rotation:y", _player.rotation.y + wrapf(yaw - _player.rotation.y, -PI, PI), 0.8).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(_head, "rotation:x", 0.0, 0.6)
-	await tw.finished
-	_say("ИТАН", "«04»… Это камера Сэма.", 2.2)
-	await get_tree().create_timer(2.4, false).timeout
-
-	# Спотыкается о край асфальта: фонарик улетает, камера у земли
-	_sound("res://assets/audio/player_step.wav", 0.0, 0.55)
-	_drop_flashlight()
-	var fall := create_tween().set_parallel()
-	fall.tween_property(_head, "position:y", 0.55, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fall.tween_property(_head, "rotation:z", deg_to_rad(10.0), 0.42)
-	await fall.finished
-	_heart = AudioStreamPlayer.new()
-	_heart.stream = load("res://assets/heart.mp3")
-	_heart.volume_db = -8.0
-	add_child(_heart)
-	_heart.finished.connect(_heart.play)
-	_heart.play()
-	await get_tree().create_timer(0.7, false).timeout
-	var ahead := -_player.global_transform.basis.z
-	_flash_eyes(_player.global_position + ahead * 11.0 + Vector3.UP * 1.8)
-	await get_tree().create_timer(1.4, false).timeout
-
-	_sound("res://assets/creepy_whisper.mp3", 0.0, 0.92)
-	_say("ШЁПОТ ЗА СПИНОЙ", "«Итан… обернись. Посмотри на меня».", 2.4)
-	await get_tree().create_timer(1.6, false).timeout
-	var warn := create_tween()
-	warn.tween_property(_warn, "modulate:a", 1.0, 0.08)
-	warn.tween_interval(1.2)
-	warn.tween_property(_warn, "modulate:a", 0.0, 0.3)
-	# Дальше решает игрок: можно терпеть, но недолго
-	_turn_active = true
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	var waited := 0.0
-	while _turn_active and waited < 8.0:
-		await get_tree().process_frame
-		waited += get_process_delta_time()
-	if _turn_active:
-		_turn_active = false
-		_say("ИТАН", "…", 0.6)
-		var auto := create_tween()
-		auto.tween_property(_player, "rotation:y", _player.rotation.y + PI, 0.55).set_trans(Tween.TRANS_SINE)
-		await auto.finished
-	_start_scare()
 
 
-func _input(event: InputEvent) -> void:
-	if _turn_active and event is InputEventMouseMotion:
-		var dx: float = event.relative.x * LOOK_SENS
-		_player.rotation.y -= dx
-		_turned += dx
-		if absf(_turned) > 1.5:
-			_turn_active = false
 
 
-func _drop_flashlight() -> void:
-	var hands = _player.get("player_hands")
-	if hands and hands.has_method("set_flashlight_state"):
-		hands.call("set_flashlight_state", false, 0.0)
-	var fl = _player.get("flashlight")
-	if fl:
-		fl.visible = false
-	_player.set("flashlight_on", false)
-	var fwd := -_player.global_transform.basis.z
-	var side := _player.global_transform.basis.x
-	var beam := SpotLight3D.new()
-	beam.light_color = Color(1.0, 0.93, 0.78)
-	beam.light_energy = 3.0
-	beam.spot_range = 16.0
-	beam.spot_angle = 30.0
-	add_child(beam)
-	var at := _player.global_position + fwd * 1.6 + side * 0.5
-	at.y = 0.1
-	beam.global_position = at
-	beam.look_at(at + fwd * 8.0 + Vector3.UP * 1.2, Vector3.UP)
 
 
-func _start_scare() -> void:
-	_warn.modulate.a = 0.0
-	if is_instance_valid(_heart):
-		_heart.finished.disconnect(_heart.play)
-		_heart.stop()
-	if is_instance_valid(_steam_audio):
-		_steam_audio.finished.disconnect(_steam_audio.play)
-		_steam_audio.stop()
-	var scare := SkinwalkerScare.new()
-	add_child(scare)
-	scare.finished.connect(_finish)
 
 
 # После скримера финал из кат-сцены: Итана волокут за ворота, затем он очнётся в подвале дома отца
@@ -1264,3 +1054,395 @@ func _finish() -> void:
 	GameManager.intro_epilogue = true
 	GameManager.wake_in_basement = true
 	get_tree().change_scene_to_file("res://scenes/IntroCutscene.tscn")
+
+
+# ─── Глава 1: дом ─────────────────────────────────────────────────────────────
+
+# Полицейская лента на входе, правила бабушки рукой отца, улики в комнате отца
+func _build_chapter_props() -> void:
+	var tape := StandardMaterial3D.new()
+	tape.albedo_color = Color(0.86, 0.72, 0.08)
+	tape.roughness = 0.6
+	tape.cull_mode = BaseMaterial3D.CULL_DISABLED
+	# Две ленты крест-накрест и одна поперёк проёма, снаружи двери
+	for k in [[1.32, 27.0], [1.32, -27.0], [0.98, 0.0]]:
+		var band := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.006, 0.075, 1.6)
+		mesh.material = tape
+		band.mesh = mesh
+		add_child(band)
+		band.global_position = FRONT_DOOR + Vector3(0.6, float(k[0]), 0.0)
+		band.rotation_degrees = Vector3(float(k[1]), 0.0, 0.0)
+		var text := Label3D.new()
+		text.text = "ПОЛИЦИЯ · НЕ ВХОДИТЬ"
+		text.font_size = 28
+		text.pixel_size = 0.0016
+		text.modulate = Color(0.05, 0.04, 0.02)
+		text.outline_size = 0
+		text.position = Vector3(0.006, 0.0, 0.0)
+		text.rotation_degrees.y = 90.0
+		band.add_child(text)
+	# Правила на стене у входа: тот же текст, что у бабушки на заправке
+	var rules := Label3D.new()
+	rules.text = RULES
+	rules.font_size = 34
+	rules.pixel_size = 0.0019
+	rules.modulate = Color(0.16, 0.13, 0.11, 0.9)
+	rules.outline_size = 0
+	rules.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	add_child(rules)
+	rules.global_position = Vector3(-53.32, 1.55, -227.2)
+	rules.rotation_degrees.y = -90.0
+	# Улики в комнате отца
+	var paper := _flat_mat(Color(0.82, 0.78, 0.68))
+	var dark := _flat_mat(Color(0.12, 0.1, 0.09))
+	_prop(Vector3(0.22, 0.17, 0.02), Vector3(-67.45, 4.32, -219.5), Vector3(-12.0, 160.0, 0.0), _flat_mat(Color(0.32, 0.24, 0.16)))
+	_prop(Vector3(0.18, 0.13, 0.004), Vector3(-67.45, 4.32, -219.49), Vector3(-12.0, 160.0, 0.0), _flat_mat(Color(0.55, 0.5, 0.42)), Vector3(0.0, 0.0, 0.013))
+	_prop(Vector3(0.17, 0.035, 0.24), Vector3(-64.0, 4.25, -219.5), Vector3(0.0, 12.0, 0.0), _flat_mat(Color(0.22, 0.12, 0.07)))
+	_prop(Vector3(0.28, 0.4, 0.008), Vector3(-63.1, 5.05, -219.32), Vector3(0.0, 0.0, 1.5), paper)
+	_prop(Vector3(0.05, 0.022, 0.11), Vector3(-63.25, 4.24, -219.62), Vector3(0.0, -30.0, 0.0), dark)
+	var circle := Label3D.new()
+	circle.text = "○"
+	circle.font_size = 64
+	circle.pixel_size = 0.0016
+	circle.modulate = Color(0.6, 0.05, 0.03)
+	circle.outline_size = 0
+	add_child(circle)
+	circle.global_position = Vector3(-63.05, 4.98, -219.31)
+
+
+func _flat_mat(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	m.roughness = 0.85
+	return m
+
+
+func _prop(size: Vector3, pos: Vector3, rot: Vector3, mat: Material, offset: Vector3 = Vector3.ZERO) -> void:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	box.material = mat
+	mi.mesh = box
+	add_child(mi)
+	mi.global_position = pos
+	mi.rotation_degrees = rot
+	mi.position += mi.global_transform.basis * offset
+
+
+func _spot(pos: Vector3, side: Vector3, action: String, use: Callable) -> StorySpot:
+	var s := StorySpot.new()
+	s.setup(action, use, side)
+	add_child(s)
+	s.global_position = pos
+	_spots.append(s)
+	return s
+
+
+func _drop(s: Variant) -> void:
+	if is_instance_valid(s):
+		s.queue_free()
+
+
+# Дверь не заперта: полиция сняла доски, Итан входит без лома
+func _open_front_door() -> void:
+	for n in get_parent().find_children("*", "Node3D", true, false):
+		if n.has_method("get_door_info") and n.name != "Panel" and n.global_position.distance_to(FRONT_DOOR) < 1.2:
+			n.set("door_boards_broken", true)
+			n.set("requires_boards", false)
+			var boards = n.get_node_or_null("Boards")
+			if boards:
+				boards.queue_free()
+			if not _basement_mode and n.get("is_open") != true:
+				n.call("open_by_enemy", null)
+			break
+	# Лом и ключ от калитки из старого сюжета больше не нужны
+	for n in get_parent().find_children("*", "Area3D", true, false):
+		if n.has_meta("item_type"):
+			var p: Vector3 = (n as Node3D).global_position
+			if p.distance_to(Vector3(-50.8, 1.2, -204.8)) < 1.5 or p.distance_to(Vector3(-66.5, 4.3, -230.3)) < 1.5:
+				n.queue_free()
+	if _basement_mode:
+		return
+	_spot(FRONT_DOOR + Vector3(0.85, 1.0, 0.0), Vector3(0.6, 2.0, 1.8), "Позвать", _on_call)
+	_spot(Vector3(-69.3, 3.95, -220.7), Vector3(2.3, 1.0, 1.7), "Посмотреть на кровать", _on_father_bed)
+	_spot(Vector3(-67.45, 4.32, -219.5), Vector3(0.4, 0.35, 0.3), "Взять фотографию", _on_clue.bind("Семейное фото… Отец, Сэм, я. И ещё кто-то: его лицо зачёркнуто ручкой. Кто это?"))
+	_spot(Vector3(-64.0, 4.26, -219.5), Vector3(0.4, 0.25, 0.4), "Открыть дневник", _on_clue.bind("Дневник отца. Последние страницы вырваны."))
+	_spot(Vector3(-63.1, 5.05, -219.35), Vector3(0.45, 0.55, 0.2), "Посмотреть календарь", _on_clue.bind("Календарь. Обведено число… Это день, когда я разбился на дороге."))
+	_spot(Vector3(-63.25, 4.25, -219.62), Vector3(0.3, 0.2, 0.3), "Включить диктофон", _on_tape)
+	_spot(Vector3(-53.45, 1.55, -227.2), Vector3(0.25, 0.8, 1.2), "Прочитать", _on_clue.bind("Это почерк отца… Те же правила, что у бабушки на заправке. Он знал."))
+	_spot(Vector3(-70.45, 3.7, -230.55), Vector3(0.9, 0.8, 0.5), "Присмотреться к углу", _on_names)
+
+
+func _on_call() -> void:
+	if _done.has("called"):
+		return
+	_done["called"] = true
+	_say("ИТАН", "Здесь кто-нибудь есть?", 2.2)
+	await get_tree().create_timer(2.8, false).timeout
+	_say("", "Тишина.", 1.8)
+
+
+func _on_father_bed() -> void:
+	if _done.has("father"):
+		_say("ИТАН", "Кровать стоит криво… Её двигали. Тяжёлая.", 3.0)
+		return
+	_done["father"] = true
+	_say("ИТАН", "Пустая… Простыня смята, будто он встал минуту назад.", 3.2)
+	await get_tree().create_timer(3.8, false).timeout
+	_say("ИТАН", FATHER_LINE, 8.5)
+
+
+func _on_clue(text: String) -> void:
+	_clues += 1
+	_say("ИТАН", text, 3.6)
+
+
+func _on_tape() -> void:
+	_clues += 1
+	_sound("res://assets/audio/tv_static.wav", -14.0, 1.4)
+	await get_tree().create_timer(0.6, false).timeout
+	_say("ОТЕЦ (ЗАПИСЬ)", "«Сэм, если я не вернусь до рассвета, не открывай подвал».", 4.0)
+
+
+func _on_names() -> void:
+	if not _done.has("sam") or _done.has("names"):
+		return
+	_done["names"] = true
+	_say("ИТАН", "«СЭМ» и «ИТАН»… Детский почерк. А над ними…", 3.2)
+	await get_tree().create_timer(3.6, false).timeout
+	_say("", "«ИТАН, ЕСЛИ ТЫ ЭТО ЧИТАЕШЬ — БЕГИ. ОНО ИДЁТ…»", 4.2)
+	await get_tree().create_timer(4.8, false).timeout
+	_run_hooves(false)
+
+
+# ─── Глава 1: копыта и прятки ─────────────────────────────────────────────────
+
+# Спрятался = сидит в шкафу на втором этаже
+func _is_hidden() -> bool:
+	if _player.get("is_hiding") != true:
+		return false
+	var spot = _player.get("hiding_node")
+	return is_instance_valid(spot) and (spot as Node3D).global_position.y > 3.0
+
+
+func _hoof(kind: String, at: Vector3, db: float) -> void:
+	_sound_at("res://assets/audio/cutscenes/hoof_%s_%d.wav" % [kind, randi() % 4 + 1], at, db, randf_range(0.94, 1.04))
+
+
+func _run_hooves(retry: bool) -> void:
+	_caught = false
+	if not retry:
+		for k in range(4):
+			_hoof("ground", Vector3(-45.0 + k * 0.4, 0.2, -225.0 - k * 0.3), -2.0)
+			await get_tree().create_timer(0.85, false).timeout
+		_say("ИТАН", "…Это не шаги. Копыта.", 2.2)
+		_warn.text = "СПРЯЧЬСЯ"
+		var tw := create_tween()
+		tw.tween_property(_warn, "modulate:a", 1.0, 0.1)
+		tw.tween_interval(1.4)
+		tw.tween_property(_warn, "modulate:a", 0.0, 0.4)
+		await get_tree().create_timer(1.6, false).timeout
+		_sound_at("res://assets/audio/intro/door_creak.wav", FRONT_DOOR + Vector3.UP, -4.0, 0.8)
+		for k in range(3):
+			_hoof("wood", FRONT_DOOR + Vector3(-1.0 - k * 0.9, 0.3, -0.5 - k * 0.6), 0.0)
+			await get_tree().create_timer(0.9, false).timeout
+	# Вверх по лестнице и по коридору, всё ближе и громче
+	var path := [Vector3(-56.0, 0.4, -228.6), Vector3(-56.0, 3.6, -224.6), Vector3(-54.0, 3.6, -225.2), Vector3(-54.0, 3.6, -228.0), Vector3(-58.2, 3.6, -228.0)]
+	var steps := 13
+	for k in range(steps):
+		var u := float(k) / float(steps - 1) * float(path.size() - 1)
+		var a := int(floor(u))
+		var b := mini(a + 1, path.size() - 1)
+		_hoof("wood", (path[a] as Vector3).lerp(path[b], u - a), lerpf(0.0, 5.0, float(k) / steps))
+		await get_tree().create_timer(0.78 - float(k) * 0.015, false).timeout
+	if not _is_hidden():
+		_on_caught()
+		return
+	_done["hidden"] = true
+	# Дверь медленно открывается: в проёме когти, существо осматривает комнату
+	_creature = SkinwalkerModel.new()
+	get_tree().current_scene.add_child(_creature)
+	_creature.global_position = SAM_DOOR + Vector3(0.9, 0.0, 0.0)
+	_dim_outline(_creature)
+	_creature.rotation.y = -PI * 0.5
+	var door := _door_at(SAM_DOOR)
+	if door:
+		door.call("open_by_enemy", _creature)
+	_hide_watch = true
+	_creature_gait = "walk"
+	_creature_speed = 0.5
+	var tw2 := create_tween()
+	tw2.tween_property(_creature, "global_position", SAM_DOOR + Vector3(-0.15, 0.0, 0.0), 1.6)
+	await tw2.finished
+	_creature_gait = "idle"
+	_creature_speed = 0.0
+	_sound_at("res://assets/audio/monster/monster_breath.wav", SAM_DOOR + Vector3(0.0, 2.0, 0.0), -2.0)
+	for look: float in [-PI * 0.25, -PI * 0.75, -PI * 0.5]:
+		var turn := create_tween()
+		turn.tween_property(_creature, "rotation:y", look, 1.0).set_trans(Tween.TRANS_SINE)
+		await turn.finished
+		await get_tree().create_timer(0.6, false).timeout
+		if _caught:
+			return
+	# Ничего не заметило и ушло в соседнюю комнату
+	_creature_gait = "walk"
+	_creature_speed = 0.55
+	var turn_out := create_tween()
+	turn_out.tween_property(_creature, "rotation:y", 0.0, 0.6)
+	await turn_out.finished
+	var away := create_tween()
+	away.tween_property(_creature, "global_position", Vector3(-58.0, 3.48, -222.6), 3.4)
+	await away.finished
+	if _caught:
+		return
+	_hide_watch = false
+	_creature.queue_free()
+	_creature = null
+	for k in range(2):
+		_hoof("muffled", Vector3(-62.0, 3.6, -222.0), -6.0)
+		await get_tree().create_timer(0.9, false).timeout
+	_done["creature_gone"] = true
+	_say("ИТАН", "Ушло в соседнюю комнату… Надо выбираться. Тихо.", 3.4)
+
+
+# В темноте видно только контур и глаза: слабый холодный свет из-за спины
+func _dim_outline(model: Node3D) -> void:
+	model.call("set_eye_glow", 1.0)
+	var rim := OmniLight3D.new()
+	rim.light_color = Color(0.55, 0.66, 0.95)
+	rim.light_energy = 1.1
+	rim.omni_range = 3.2
+	rim.shadow_enabled = false
+	model.add_child(rim)
+	rim.position = Vector3(0.0, 2.2, 0.9)
+
+
+func _door_at(pos: Vector3) -> Node:
+	for n in get_parent().find_children("*", "Node3D", true, false):
+		if n.has_method("get_door_info") and n.name != "Panel" and n.global_position.distance_to(pos) < 1.0:
+			return n
+	return null
+
+
+# Заметило: скример, затем снова в углу, копыта ещё раз поднимаются по лестнице
+func _on_caught() -> void:
+	if _caught:
+		return
+	_caught = true
+	_hide_watch = false
+	_player.set("is_in_cutscene", true)
+	var scare := SkinwalkerScare.new()
+	add_child(scare)
+	await scare.finished
+	scare.queue_free()
+	if is_instance_valid(_creature):
+		_creature.queue_free()
+	_creature = null
+	var door := _door_at(SAM_DOOR)
+	if door and door.get("is_open") == true and door.has_method("interact"):
+		door.call("interact", null)
+	_black.color.a = 1.0
+	_player.global_position = SAM_WARDROBE + Vector3(1.4, 0.1, 0.4)
+	_player.velocity = Vector3.ZERO
+	_player.set("is_in_cutscene", false)
+	var fade := create_tween()
+	fade.tween_property(_black, "color:a", 0.0, 1.2)
+	_say("ИТАН", "Нельзя, чтобы оно меня увидело. В шкаф, быстро…", 3.4)
+	await get_tree().create_timer(4.5, false).timeout
+	_run_hooves(true)
+
+
+# ─── Глава 1: побег ───────────────────────────────────────────────────────────
+
+func _run_trip() -> void:
+	_player.set("is_in_cutscene", true)
+	_player.velocity = Vector3.ZERO
+	_sound("res://assets/audio/player_step.wav", 0.0, 0.55)
+	var fall := create_tween().set_parallel()
+	fall.tween_property(_head, "position:y", 0.7, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fall.tween_property(_head, "rotation:z", deg_to_rad(12.0), 0.3)
+	await fall.finished
+	_say("ИТАН", "Ах!..", 1.2)
+	await get_tree().create_timer(0.9, false).timeout
+	_say("ИТАН", "(зажимает рот) …Поздно. Оно услышало.", 2.6)
+	var up := create_tween().set_parallel()
+	up.tween_property(_head, "position:y", 1.62, 0.6).set_trans(Tween.TRANS_SINE)
+	up.tween_property(_head, "rotation:z", 0.0, 0.6)
+	await up.finished
+	_player.set("is_in_cutscene", false)
+	# Быстрый стук копыт сверху и вниз по лестнице
+	for k in range(9):
+		_hoof("wood", Vector3(-56.0, lerpf(3.6, 0.4, k / 8.0), lerpf(-224.6, -228.6, k / 8.0)), 2.0)
+		await get_tree().create_timer(0.24, false).timeout
+	_say("ИТАН", "К гаражу!", 1.6)
+	# Существо выходит во двор и обходит гараж с другой стороны
+	_creature = SkinwalkerModel.new()
+	get_tree().current_scene.add_child(_creature)
+	_creature.global_position = FRONT_DOOR + Vector3(0.6, -0.16, 0.0)
+	_dim_outline(_creature)
+	_creature_gait = "walk"
+	_creature_speed = 1.1
+	for target: Vector3 in [Vector3(-45.0, 0.0, -219.0), Vector3(-38.6, 0.0, -212.0), Vector3(-38.6, 0.0, -202.0), CREATURE_WAIT]:
+		if _done.has("peeked"):
+			break
+		var from := _creature.global_position
+		_creature.rotation.y = atan2(target.x - from.x, target.z - from.z) + PI
+		var walk := create_tween()
+		walk.tween_property(_creature, "global_position", target, from.distance_to(target) / 2.4)
+		await walk.finished
+	_creature_gait = "idle"
+	_creature_speed = 0.0
+	_spot(GARAGE_PEEK + Vector3(0.1, 1.2, 0.3), Vector3(1.2, 2.0, 1.4), "Выглянуть из-за угла", _on_peek)
+
+
+func _on_peek() -> void:
+	if _done.has("peeked") or not _done.has("at_garage"):
+		return
+	for s in _spots:
+		if is_instance_valid(s) and (s as StorySpot).hint.ends_with("Выглянуть из-за угла"):
+			_drop(s)
+	_player.set("is_in_cutscene", true)
+	if is_instance_valid(_creature):
+		_creature.global_position = CREATURE_WAIT
+		_creature.rotation.y = atan2(-1.0, 0.0)
+	var start := _player.global_position
+	var peek := Vector3(-53.25, start.y, -203.55)
+	var look := CREATURE_WAIT - peek
+	var tw := create_tween().set_parallel()
+	tw.tween_property(_player, "global_position", peek, 0.7).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_player, "rotation:y", atan2(-look.x, -look.z), 0.7).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_head, "rotation:x", 0.12, 0.7)
+	await tw.finished
+	_say("ИТАН", "Высокое… чёрное… неестественно худое. Когти…", 3.0)
+	await get_tree().create_timer(2.6, false).timeout
+	var back := create_tween().set_parallel()
+	back.tween_property(_player, "global_position", Vector3(-53.6, start.y, -205.6), 0.4).set_trans(Tween.TRANS_QUAD)
+	back.tween_property(_player, "rotation:y", 0.0, 0.5)
+	back.tween_property(_head, "rotation:x", 0.0, 0.4)
+	await back.finished
+	_done["peeked"] = true
+	_player.set("is_in_cutscene", false)
+	# Постояло и ушло
+	if is_instance_valid(_creature):
+		_creature_gait = "walk"
+		_creature_speed = 1.0
+		_creature.rotation.y = -PI * 0.5
+		var go := create_tween()
+		go.tween_property(_creature, "global_position", CREATURE_WAIT + Vector3(14.0, 0.0, -1.0), 5.0)
+		go.tween_callback(_creature.queue_free)
+	await get_tree().create_timer(1.4, false).timeout
+	_say("ИТАН", "Ушло… Вдоль стены. Тихо.", 2.6)
+
+
+# За углом его уже ждут: кат-сцена Jan-ky, потом подвал
+func _run_corner() -> void:
+	_ending = true
+	_player.set("is_in_cutscene", true)
+	_player.velocity = Vector3.ZERO
+	for s in _spots:
+		_drop(s)
+	await Cutscene.overlay(self, "res://scenes/cutscenes/Ch1Corner.tscn", {"from_gameplay": true})
+	_black.color.a = 1.0
+	_finish()
