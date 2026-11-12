@@ -7,9 +7,9 @@ extends Cutscene
 # Итан перерезает ремни; Сэм не может стоять, Итан сажает его к стене у очага.
 # Снаружи — стук копыт. Медленный. Уверенный. КОНЕЦ ГЛАВЫ 4.
 
-const WORDS := "ПОЗДНО.\nОНО ИДЁТ.\nОГОНЬ — ОЧАГ."
+const WORDS := CraneHouse.SAM_WORDS
 const SAM_SEAT := CraneHouse.ELDER
-const SAM_WALL := Vector3(-2.62, 0.0, 1.62)    # у стены рядом с очагом (очаг Досыма шириной ±1.05 по z)
+const SAM_WALL := CraneHouse.SAM_WALL
 const C_ENTER := Vector3(2.35, 1.62, 1.45)
 const C_ACROSS := Vector3(0.1, 1.56, 1.3)
 const C_KNEEL := Vector3(-1.65, 0.98, 1.6)
@@ -17,7 +17,7 @@ const C_KNEEL := Vector3(-1.65, 0.98, 1.6)
 var house: Dictionary
 var sam: PlayerModel
 var mouth: MeshInstance3D
-var straps: Array[Node3D] = []
+var straps: Array = []
 var knife_rig: Node3D
 var sw: SkinwalkerModel
 var _pose_from := {}
@@ -51,19 +51,20 @@ func build() -> void:
 	hearth_glow.omni_range = 3.2
 	hearth_glow.position = Vector3(-2.0, 2.1, 0.9)
 	add_child(hearth_glow)
+	# Лунный свет из дыры в крыше над трубой: камни очага должны читаться в его кадре
+	var hearth_key := OmniLight3D.new()
+	hearth_key.light_color = Color(0.62, 0.7, 0.95)
+	hearth_key.light_energy = 1.5
+	hearth_key.omni_range = 3.0
+	hearth_key.position = Vector3(-1.75, 1.45, -0.15)
+	add_child(hearth_key)
 	# Сэм на стуле «Старший»
-	sam = CutsceneCast.sam()
-	add_child(sam)
-	sam.position = SAM_SEAT + Vector3(0, 0, -0.04)
+	# (тот же Сэм с ремнями из оленьей кожи, что сидит в игре до кат-сцены)
+	var tied := CraneHouse.sam_tied(self)
+	sam = tied.sam
+	straps = tied.straps
 	_pose_to = CutsceneCast.sit_tied()
-	CutsceneCast.pose(sam, _pose_to)
 	_add_mouth()
-	# Ремни из оленьей кожи на запястьях
-	var leather := CutsceneKit.mat(Color(0.3, 0.2, 0.13), 0.8)
-	for s in [-1.0, 1.0]:
-		var st := CutsceneKit.box(self, Vector3(0.09, 0.05, 0.07), SAM_SEAT + Vector3(0.21 * s, 0.5, 0.05), leather)
-		CutsceneKit.box(st, Vector3(0.02, 0.18, 0.02), Vector3(0, -0.11, 0), leather)
-		straps.append(st)
 	# Нож в руке Итана (для ремней)
 	knife_rig = Node3D.new()
 	cam.add_child(knife_rig)
@@ -126,7 +127,12 @@ func run() -> void:
 	var amb := loop("amb_crane_house", -12.0, 1.0)
 	handheld = 0.5
 	breathe = 0.9
-	shot(C_ENTER, SAM_SEAT + Vector3(0, 1.05, 0), 54.0)
+	# Из игры камера начинает оттуда, где стоял игрок (если он с той же стороны стола, что и вход)
+	var start := C_ENTER
+	var seen: Vector3 = args.get("cam_pos", C_ENTER)
+	if from_game and seen.z > 0.2 and absf(seen.x) < 2.8 and seen.z < 2.3:
+		start = Vector3(seen.x, 1.62, seen.z)
+	shot(start, SAM_SEAT + Vector3(0, 1.05, 0), 54.0)
 	fade_in(0.6 if from_game else 1.6)
 	sfx("step_grass_1", -16.0)
 	glide(C_ENTER + Vector3(-0.7, 0.0, -0.3), SAM_SEAT + Vector3(0, 1.0, 0), 3.5, 48.0)
@@ -162,13 +168,13 @@ func run() -> void:
 	_writing = false
 	await wait(1.6)
 	# У дальней стены — старый каменный очаг
-	glide(C_ACROSS + Vector3(-0.2, 0, -0.1), CraneHouse.HEARTH + Vector3(0.2, 0.75, 0), 1.6, 50.0)
+	glide(Vector3(0.75, 1.5, 1.35), CraneHouse.HEARTH + Vector3(0.25, 0.95, 0), 1.6, 46.0)
 	await wait(2.4)
 	# Ремни: нож, рывок — ремень падает
 	knife_rig.visible = true
 	shot(SAM_SEAT + Vector3(0.78, 0.98, -0.32), SAM_SEAT + Vector3(0.21, 0.5, 0.05), 46.0)
 	for i in 2:
-		var st := straps[1 - i]
+		var st: Node3D = straps[1 - i]
 		if i == 1:
 			shot(SAM_SEAT + Vector3(-0.78, 0.98, -0.32), SAM_SEAT + Vector3(-0.21, 0.5, 0.05), 46.0)
 		tween_prop(knife_rig, "position", Vector3(0.05, -0.2, -0.38), 0.35)
@@ -183,10 +189,14 @@ func run() -> void:
 	shot(C_ACROSS + Vector3(0.6, -0.1, -0.2), SAM_SEAT + Vector3(0, 0.9, 0), 50.0)
 	_go_pose(CutsceneCast.with(CutsceneCast.sit_table(), {"hips_pos": Vector3(0, -0.25, 0.1), "spineA": Vector3(0.55, 0, 0), "chest": Vector3(0.3, 0, 0), "head": Vector3(0.3, 0, 0), "shL": Vector3(-0.6, 0, -0.3), "shR": Vector3(-0.6, 0, 0.3)}), 0.8)
 	await wait(0.9)
+	# Ноги не держат: сползает со стула вбок, на пол между стулом и очагом
+	shot(SAM_SEAT + Vector3(-1.75, 1.2, -0.95), SAM_SEAT + Vector3(-0.4, 0.5, -0.1), 50.0)
 	sfx("body_slump", -2.0)
-	_go_pose(CutsceneCast.with(CutsceneCast.sit_floor(), {"hips_pos": Vector3(0, -0.84, 0.25)}), 0.35)
+	_go_pose(CutsceneCast.with(CutsceneCast.sit_floor(), {"spineA": Vector3(0.2, 0, 0), "head": Vector3(0.4, 0.1, 0.1)}), 0.4)
+	tween_prop(sam, "position", SAM_SEAT + Vector3(-0.62, 0, -0.14), 0.4, Tween.TRANS_QUAD, Tween.EASE_IN)
+	tween_prop(sam, "rotation_degrees", Vector3(0, 28, 0), 0.4)
 	shake(0.4)
-	await wait(1.2)
+	await wait(1.5)
 	# Итан тащит его к стене у очага
 	black(1.0)
 	sfx("drag_body", -6.0)

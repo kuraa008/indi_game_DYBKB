@@ -1033,6 +1033,8 @@ func _spawn_player() -> void:
 
 	if _is_crane_house():
 		add_child(load("res://scripts/CraneHouseMap.gd").new())
+		# Глава 4: Сэм на стуле «Старший», ремни → кат-сцена Ch4Sam (Jan-ky)
+		add_child(load("res://scripts/cutscenes/CraneHouseSam.gd").new())
 
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
