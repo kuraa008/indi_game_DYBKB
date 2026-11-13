@@ -11,12 +11,20 @@ extends Cutscene
 # args.part: "all" (talk → walk → drive, по умолчанию), "talk", "walk", "drive", "secret",
 # "walk_secret" (talk → walk → secret). Заправка и бабушка — GasStation.gd / CashierModel.gd (Досым).
 # Машина — старая отцовская (из гаража): пока это тот же кузов, что у Итана, другого цвета.
+# Она стоит у колонки носом на юг (Итан едет обратно в город), водительская дверь — к магазину:
+# по дороге от магазина к двери лес с голосом всё время остаётся за спиной.
+#
+# В игре финал идёт на карте «Заправка» (FinaleStation.gd): оттуда приходят
+#   {"part": "talk", "from_gameplay": true}                      — игрок положил деньги на прилавок
+#   {"part": "drive", "from_gameplay": true}                     — сел в машину, не обернувшись
+#   {"part": "secret", "cam_pos": …, "cam_dir": …, "cam_fov": …} — обернулся: кадр продолжает его взгляд
 
 const COUNTER_CAM := Vector3(24.05, 1.6, 1.3)
 const CASHIER_HEAD := Vector3(25.72, 1.5, 1.8)
 const DOOR_IN := Vector3(21.96, 1.6, -3.3)
 const DOOR_OUT := Vector3(20.6, 1.62, -4.4)
-const CAR_AT := Vector3(11.6, 0.0, -3.4)
+const CAR_AT := Vector3(11.3, 0.0, -3.4)
+const CAR_DOOR := Vector3(12.1, 0.0, -3.6)        # водительская дверь, со стороны островка
 const FOREST_VOICE := Vector3(40.0, 2.0, -12.0)
 const DEER_AT := Vector3(37.5, 0.0, -21.0)
 
@@ -47,18 +55,9 @@ func build() -> void:
 	station.build_environment = false
 	station.build_forest = true
 	add_child(station)
-	# Отцовская машина у колонки
-	car = EthanCar.new()
-	add_child(car)
-	car.position = CAR_AT
-	var paint: StandardMaterial3D = car._mats["paint"]
-	paint.albedo_color = Color(0.16, 0.22, 0.17)
-	(car._mats["paint2"] as StandardMaterial3D).albedo_color = Color(0.11, 0.15, 0.12)
-	car.set_lights(false, false)
+	car = father_car(self)
 	# Чёрный олень на опушке за заправкой (виден, только если обернуться)
-	deer_node = CutsceneKit.deer(self, 2.25)
-	deer_node.position = DEER_AT
-	deer_node.rotation_degrees = Vector3(0, -60, 0)
+	deer_node = forest_deer(self)
 	deer_node.visible = false
 	# Деньги в руке
 	money = Node3D.new()
@@ -71,11 +70,30 @@ func build() -> void:
 	for i in 3:
 		CutsceneKit.box(money, Vector3(0.07, 0.002, 0.14), Vector3(0.0, 0.016 + i * 0.002, -0.07), bill, Vector3(0, i * 9, 0))
 	money.visible = false
-	# Путь отъезда — как в начале истории: вдоль островка, через съезд, на шоссе
+	# Путь отъезда — обратно в город: вдоль островка на юг, через южный съезд, на дальнюю полосу
 	path = Curve3D.new()
-	for p in [Vector3(11.6, 0, -3.4), Vector3(11.6, 0, -7.0), Vector3(9.5, 0, -9.4), Vector3(4.0, 0, -9.3), Vector3(1.9, 0, -12.0), Vector3(1.75, 0, -21.0), Vector3(1.75, 0, -140.0)]:
+	for p in [CAR_AT, Vector3(11.3, 0, 3.5), Vector3(10.0, 0, 8.0), Vector3(6.0, 0, 10.6), Vector3(1.5, 0, 11.4), Vector3(-1.2, 0, 14.5), Vector3(-1.75, 0, 22.0), Vector3(-1.75, 0, 160.0)]:
 		path.add_point(p)
 	path.bake_interval = 0.25
+
+
+# Отцовская машина у колонки и олень на опушке: те же, что ставит в игре FinaleStation.gd
+static func father_car(parent: Node) -> EthanCar:
+	var c := EthanCar.new()
+	parent.add_child(c)
+	c.position = CAR_AT
+	c.rotation.y = PI
+	(c._mats["paint"] as StandardMaterial3D).albedo_color = Color(0.16, 0.22, 0.17)
+	(c._mats["paint2"] as StandardMaterial3D).albedo_color = Color(0.11, 0.15, 0.12)
+	c.set_lights(false, 0.0)
+	return c
+
+
+static func forest_deer(parent: Node) -> Node3D:
+	var d := CutsceneKit.deer(parent, 2.25)
+	d.position = DEER_AT
+	d.rotation_degrees = Vector3(0, -60, 0)
+	return d
 
 
 func tick(delta: float) -> void:
@@ -167,7 +185,7 @@ func _walk(stop_halfway: bool) -> void:
 	handheld = 0.6
 	breathe = 0.8
 	fade_in(0.6)
-	var target := CAR_AT + Vector3(2.2, 1.62, -1.2)
+	var target := CAR_DOOR + Vector3(1.0, 1.85, 0.0)
 	move_to(target, 7.0, Tween.TRANS_LINEAR)
 	for i in 4:
 		sfx("res://assets/audio/intro/step_gravel_%d.wav" % (i + 1), -14.0)
@@ -190,8 +208,8 @@ func _drive_off() -> void:
 	sfx("res://assets/audio/intro/car_door.wav", -6.0, 1.0, CAR_AT, 5.0)
 	black(1.0)
 	await wait(0.8)
-	var wide := Vector3(-8.5, 1.65, -13.5)
-	shot(wide, CAR_AT + Vector3(4.0, 1.4, 2.0), 42.0)
+	var wide := Vector3(-8.5, 1.65, 14.5)
+	shot(wide, CAR_AT + Vector3(4.0, 1.4, -2.0), 42.0)
 	handheld = 0.0
 	breathe = 0.0
 	fade_in(1.0)
@@ -200,7 +218,7 @@ func _drive_off() -> void:
 	await wait(2.4)
 	var idle := loop("res://assets/audio/intro/engine_ext.wav", -12.0, 0.4, CAR_AT, 8.0)
 	_drive = true
-	glide(wide + Vector3(0, 0, -0.5), Vector3(1.75, 1.0, -60.0), 9.0, 38.0)
+	glide(wide + Vector3(0, 0, 0.5), Vector3(-1.75, 1.0, 70.0), 9.0, 38.0)
 	var follow_t := 0.0
 	while follow_t < 7.5 and not skipping:
 		follow_t += get_process_delta_time()
@@ -218,20 +236,34 @@ func _drive_off() -> void:
 
 
 func _secret(standalone: bool) -> void:
-	if standalone:
-		shot(CAR_AT + Vector3(4.5, 1.62, -1.0), CAR_AT + Vector3(0, 1.0, 0), 58.0)
+	var seen = args.get("cam_pos")
+	if standalone and seen is Vector3:
+		# Из игры: игрок уже обернулся сам, голос уже прозвучал. Кадр продолжает его взгляд
+		var dir: Vector3 = args.get("cam_dir", Vector3(1, 0, 0))
+		loop("amb_night_wind", -18.0, 0.0)
+		shot(seen, seen + dir * 12.0, args.get("cam_fov", 70.0))
+		handheld = 0.6
+		black(0.0)
+		var st := voice_stream("forest_marta")
+		var at: float = args.get("voice_pos", -1.0)
+		if st and at >= 0.0 and at < st.get_length():
+			_play3d(st, FOREST_VOICE, 10.0, 30.0, BUS_VOICE).seek(at)
+	elif standalone:
+		shot(CAR_DOOR + Vector3(3.6, 1.62, -1.0), CAR_AT + Vector3(0, 1.0, 0), 58.0)
 		handheld = 0.6
 		fade_in(0.6)
 		say_line("forest_marta", "ГОЛОС ИЗ ЛЕСА", "Марта… Марта…", FOREST_VOICE, 10.0, 30.0)
 		await wait(2.2)
 	# Обернулся: на опушке — чёрный олень, глаза человеческие
 	deer_node.visible = true
-	look_to(DEER_AT + Vector3(0, 1.9, 0), 0.9, Tween.TRANS_QUAD, Tween.EASE_IN_OUT)
+	look_to(DEER_AT + Vector3(0, 1.35, 0), 0.9, Tween.TRANS_QUAD, Tween.EASE_IN_OUT)
 	await wait(1.0)
 	silence(0.2)
 	clear_subtitle()
-	tween_prop(self, "cam_fov", 26.0, 2.2, Tween.TRANS_SINE, Tween.EASE_IN)
-	await wait(2.3)
+	# Наезд: олень стоит далеко, поэтому кадр сужается, пока он не займёт треть экрана
+	handheld = 0.15
+	tween_prop(self, "cam_fov", 13.0, 2.4, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	await wait(3.1)
 	sfx("stinger_hit", -2.0)
 	black(1.0)
 	await wait(2.0)

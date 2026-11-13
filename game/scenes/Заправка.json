@@ -1,0 +1,67 @@
+{
+ "boundary": [],
+ "generator": "MapForge",
+ "meta": {
+  "rotations": "градусы (X,Y,Z)",
+  "units": "метры",
+  "up": "Y"
+ },
+ "objects": [
+  {
+   "color": "1a1c16ff",
+   "comment": "Заправка, финал",
+   "id": 7100,
+   "lock_id": 0,
+   "name": "Заправка: основание земли",
+   "position": [
+    0,
+    -0.8,
+    0
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    220,
+    1,
+    220
+   ],
+   "type": "cube",
+   "visible": true
+  },
+  {
+   "color": "8a8378ff",
+   "comment": "Заправка, финал",
+   "id": 7101,
+   "lock_id": 0,
+   "name": "Заправка: Итан у отцовской машины",
+   "position": [
+    13,
+    0.3,
+    -3.8
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.8,
+    1.8,
+    0.8
+   ],
+   "type": "marker_player",
+   "visible": true
+  }
+ ],
+ "sceneComment": "Заправка: финал",
+ "sceneSize": [
+  220,
+  16,
+  220
+ ],
+ "trails": [],
+ "version": 1
+}
