@@ -2,12 +2,11 @@ class_name DebugOverlay
 extends CanvasLayer
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  DebugOverlay.gd — Информационная панель отладки [F1] и хитбоксы/путь [F2]
-#  • F1: Счётчик FPS, состояние и форма ИИ, координаты, объект под ногами,
-#        объект в прицеле, проверка условий побега, ошибки объектов.
-#        Панель полупрозрачная (не перекрывает обзор игры).
-#  • F2: 3D-визуализация хитбоксов и коллизий сквозь стены.
-#  • passai: 3D-визуализация линии траектории движения Скинвокера в реальном времени.
+#  DebugOverlay.gd — панель отладки [F1] и хитбоксы с путём существа [F2]
+#  • F1: производительность (FPS, отрисовки, память), сюжет (карта, глава, задача),
+#        игрок (позиция, состояние, что под прицелом), существо (режим, дистанция,
+#        видит ли игрока, сценарий главы) и короткие проверки.
+#  • F2: 3D-хитбоксы и коллизии сквозь стены, линия пути существа (passai).
 # ══════════════════════════════════════════════════════════════════════════════
 
 var is_hud_visible: bool = false
@@ -40,18 +39,18 @@ func _build_ui() -> void:
 	root_panel.anchor_bottom = 0.0
 	root_panel.offset_left = 20
 	root_panel.offset_top = 20
-	root_panel.offset_right = 480
-	root_panel.offset_bottom = 540
-	root_panel.custom_minimum_size = Vector2(460, 520)
+	root_panel.offset_right = 560
+	root_panel.offset_bottom = 380
+	root_panel.custom_minimum_size = Vector2(540, 0)
 
 	# Полупрозрачный стильный фон со скруглением и аккуратной окантовкой
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.02, 0.03, 0.06, 0.48)
+	style.bg_color = Color(0.03, 0.03, 0.035, 0.78)
 	style.border_width_left = 2
 	style.border_width_right = 2
 	style.border_width_top = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.35, 0.55, 0.85, 0.55)
+	style.border_color = Color(1, 1, 1, 0.08)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -70,7 +69,9 @@ func _build_ui() -> void:
 	info_label.scroll_active = false
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	info_label.add_theme_font_size_override("normal_font_size", 12)
+	info_label.fit_content = true
+	info_label.add_theme_font_size_override("normal_font_size", 13)
+	info_label.add_theme_font_size_override("bold_font_size", 12)
 	root_panel.add_child(info_label)
 
 func _setup_3d_renderer() -> void:
@@ -97,7 +98,7 @@ func toggle_hud() -> void:
 	is_hud_visible = !is_hud_visible
 	visible = is_hud_visible
 	if is_hud_visible and GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
-		GameManager.ui_ref.call("show_hint", "Меню отладки: ВКЛЮЧЕНО [F1]", 2.0)
+		GameManager.ui_ref.call("show_hint", "Отладка: F1 закрыть", 1.5)
 
 func toggle_hitboxes() -> void:
 	is_hitboxes_visible = !is_hitboxes_visible
@@ -126,120 +127,188 @@ func _process(_delta: float) -> void:
 		imm_mesh.clear_surfaces()
 
 func _update_hud_info() -> void:
-	var text = ""
+	var lines: PackedStringArray = []
+	var player = GameManager.player_ref if is_instance_valid(GameManager.player_ref) else null
+	var scene := get_tree().current_scene
 
-	# 1. СИСТЕМА И ПРОИЗВОДИТЕЛЬНОСТЬ
-	var fps = Engine.get_frames_per_second()
-	var frame_ms = 1000.0 / max(1, fps)
-	var fps_color = "#55ff55" if fps >= 55 else ("#ffbb44" if fps >= 30 else "#ff4444")
-	var gfx = GameManager.graphics_quality.to_upper() if GameManager and "graphics_quality" in GameManager else "HIGH"
-	text += "[b][color=#55aaff]═══ [F1] ОТЛАДКА И СИСТЕМА ═══[/color][/b]\n"
-	text += "FPS: [b][color=%s]%d[/color][/b] (%.1f ms) | Качество: %s\n\n" % [fps_color, fps, frame_ms, gfx]
+	# ── Производительность ──
+	var fps := int(round(Engine.get_frames_per_second()))
+	var fps_col := C_OK if fps >= 55 else (C_WARN if fps >= 30 else C_BAD)
+	lines.append(_head("ПРОИЗВОДИТЕЛЬНОСТЬ"))
+	lines.append("FPS %s  ·  кадр %.1f мс  ·  качество %s  ·  VHS %s" % [
+		_col(str(fps), fps_col), 1000.0 / maxf(1.0, float(fps)), str(GameManager.graphics_quality).to_upper(),
+		"вкл" if GameManager.vhs_enabled else "выкл"])
+	lines.append("Отрисовок %d  ·  объектов %d  ·  память %.0f МБ" % [
+		int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
+		Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0])
 
-	# 2. ИГРОК И КООРДИНАТЫ
-	var player = GameManager.player_ref if GameManager else null
-	if player and is_instance_valid(player):
-		var p_pos = player.global_position
-		var p_vel = player.velocity
-		var cam: Camera3D = null
-		if player.has_node("Head/Camera"):
-			cam = player.get_node("Head/Camera") as Camera3D
-		elif player.has_node("Camera"):
-			cam = player.get_node("Camera") as Camera3D
-		elif player.has_node("Camera3D"):
-			cam = player.get_node("Camera3D") as Camera3D
-		elif player.find_child("Camera", true, false):
-			cam = player.find_child("Camera", true, false) as Camera3D
+	# ── Сюжет ──
+	lines.append("")
+	lines.append(_head("СЮЖЕТ"))
+	lines.append("Карта: %s" % _col(str(GameManager.active_map_path).get_file().get_basename(), C_VALUE))
+	var chapter := _chapter_name(scene)
+	lines.append("Глава: %s" % (_col(chapter, C_VALUE) if chapter != "" else _col("нет сюжетного скрипта", C_DIM)))
+	var task := _current_task(scene)
+	lines.append("Задача: %s" % (_col(task, C_VALUE) if task != "" else _col("нет", C_DIM)))
+	var flags: PackedStringArray = []
+	if GameManager.is_godmode:
+		flags.append("обычная смерть выключена (поимку решает глава)" if _director_info(scene) != "" else "бессмертие")
+	if GameManager.is_no_ai:
+		flags.append("ИИ выключен")
+	if GameManager.is_noclip:
+		flags.append("noclip")
+	if Phone.is_ringing():
+		flags.append("звонит телефон")
+	if not flags.is_empty():
+		lines.append("Флаги: %s" % _col(", ".join(flags), C_WARN))
 
-		var pitch_deg = cam.rotation_degrees.x if cam else 0.0
-		var yaw_deg = player.rotation_degrees.y
-
-		var stance = "ОБЫЧНЫЙ"
-		if player.get("is_hiding") == true:
-			stance = "В УКРЫТИИ (Шкаф/Кровать)"
-		elif player.get("is_crouching") == true:
-			stance = "ПРИСЕД (Ctrl)"
-		elif p_vel.length() > 4.6:
-			stance = "СПРИНТ (Shift)"
-
-		var noclip_str = " [color=#44ffbb][NOCLIP][/color]" if (GameManager and GameManager.is_noclip) else ""
-		var god_str = " [color=#ff5588][GODMODE][/color]" if (GameManager and GameManager.is_godmode) else ""
-		var batt_val = player.get("flash_battery")
-		var batt_pct = batt_val if batt_val != null else 100.0
-
-		text += "[b][color=#eedd88]► ИГРОК[/color][/b]%s%s\n" % [noclip_str, god_str]
-		text += "Позиция: [color=#55ffdd]X: %.2f,  Y: %.2f,  Z: %.2f[/color]\n" % [p_pos.x, p_pos.y, p_pos.z]
-		text += "Скорость: [color=#88ff88]%.2f м/с[/color] | Взгляд: Yaw: %.1f°, Pitch: %.1f°\n" % [p_vel.length(), yaw_deg, pitch_deg]
-		text += "Стойка: %s | Фонарик: %s (%.0f%%)\n\n" % [
-			stance,
-			"ВКЛ" if player.get("flashlight_on") else "ВЫКЛ",
-			batt_pct
-		]
-
-		# 3. НА ЧЁМ СТОИМ
-		var ground_info = _get_player_ground_info(player)
-		text += "[b][color=#eedd88]► ОБЪЕКТ ПОД НОГАМИ[/color][/b]\n"
-		text += ground_info + "\n\n"
-
-		# 4. НА ЧТО СМОТРИМ
-		var look_info = _get_player_look_info(player, cam)
-		text += "[b][color=#eedd88]► ОБЪЕКТ В ПРИЦЕЛЕ[/color][/b]\n"
-		text += look_info + "\n\n"
+	# ── Игрок ──
+	lines.append("")
+	lines.append(_head("ИГРОК"))
+	if player == null:
+		lines.append(_col("нет игрока в сцене", C_DIM))
 	else:
-		text += "[color=#ff5555]Игрок не найден в сцене.[/color]\n\n"
+		var p: Vector3 = player.global_position
+		lines.append("Позиция %s  ·  скорость %.1f м/с" % [_col("%.1f, %.1f, %.1f" % [p.x, p.y, p.z], C_VALUE), Vector2(player.velocity.x, player.velocity.z).length()])
+		lines.append("Состояние: %s  ·  фонарик %s" % [_col(_player_state(player), C_VALUE), "вкл" if player.get("flashlight_on") == true else "выкл"])
+		lines.append("Под ногами: %s" % _get_player_ground_info(player))
+		lines.append("В прицеле: %s" % _get_player_target_info(player))
 
-	# 5. ИИ ВРАГА
-	var enemy = GameManager.enemy_ref if GameManager else null
-	text += "[b][color=#ff7777]► ИИ ВРАГА (СКИНВОКЕР)[/color][/b]\n"
-	if enemy and is_instance_valid(enemy):
-		var e_state_name = _get_enemy_state_name(enemy)
-		var e_pos = enemy.global_position
-		var e_dist = e_pos.distance_to(player.global_position) if (player and is_instance_valid(player)) else 0.0
-		var can_see = enemy.call("_can_see_player") if enemy.has_method("_can_see_player") else false
-		var see_str = "[color=#ff3333]ДА (ВИДИТ!)[/color]" if can_see else "[color=#88aa88]НЕТ[/color]"
-		var noai_str = " [color=#ffdd55][ЗАМОРОЖЕН][/color]" if (GameManager and GameManager.is_no_ai) else ""
-		var passai_str = " [color=#ffaa33][PASS-AI ON][/color]" if (GameManager and GameManager.show_ai_path) else ""
-
-		text += "Режим / Форма: [b][color=#ff5555]%s[/color][/b]%s%s\n" % [e_state_name, noai_str, passai_str]
-		var thought_str = enemy.call("get_current_thought") if enemy.has_method("get_current_thought") else ""
-		if thought_str != "":
-			text += "[Мысль] [color=#ffdd66]%s[/color]\n" % thought_str
-		text += "Позиция: (%.1f, %.1f, %.1f) | До игрока: [b]%.1f м[/b]\n" % [e_pos.x, e_pos.y, e_pos.z, e_dist]
-		text += "Прямой контакт: %s | Скорость: %.1f м/с\n\n" % [see_str, enemy.velocity.length()]
+	# ── Существо ──
+	lines.append("")
+	lines.append(_head("СУЩЕСТВО"))
+	var enemy = GameManager.enemy_ref if is_instance_valid(GameManager.enemy_ref) else null
+	if enemy == null:
+		lines.append(_col("на этой карте его нет", C_DIM))
+	elif not enemy.visible:
+		lines.append(_col("не здесь: ходит наверху / ждёт", C_DIM) + _director_info(scene))
 	else:
-		text += "Враг отсутствует в сцене.\n\n"
+		var dist: float = enemy.global_position.distance_to(player.global_position) if player else 0.0
+		var sees: bool = enemy.has_method("_can_see_player") and bool(enemy.call("_can_see_player"))
+		lines.append("Режим: %s%s" % [_col(_get_enemy_state_name(enemy), C_BAD if int(enemy.get("state")) in [3, 6, 12] else C_VALUE), _director_info(scene)])
+		lines.append("До игрока %s  ·  видит игрока: %s  ·  скорость %.1f м/с" % [
+			_col("%.1f м" % dist, C_BAD if dist < 4.0 else C_VALUE), _col("ДА", C_BAD) if sees else "нет", enemy.velocity.length()])
+		var thought = enemy.call("get_current_thought") if enemy.has_method("get_current_thought") else ""
+		if str(thought) != "":
+			lines.append("Мысль: %s" % _col(str(thought), C_DIM))
 
-	# 6. УСЛОВИЯ ПОБЕГА
-	text += "[b][color=#77dd77]► УСЛОВИЯ ПОБЕГА[/color][/b]\n"
-	if GameManager:
-		var pwr = "ВКЛ (Свет)" if GameManager.room_lights_on else "ВЫКЛ (Темно)"
-		var brd = "СОРВАНЫ (Лом)" if GameManager.door_boards_broken else "ЗАКОЛОЧЕНО"
-		var keys_list = GameManager.keys_inventory
-		var keys = str(keys_list) if not keys_list.is_empty() else "НЕТ"
-		text += "Свет в доме: %s | Батареи: %d/3\n" % [pwr, GameManager.battery_cells]
-		text += "Доски: %s | Ключи: %s\n" % [brd, keys]
-		text += "Шифр сейфа: [color=#ffdd44]%s[/color] | Бутылок: %d\n\n" % [GameManager.safe_code, GameManager.throwables_count]
+	# ── Проверки ──
+	var problems: PackedStringArray = []
+	if player and player.global_position.y < -15.0:
+		problems.append("игрок провалился под карту")
+	if scene and scene.find_child("NavRegion", true, false) == null and enemy != null:
+		problems.append("нет навигационной сетки: существо не найдёт путь")
+	if fps > 0 and fps < 30:
+		problems.append("FPS ниже 30")
+	lines.append("")
+	lines.append(_head("ПРОВЕРКИ"))
+	lines.append(_col("всё в порядке", C_OK) if problems.is_empty() else _col("; ".join(problems), C_BAD))
+	lines.append(_col("F1 закрыть  ·  F2 хитбоксы и путь существа", C_DIM))
+	info_label.text = "\n".join(lines)
 
-	# 7. ДИАГНОСТИКА И ОШИБКИ
-	text += "[b][color=#55aaff]► ЦЕЛОСТНОСТЬ И ОШИБКИ[/color][/b]\n"
-	var checks: Array[String] = []
-	var cur_scene = get_tree().current_scene if get_tree() else null
-	if cur_scene and is_instance_valid(cur_scene):
-		var nav = cur_scene.find_child("NavRegion", true, false) as NavigationRegion3D
-		if nav and nav.navigation_mesh:
-			checks.append("[OK] Навмеш: Сгенерирован (размер ячейки 0.1м)")
-		else:
-			checks.append("[!] Навмеш: Не найден в активной сцене")
-	else:
-		checks.append("[!] Сцена ожидает загрузки")
 
-	if player and is_instance_valid(player) and player.global_position.y < -15.0:
-		checks.append("[X] ОШИБКА: Игрок провалился под карту!")
-	elif player and is_instance_valid(player):
-		checks.append("[OK] Позиция игрока: В пределах карты")
+const C_HEAD := "#d8d4c8"
+const C_VALUE := "#e9e6dc"
+const C_DIM := "#8a8780"
+const C_OK := "#7fcf8a"
+const C_WARN := "#e2b75a"
+const C_BAD := "#e06a5c"
 
-	text += "\n".join(checks)
-	info_label.text = text
+
+func _head(title: String) -> String:
+	return "[b][color=%s]%s[/color][/b]" % [C_HEAD, title]
+
+
+func _col(text: String, color: String) -> String:
+	return "[color=%s]%s[/color]" % [color, text]
+
+
+# Сюжетный скрипт сцены: по имени узла, который ставит Main
+func _chapter_name(scene: Node) -> String:
+	if scene == null:
+		return ""
+	var known := [
+		["HouseChapter3", "3 · комната отца"],
+		["BasementChapter", "2 · подвал"],
+		["PrologueApartment", "пролог · квартира"],
+		["StreetCar", "пролог · улица"],
+		["CraneHouseSam", "4 · дом Крейна"],
+		["FinaleStation", "финал · заправка"],
+		["HighwayChapter", "1 · дом отца"],
+	]
+	for pair in known:
+		var node := scene.get_node_or_null(pair[0])
+		if node != null and (not ("visible" in node) or bool(node.get("visible"))):
+			return pair[1]
+	return ""
+
+
+func _current_task(scene: Node) -> String:
+	if scene == null:
+		return ""
+	for tracker in scene.find_children("*", "MissionTracker", true, false):
+		if is_instance_valid(tracker) and tracker.visible and not tracker.is_queued_for_deletion() and tracker.has_method("current_text"):
+			var text := str(tracker.call("current_text"))
+			if text != "":
+				return text
+	return ""
+
+
+func _player_state(player: Node) -> String:
+	if player.get("is_dead") == true:
+		return "погиб"
+	if player.get("is_in_cutscene") == true:
+		return "кат-сцена"
+	if player.get("is_hiding") == true:
+		return "в укрытии"
+	if Phone.is_open():
+		return "в телефоне"
+	if GameManager.is_reading_note:
+		return "читает записку"
+	if GameManager.is_backpack_open:
+		return "окно открыто (рюкзак, записка, замок)"
+	if player.get("is_crouching") == true:
+		return "присел"
+	if player.get("is_sprinting") == true:
+		return "бежит"
+	return "идёт" if Vector2(player.velocity.x, player.velocity.z).length() > 0.3 else "стоит"
+
+
+# То, с чем игрок взаимодействует, и подсказка, которую он видит
+func _get_player_target_info(player: Node) -> String:
+	var target: Node = player.call("_get_interactable") if player.has_method("_get_interactable") else null
+	if target == null:
+		return _col("ничего", C_DIM)
+	var hint := ""
+	var n: Node = target
+	for _i in range(4):
+		if n == null:
+			break
+		if n.has_method("get_interaction_hint"):
+			hint = str(n.call("get_interaction_hint"))
+			break
+		n = n.get_parent()
+	var kind := str(target.get_meta("item_type", ""))
+	var dist: float = (target as Node3D).global_position.distance_to(player.global_position) if target is Node3D else 0.0
+	var label := hint if hint != "" else str(target.name)
+	return "%s  ·  %.1f м%s" % [_col(label.strip_edges(), C_VALUE), dist, (" · " + kind) if kind != "" else ""]
+
+
+# Сценарий главы, который ведёт существо (подвал или дом)
+func _director_info(scene: Node) -> String:
+	if scene == null:
+		return ""
+	for path in ["HouseChapter3/BasementCreature", "BasementChapter/BasementCreature"]:
+		var cr := scene.get_node_or_null(path)
+		if cr == null:
+			continue
+		if cr.get("mode") != null:
+			return "  ·  обход: " + ("ходит по кругу" if str(cr.get("mode")) == "patrol" else "ищет / гонится") + "  ·  поймал раз: %d" % int(cr.get("catches"))
+		var phases := ["ждёт наверху", "спускается (начало)", "идёт к месту пробуждения", "нюхает", "зовёт голосом Сэма", "уходит", "стучит наверху", "проверяет подвал", "уходит наверх"]
+		var ph := int(cr.get("phase"))
+		return "  ·  сценарий: %s  ·  поймал раз: %d" % [phases[ph] if ph < phases.size() else str(ph), int(cr.get("catches"))]
+	return ""
 
 func _get_player_ground_info(player: CharacterBody3D) -> String:
 	if not player or not is_instance_valid(player):
@@ -254,6 +323,8 @@ func _get_player_ground_info(player: CharacterBody3D) -> String:
 		var collider = col.get_collider()
 		if collider and is_instance_valid(collider):
 			var c_name = collider.name
+			if str(c_name).begins_with("@"):
+				c_name = "пол карты"
 			var it = collider.get_meta("item_type") if collider.has_meta("item_type") else ""
 			var meta_str = " (тип: %s)" % str(it) if str(it) != "" else ""
 			var pos_str = ""
@@ -264,62 +335,15 @@ func _get_player_ground_info(player: CharacterBody3D) -> String:
 
 	return "[color=#88ffaa]Пол / Земля[/color]"
 
-func _get_player_look_info(player: CharacterBody3D, cam: Camera3D) -> String:
-	if not cam or not is_instance_valid(cam):
-		return "Камера недоступна"
-	if not player or not is_instance_valid(player) or not player.is_inside_tree():
-		return "Игрок вне сцены"
-
-	var space = player.get_world_3d().direct_space_state if player.get_world_3d() else null
-	if not space:
-		return "Физическое пространство недоступно"
-
-	var from = cam.global_position
-	var to = from - cam.global_transform.basis.z * 15.0
-	var q = PhysicsRayQueryParameters3D.create(from, to, 1)
-	var exc: Array[RID] = []
-	if player:
-		exc.append(player.get_rid())
-	q.exclude = exc
-	q.collide_with_areas = true
-	var hit = space.intersect_ray(q)
-
-	if hit.is_empty() or not hit.collider:
-		return "[color=#778899]Пусто (дальше 15м)[/color]"
-
-	var col = hit.collider
-	if not is_instance_valid(col):
-		return "[color=#778899]Пусто[/color]"
-	var dist = from.distance_to(hit.position)
-	var c_name = col.name
-	var p_node = col.get_parent()
-	var it = col.get_meta("item_type") if col.has_meta("item_type") else ""
-	if str(it) == "" and p_node and is_instance_valid(p_node) and p_node.has_meta("item_type"):
-		it = p_node.get_meta("item_type")
-
-	var extra = ""
-	if col.has_method("is_door_locked"):
-		var locked = col.call("is_door_locked")
-		extra += " | Дверь: " + ("[color=#ff5555]ЗАПЕРТА[/color]" if locked else "[color=#55ff55]ОТКРЫТА[/color]")
-	elif col.has_meta("is_powered"):
-		extra += " | Питание: " + str(col.get_meta("is_powered"))
-
-	return "[b][color=#55ffdd]%s[/color][/b] (дист: %.1fм)%s%s" % [c_name, dist, (" [тип: " + str(it) + "]") if str(it) != "" else "", extra]
-
 func _get_enemy_state_name(enemy: Node) -> String:
 	var state_val = enemy.get("state")
 	if state_val == null:
-		return "НЕИЗВЕСТНО"
-	match state_val:
-		0: return "ПАТРУЛЬ (PATROL)"
-		1: return "ДОМАШНИЕ ДЕЛА (ROUTINE)"
-		2: return "ТРЕВОГА / НА ЗВУК (ALERT)"
-		3: return "СМЕРТЕЛЬНАЯ ПОГОНЯ (HUNT)"
-		4: return "ПОИСК В КОМНАТАХ (SEARCH)"
-		5: return "ПРОВЕРКА ПОДВАЛА (BASEMENT)"
-		6: return "ЯРОСТЬ (RAGE)"
-		7: return "ЗАСАДА ЗА ДВЕРЬЮ (AMBUSH)"
-	return str(state_val)
+		return "неизвестно"
+	var names := ["обход", "дела по дому", "тревога", "погоня", "поиск", "проверяет подвал", "ярость",
+		"засада", "проверяет укрытие", "слушает у укрытия", "слушает", "крадётся", "рывок"]
+	var i := int(state_val)
+	return names[i] if i >= 0 and i < names.size() else str(state_val)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  3D Хитбокс-рендер и отображение пути passai

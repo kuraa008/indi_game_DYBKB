@@ -9,6 +9,7 @@ extends Node3D
 # Дверь наверху лестницы открыта, но выход через неё всегда заканчивается поимкой.
 
 const StorySpot := preload("res://scripts/StorySpot.gd")
+const BasementCreature := preload("res://scripts/BasementCreature.gd")
 
 signal alerted(reason: String)  # громкий звук: сюда подключается существо
 
@@ -88,6 +89,7 @@ var _wardrobe_note_read := false
 var _wardrobe_wait := 0.0
 var _busy := false
 var _missions: MissionTracker
+var creature: Node
 
 var _layer: CanvasLayer
 var _black: ColorRect
@@ -121,6 +123,10 @@ func _begin() -> void:
 	_add_spots()
 	_add_props()
 	_start_missions()
+	creature = BasementCreature.new()
+	creature.chapter = self
+	add_child(creature)
+	creature.begin(_player)
 
 
 func _index_objects() -> void:
@@ -236,13 +242,25 @@ func _drop_spot(key: String) -> void:
 
 func _add_props() -> void:
 	for i in range(1, NOTES.size()):
-		_paper(NOTES[i][1])
+		_outline("note%d" % i, _paper(NOTES[i][1]))
 	_soldier_mesh()
 	_cutters_mesh()
 	_candle_mesh()
+	_outline("soldier", get_node_or_null("Soldier"))
+	_outline("cutters", get_node_or_null("Cutters"))
+	for pair in [["toolbox", 3046], ["fusebox", 3071], ["chest", 3047], ["post", 3048]]:
+		_outline(pair[0], _objects.get(pair[1]))
+	for i in range(_jar_nodes.size()):
+		_outline("jar%d" % i, _jar_nodes[i][0])
 
 
-func _paper(pos: Vector3) -> void:
+# Точка действия невидима; игрок видит обводку этого предмета
+func _outline(key: String, node: Variant) -> void:
+	if spots.has(key) and node is Node and is_instance_valid(node):
+		(spots[key] as StorySpot).highlight = node
+
+
+func _paper(pos: Vector3) -> MeshInstance3D:
 	var m := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(0.21, 0.003, 0.29)
@@ -251,6 +269,7 @@ func _paper(pos: Vector3) -> void:
 	add_child(m)
 	m.global_position = pos
 	m.rotation_degrees = Vector3(0, randf_range(-14.0, 14.0), 0)
+	return m
 
 
 func _mat(color: Color, rough: float = 0.8, metal: float = 0.0) -> StandardMaterial3D:
@@ -320,6 +339,7 @@ func _candle_mesh() -> void:
 func _start_missions() -> void:
 	_missions = MissionTracker.new()
 	_missions.setup([
+		{"text": "Спрячься", "done": func(): return creature != null and creature.opening_done},
 		{"text": "Найти свет", "done": func(): return lit},
 		{"text": "Открыть сундук отца", "done": func(): return chest_open},
 		{"text": "Найти, где дует ветер", "done": func(): return draft_found},
@@ -391,6 +411,7 @@ func _try_code() -> void:
 	_play(SFX + "safe_open.wav", -6.0)
 	(spots["chest"] as StorySpot).hint = "[ЛКМ / E]  Перечитать записку"
 	_spot("candle", CANDLE + Vector3(0, 0.1, 0), Vector3(0.46, 0.34, 0.46), "Взять свечу и зажигалку", _on_candle)
+	_outline("candle", get_node_or_null("CandleOnBench"))
 	Phone.add_note("Записка №7", NOTE_7)
 	_show_paper("Записка №7", NOTE_7, func(): _say("В тот год он перестал отмечать рост… Я и не заметил.", 3.2))
 
@@ -523,6 +544,7 @@ func _on_shelf() -> void:
 	_player.set("is_in_cutscene", false)
 	_busy = false
 	_spot("hatch", TRAPDOOR + Vector3(0, 0.12, 0), Vector3(1.05, 0.4, 1.05), "Перекусить цепь", _on_chain)
+	_outline("hatch", _trapdoor)
 
 
 func _build_trapdoor() -> void:
@@ -586,12 +608,28 @@ func _escape() -> void:
 	_drop_spot("hatch")
 	if is_instance_valid(_candle_rig):
 		_candle_rig.queue_free()
+	if creature:
+		creature.stop()
 	var hatch := _exit_hatch()
 	if hatch and hatch.has_method("interact"):
 		await hatch.call("interact", _player)
+	_finish_basement()
+
+
+# Подвал позади: убрать его задачи и свет, вернуть туман и фонарик, начать главу 3
+func _finish_basement() -> void:
 	_restore_fog()
 	visible = false
 	set_process(false)
+	if creature:
+		creature.stop()
+	if is_instance_valid(_missions):
+		_missions.queue_free()
+	if is_instance_valid(_layer):
+		_layer.visible = false
+	_show_flashlight_model(true)
+	# Глава 3 начинается во дворе, там, где кончился лаз
+	get_parent().add_child(preload("res://scripts/HouseChapter3.gd").new())
 
 
 # ─── Ловушка у двери, поимка, шум ───────────────────────────
@@ -602,7 +640,7 @@ func _alert(reason: String) -> void:
 	GameManager.emit_noise(_player.global_position, 30.0, reason)
 
 
-func caught() -> void:
+func caught(to: Vector3 = WAKE_POS) -> void:
 	if _busy:
 		return
 	_busy = true
@@ -610,7 +648,9 @@ func caught() -> void:
 	_player.set("is_in_cutscene", true)
 	_play(MONSTER + "monster_growl.wav", -4.0)
 	await _fade(1.0, 0.25)
-	_player.global_position = WAKE_POS
+	if _player.get("is_hiding") == true and _player.has_method("exit_hiding"):
+		_player.call("exit_hiding")
+	_player.global_position = to
 	_player.velocity = Vector3.ZERO
 	await get_tree().create_timer(0.9, false).timeout
 	_player.set("is_in_cutscene", false)
@@ -675,6 +715,17 @@ func _force_flashlight_off() -> void:
 	var hands = _player.get("player_hands")
 	if hands != null:
 		hands.call("set_flashlight_state", false, 0.0)
+	_show_flashlight_model(false)
+
+
+# Фонарик разбит: в руке его тоже нет
+func _show_flashlight_model(on: bool) -> void:
+	var hands = _player.get("player_hands")
+	if hands == null:
+		return
+	var pivot = hands.find_child("FlashlightPivot", true, false)
+	if pivot != null:
+		pivot.visible = on
 
 
 func _check_wardrobe_note() -> void:

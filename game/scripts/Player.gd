@@ -31,6 +31,7 @@ var is_charging_throw: bool = false
 var event_r_down:     bool = false
 const MAX_THROW_CHARGE_TIME: float = 1.1
 var highlight_material: StandardMaterial3D = null
+const OUTLINE_COLOR := Color(0.95, 0.94, 0.9, 1.0)
 var current_highlighted_node: Node = null
 
 # ── Автоприцел и выбор предметов стрелками D-Pad ──
@@ -2421,17 +2422,18 @@ func _setup_highlight_material() -> void:
 	highlight_material = StandardMaterial3D.new()
 	highlight_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	highlight_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	highlight_material.albedo_color = Color(1.0, 0.95, 0.45, 0.32)
-	highlight_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	highlight_material.grow = true
-	highlight_material.grow_amount = 0.012
+	# Обводка вместо свечения: сам предмет не перекрашивается, контур рисует трафарет
+	highlight_material.albedo_color = Color(1, 1, 1, 0)
+	highlight_material.stencil_mode = BaseMaterial3D.STENCIL_MODE_OUTLINE
+	highlight_material.stencil_color = OUTLINE_COLOR
+	highlight_material.stencil_outline_thickness = 0.02
 
 func _apply_highlight(node: Node) -> void:
 	if not node or not is_instance_valid(node):
 		return
 
 	# Динамический цвет подсветки в зависимости от соответствия ключа/лома!
-	var hl_color = Color(1.0, 0.95, 0.45, 0.35)
+	var hl_color = OUTLINE_COLOR
 
 	var target_door = node
 	for _p in range(4):
@@ -2457,7 +2459,7 @@ func _apply_highlight(node: Node) -> void:
 			else:
 				hl_color = Color(0.95, 0.25, 0.25, 0.45) # Нужен ключ
 		else:
-			hl_color = Color(0.35, 0.90, 1.0, 0.35)
+			hl_color = OUTLINE_COLOR
 	elif node.has_meta("key_id") or str(node.get_meta("item_type", "")).begins_with("key"):
 		var kid = 1
 		if node.has_meta("key_id"):
@@ -2472,7 +2474,8 @@ func _apply_highlight(node: Node) -> void:
 		hl_color = Color(1.0, 0.35, 0.15, 0.60)
 
 	if highlight_material:
-		highlight_material.albedo_color = hl_color
+		hl_color.a = OUTLINE_COLOR.a
+		highlight_material.stencil_color = hl_color
 
 	var glow_target := _highlight_target(node)
 	if current_highlighted_node == glow_target:
@@ -2483,6 +2486,11 @@ func _apply_highlight(node: Node) -> void:
 
 # У подвала светятся только створки, без цоколя, земли и травы
 func _highlight_target(node: Node) -> Node:
+	# Сюжетная точка действия невидима: обводится предмет, к которому она привязана
+	if node.has_method("get_highlight_node"):
+		var shown = node.call("get_highlight_node")
+		if shown is Node:
+			return shown
 	var n: Node = node
 	for _p in range(5):
 		if n == null:

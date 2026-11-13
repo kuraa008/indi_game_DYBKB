@@ -2139,7 +2139,13 @@ func _add_controls_rows(parent: Control, rows: Array, x: float, y: float, step: 
 		act_lbl.add_theme_color_override("font_color", HUD_DIM)
 		parent.add_child(act_lbl)
 
+# Подсказка по клавишам показывается один раз за запуск игры, а не на каждой карте
+static var _controls_help_shown := false
+
 func _build_controls_help() -> void:
+	if _controls_help_shown:
+		return
+	_controls_help_shown = true
 	controls_help = Control.new()
 	controls_help.name = "ControlsHelp"
 	controls_help.set_anchors_preset(Control.PRESET_FULL_RECT)

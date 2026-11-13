@@ -57,6 +57,10 @@ var _stain_material: StandardMaterial3D
 class Spot extends Area3D:
 	var hint := ""
 	var on_use: Callable
+	var highlight: Node
+
+	func get_highlight_node() -> Node:
+		return highlight if is_instance_valid(highlight) else null
 
 	func get_interaction_hint() -> String:
 		return hint
@@ -143,6 +147,8 @@ func _add_spots() -> void:
 	_spot("socks", Vector3(0.745, 0.08, -4.975), Vector3(0.75, 0.2, 0.75), "Подобрать носки", _on_cloth.bind("socks"))
 	_spot("washer", WASHER_CENTER, Vector3(0.66, 0.98, 0.66), "Загрузить стиралку", _on_washer)
 	_spot("sofa", SOFA_CENTER, Vector3(2.3, 1.04, 1.1), "Завалиться на диван", _on_sofa)
+	for key in _clothes:
+		spots[key].highlight = _clothes[key]
 
 
 func _spot(key: String, pos: Vector3, side: Vector3, action: String, use: Callable) -> void:

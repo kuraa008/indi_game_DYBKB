@@ -99,6 +99,9 @@ func _start() -> void:
 		waited += 0.5
 	print("wake took ", waited)
 	check(player.get("is_in_cutscene") != true, "После пробуждения управление у игрока")
+	# Здесь проверяются загадки; существо проверяет test_basement_creature
+	ch.creature.stop()
+	ch.creature.opening_done = true
 	await wait(0.5)
 	check(ch._lamp_lights.size() > 0, "Лампочка найдена на карте")
 	check(ch._lamp_lights.all(func(l): return not l.visible), "Лампа выключена")

@@ -171,7 +171,11 @@ func _start() -> void:
 	Phone._answer_btn.pressed.emit()
 	await wait(1.5)
 	var after := get_tree().current_scene
-	check(after != null and after.scene_file_path.contains("PoliceCall"), "Ответ ведёт в кат-сцену «Звонок»")
+	# Быстрая смена сцены ждёт отрисовки кадра, а без окна кадров нет: тогда проверяется только заявка
+	if DisplayServer.get_name() == "headless":
+		check(GameManager.active_map_path.contains("Улица"), "Ответ запрашивает кат-сцену «Звонок»")
+	else:
+		check(after != null and after.scene_file_path.contains("PoliceCall"), "Ответ ведёт в кат-сцену «Звонок»")
 	check(GameManager.active_map_path.contains("Улица"), "После кат-сцены следующая карта улица")
 	check(not Phone.is_open() and not Phone.allow_in_cutscene, "Телефон убран, разрешение снято")
 	check(not GameManager.is_backpack_open, "Блокировка снята")

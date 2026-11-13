@@ -5,6 +5,7 @@ extends Area3D
 
 var hint := ""
 var on_use: Callable
+var highlight: Node        # что обводить, когда игрок смотрит на точку
 
 
 func setup(action: String, use: Callable, side: Vector3) -> void:
@@ -18,6 +19,10 @@ func setup(action: String, use: Callable, side: Vector3) -> void:
 	shape.size = side
 	col.shape = shape
 	add_child(col)
+
+
+func get_highlight_node() -> Node:
+	return highlight if is_instance_valid(highlight) else null
 
 
 func get_interaction_hint() -> String:
