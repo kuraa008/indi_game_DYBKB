@@ -231,7 +231,8 @@ func run() -> void:
 	# Старик смотрит на стол с четырьмя тарелками
 	_turn_crane(Vector3(0.0, 0.0, 0.0), 1.6)
 	await wait(1.8)
-	shot(KNEEL_AT + Vector3(-0.35, 1.08, 0.95), KNEEL_AT + Vector3(0.1, 1.15, 0.1), 40.0)
+	# Три четверти спереди: длинные волосы Крейна (модель Досыма) уходят за спину, лицо открыто
+	shot(KNEEL_AT + Vector3(0.78, 1.1, 1.02), KNEEL_AT + Vector3(-0.05, 1.12, -0.02), 40.0)
 	await line("crane_1", "КРЕЙН", "Марта… Мальчики…", 0.4, KNEEL_AT + Vector3(0, 1.2, 0), 2.0, 4.0)
 	await line("crane_2", "КРЕЙН", "Я не хотел…", 0.4, KNEEL_AT + Vector3(0, 1.2, 0), 2.0, 4.0)
 	await line("crane_3", "КРЕЙН", "Зима была такая долгая…", 0.4, KNEEL_AT + Vector3(0, 1.2, 0), 2.0, 4.0)
@@ -251,6 +252,13 @@ func run() -> void:
 	tween_prop(ash_pile, "scale", Vector3(1.0, 0.22, 1.0), 3.0)
 	var eyes_node := crane.skeleton.get_node_or_null("Eyes") as Node3D
 	var beard_node := crane.skeleton.get_node_or_null("Beard") as Node3D
+	# Волосы, брови, ремень с ножом — не на шейдере кожи: прячем вместе с бородой
+	var hair_nodes: Array = []
+	for nm in ["Hair", "Brows"]:
+		var n := crane.skeleton.get_node_or_null(nm)
+		if n:
+			hair_nodes.append(n)
+	var rags_node := crane.find_child("Rags", true, false) as Node3D
 	while ash_v > -0.1 and not skipping:
 		ash_v -= get_process_delta_time() * 0.68
 		CutsceneCast.set_param(crane, "ash", ash_v)
@@ -258,6 +266,11 @@ func run() -> void:
 			eyes_node.visible = false
 		if beard_node and ash_v < 1.5:
 			beard_node.visible = false
+		if ash_v < 1.5:
+			for n in hair_nodes:
+				n.visible = false
+		if rags_node and ash_v < 0.9:
+			rags_node.visible = false
 		await get_tree().process_frame
 	crane.visible = false
 	# Огонь гаснет

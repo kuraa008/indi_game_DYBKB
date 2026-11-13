@@ -403,7 +403,7 @@ func _build_colliders() -> void:
 			_solid(Vector3(bx, 0.6, 6.8 * s), Vector3(0.16, 1.0, 0.16))
 	_solid(Vector3(13.0, 0.65, 4.2), Vector3(0.44, 0.9, 0.44))
 	# Машина
-	_solid(Fin.CAR_AT + Vector3(0, 0.7, 0), Vector3(1.66, 1.4, 3.75))
+	_solid(Fin.CAR_AT + Vector3(0, 0.75, 0), Vector3(1.84, 1.5, 4.7))   # пикап FatherCar 1.86 × 1.78 × 4.62
 	# Двор: будка, стела, воздух, контейнер, забор
 	_solid(Vector3(19.8, 1.14, -10.6), Vector3(0.94, 2.2, 0.94))
 	_solid(Vector3(7.2, 1.5, -13.0), Vector3(0.4, 3.0, 0.4))
@@ -447,7 +447,7 @@ func _build_spots() -> void:
 	_door_out = _spot("Войти в магазин", _on_enter, Vector3(21.78, 1.25, -3.3), Vector3(0.2, 2.3, 1.4))
 	_door_in = _spot("Выйти на улицу", _on_exit, Vector3(22.22, 1.25, -3.3), Vector3(0.2, 2.3, 1.4))
 	_counter = _spot("Положить деньги на прилавок", _on_pay, Vector3(24.86, 1.45, 1.45), Vector3(0.9, 1.3, 2.6))
-	_car_spot = _spot("Сесть в машину", _on_car, Fin.CAR_AT + Vector3(0, 1.15, 0), Vector3(2.06, 2.3, 4.15))
+	_car_spot = _spot("Сесть в машину", _on_car, Fin.CAR_AT + Vector3(0, 1.15, 0), Vector3(2.2, 2.3, 4.9))
 	for s in [_door_in, _counter, _car_spot]:
 		_enable(s, false)
 

@@ -24,7 +24,7 @@ const CASHIER_HEAD := Vector3(25.72, 1.5, 1.8)
 const DOOR_IN := Vector3(21.96, 1.6, -3.3)
 const DOOR_OUT := Vector3(20.6, 1.62, -4.4)
 const CAR_AT := Vector3(11.3, 0.0, -3.4)
-const CAR_DOOR := Vector3(12.1, 0.0, -3.6)        # водительская дверь, со стороны островка
+const CAR_DOOR := Vector3(12.2, 0.0, -3.1)        # водительская дверь пикапа (FatherCar), со стороны островка
 const FOREST_VOICE := Vector3(40.0, 2.0, -12.0)
 const DEER_AT := Vector3(37.5, 0.0, -21.0)
 
@@ -93,6 +93,14 @@ static func forest_deer(parent: Node) -> Node3D:
 	d.position = DEER_AT
 	d.rotation_degrees = Vector3(0, -60, 0)
 	return d
+
+
+# Середина между глазами оленя (узел "Eyes" у BlackDeerModel); без модели — голова на глаз
+func _deer_eyes() -> Vector3:
+	var eyes := deer_node.find_child("Eyes", true, false) as Node3D
+	if eyes and eyes.get_child_count() >= 2:
+		return ((eyes.get_child(0) as Node3D).global_position + (eyes.get_child(1) as Node3D).global_position) * 0.5
+	return DEER_AT + Vector3(0, 1.9, 0)
 
 
 func tick(delta: float) -> void:
@@ -184,7 +192,8 @@ func _walk(stop_halfway: bool) -> void:
 	handheld = 0.6
 	breathe = 0.8
 	fade_in(0.6)
-	var target := CAR_DOOR + Vector3(1.0, 1.85, 0.0)
+	# Пикап выше хэтчбека: останавливаемся чуть дальше, чтобы в кадре была дверь, а не одно тёмное стекло
+	var target := CAR_DOOR + Vector3(1.3, 1.8, -0.15)
 	move_to(target, 7.0, Tween.TRANS_LINEAR)
 	for i in 4:
 		sfx("res://assets/audio/intro/step_gravel_%d.wav" % (i + 1), -14.0)
@@ -262,7 +271,14 @@ func _secret(standalone: bool) -> void:
 	# Наезд: олень стоит далеко, поэтому кадр сужается, пока он не займёт треть экрана
 	handheld = 0.15
 	tween_prop(self, "cam_fov", 13.0, 2.4, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
-	await wait(3.1)
+	await wait(2.7)
+	# Новая модель оленя (Досым): глаза настоящего размера, издалека их не видно.
+	# Последний рывок камеры — прямо в человеческие глаза
+	var eyes_at := _deer_eyes()
+	handheld = 0.05
+	look_to(eyes_at, 0.3, Tween.TRANS_QUAD, Tween.EASE_OUT)
+	tween_prop(self, "cam_fov", 1.6, 0.3, Tween.TRANS_QUAD, Tween.EASE_OUT)
+	await wait(1.3)
 	sfx("stinger_hit", -2.0)
 	black(1.0)
 	await wait(2.0)
