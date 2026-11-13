@@ -679,34 +679,9 @@ static func cobweb(parent: Node, pos: Vector3, size: float, rot_deg: Vector3) ->
 # Олений череп: маленький, чёрный, с обломанным рогом и надписью «ДЖОЗЕФ КРЕЙН».
 # Морда смотрит вдоль -Z, надпись на лбу.
 static func deer_skull(parent: Node) -> Node3D:
-	var root := node(parent, Vector3.ZERO, Vector3.ZERO, "DeerSkull")
-	var bone := StandardMaterial3D.new()
-	bone.albedo_color = Color(0.17, 0.15, 0.13)
-	bone.roughness = 0.5
-	bone.metallic_specular = 0.55
-	var hole := mat(Color(0.0, 0.0, 0.0), 1.0)
-	# Мозговая коробка, лоб и длинная узкая морда
-	ball(root, 0.04, Vector3(0, 0.03, 0.055), bone, Vector3(1.1, 0.95, 1.25), 14)
-	ball(root, 0.042, Vector3(0, 0.04, -0.005), bone, Vector3(1.05, 0.55, 1.15), 12)
-	var snout := cyl(root, 0.013, 0.033, 0.2, Vector3(0, 0.005, -0.115), bone, Vector3(-90, 0, 0), 10)
-	snout.scale = Vector3(1.0, 1.0, 0.62)
-	ball(root, 0.016, Vector3(0, 0.0, -0.212), bone, Vector3(1.0, 0.75, 1.15), 8)
-	for s in [-1.0, 1.0]:
-		# Глазницы с надбровьем и носовые щели
-		ball(root, 0.016, Vector3(0.036 * s, 0.032, -0.005), bone, Vector3(0.6, 0.9, 1.1), 10)
-		ball(root, 0.014, Vector3(0.042 * s, 0.03, -0.01), hole, Vector3(0.5, 0.9, 0.9), 10)
-		ball(root, 0.01, Vector3(0.012 * s, 0.012, -0.17), hole, Vector3(0.6, 0.8, 2.6), 8)
-		cyl(root, 0.012, 0.016, 0.04, Vector3(0.03 * s, 0.085, 0.06), bone, Vector3(-15, 0, -22 * s), 8)
-	var ant := node(root, Vector3(-0.042, 0.105, 0.065), Vector3(-25, 0, 26))
-	cyl(ant, 0.005, 0.01, 0.2, Vector3(0, 0.1, 0), bone, Vector3.ZERO, 7)
-	cyl(ant, 0.004, 0.007, 0.08, Vector3(0.0, 0.085, -0.03), bone, Vector3(-48, 0, 0), 6)
-	cyl(ant, 0.004, 0.006, 0.07, Vector3(-0.008, 0.17, -0.02), bone, Vector3(-38, 0, 12), 6)
-	# Обломок второго рога: короткий, с неровным сколом
-	cyl(root, 0.008, 0.012, 0.045, Vector3(0.044, 0.115, 0.07), bone, Vector3(-25, 0, -26), 7)
-	ball(root, 0.009, Vector3(0.052, 0.135, 0.075), bone, Vector3(1.0, 0.5, 1.0), 6)
-	var carve := text3d(root, "ДЖОЗЕФ КРЕЙН", Vector3(0, 0.066, 0.008), Vector3(-100, 0, 0), 0.00028, Color(0.66, 0.62, 0.55), 40)
-	carve.name = "Carving"
-	return root
+	var skull: Node3D = load("res://scripts/models/DeerSkullModel.gd").new()
+	parent.add_child(skull)
+	return skull
 
 
 # Металлическая коробка с крышкой на петлях (крышка — дочерний узел "Lid")
@@ -790,36 +765,7 @@ static func phone(parent: Node) -> Dictionary:
 # «глаза у него светятся не как у зверя, а как у человека» — белки и тёмные зрачки.
 static func deer(parent: Node, height: float = 2.3) -> Node3D:
 	var root := node(parent, Vector3.ZERO, Vector3.ZERO, "BlackDeer")
-	var tex := TextureHelper.get_texture("res://assets/textures/Olen.png")
-	var size := tex.get_size() if tex else Vector2(345.0, 579.0)
-	var px := height / size.y
-	var body := node(root, Vector3(0, height * 0.5, 0))
-	if tex:
-		var spr := Sprite3D.new()
-		spr.texture = tex
-		spr.pixel_size = px
-		spr.shaded = false
-		spr.double_sided = true
-		spr.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-		spr.modulate = Color(0.02, 0.02, 0.025)
-		body.add_child(spr)
-	var half := size * 0.5
-	var white := StandardMaterial3D.new()
-	white.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	white.albedo_color = Color(0.86, 0.84, 0.8)
-	var iris := StandardMaterial3D.new()
-	iris.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	iris.albedo_color = Color(0.05, 0.04, 0.035)
-	for e in [Vector2(82, 178), Vector2(116, 178)]:
-		var p := Vector3((e.x - half.x) * px, (half.y - e.y) * px, 0.03)
-		var sclera := ball(body, 0.042, p, white, Vector3(1.35, 0.72, 0.4), 12)
-		sclera.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		var pupil := ball(body, 0.019, p + Vector3(0, 0, 0.012), iris, Vector3(1.0, 1.0, 0.4), 10)
-		pupil.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var glow := OmniLight3D.new()
-	glow.light_color = Color(0.85, 0.88, 0.95)
-	glow.light_energy = 0.5
-	glow.omni_range = 1.4
-	glow.position = Vector3((99.0 - half.x) * px, (half.y - 178.0) * px, 0.3)
-	body.add_child(glow)
+	var model: Node3D = load("res://scripts/models/BlackDeerModel.gd").new()
+	model.set("height", height)
+	root.add_child(model)
 	return root

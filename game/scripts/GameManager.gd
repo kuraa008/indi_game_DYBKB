@@ -151,7 +151,7 @@ var is_reading_note:   bool   = false
 # ──────────────────────────────────────────────
 #  Map data (filled by Main.gd from JSON)
 # ──────────────────────────────────────────────
-var active_map_path: String = "res://scenes/1level.json"
+var active_map_path: String = "res://scenes/Шоссе.json"
 var intro_epilogue: bool = false
 # Глава 2: после пролога Итан приходит в себя в подвале дома отца на карте «Шоссе»
 var wake_in_basement: bool = false

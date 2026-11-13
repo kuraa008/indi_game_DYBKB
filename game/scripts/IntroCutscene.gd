@@ -815,7 +815,7 @@ func _finish() -> void:
 	_finished = true
 	if GameManager:
 		GameManager.intro_cutscene_played = true
-		GameManager.active_map_path = "res://scenes/1level.json" if _epilogue_only else "res://scenes/Шоссе.json"
+		GameManager.active_map_path = "res://scenes/Шоссе.json"
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if GameManager:
 		GameManager.change_scene_fast("res://scenes/Main.tscn")
@@ -916,7 +916,7 @@ func _update_deer() -> void:
 	deer_eyes.visible = eyes
 	var big := 2.2 if (_t < T_EJECT or _in_flashback()) else 1.0
 	for m in deer_eye_meshes:
-		m.scale = Vector3(1.3, 0.75, 0.5) * big
+		m.scale = Vector3(0.62, 0.36, 0.3) * big
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Фонари, кабина, камера 04, тень, старик
@@ -1934,33 +1934,24 @@ func _build_deer() -> void:
 	body.position = Vector3(0.0, DEER_HEIGHT * 0.5, 0.0)
 	deer_root.add_child(body)
 
-	var tex := TextureHelper.get_texture("res://assets/textures/Olen.png")
-	var tex_size := tex.get_size() if tex else Vector2(345.0, 579.0)
-	var px := DEER_HEIGHT / tex_size.y
-	if tex:
-		var sprite := Sprite3D.new()
-		sprite.texture = tex
-		sprite.pixel_size = px
-		sprite.shaded = false
-		sprite.double_sided = true
-		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-		sprite.modulate = Color(0.02, 0.02, 0.025)
-		body.add_child(sprite)
+	var model: Node3D = load("res://scripts/models/BlackDeerModel.gd").new()
+	model.set("height", DEER_HEIGHT)
+	deer_root.add_child(model)
+	model.call("show_eyes", false)
 
 	deer_eyes = Node3D.new()
 	deer_eyes.visible = false
 	body.add_child(deer_eyes)
-	var half := tex_size * 0.5
-	for eye_px in DEER_EYES_PX:
-		var p: Vector2 = eye_px
-		var eye := _make_eye(Vector3((p.x - half.x) * px, (half.y - p.y) * px, 0.03))
+	var points: Array = model.get("eye_points")
+	for point: Vector3 in points:
+		var eye := _make_eye(point - body.position + Vector3(0.0, 0.0, 0.01))
 		deer_eyes.add_child(eye)
 		deer_eye_meshes.append(eye)
 	var glow := OmniLight3D.new()
 	glow.light_color = Color(0.85, 0.88, 0.95)
 	glow.light_energy = 0.9
 	glow.omni_range = 2.2
-	glow.position = Vector3((99.0 - half.x) * px, (half.y - 178.0) * px, 0.3)
+	glow.position = Vector3(0.0, (points[0] as Vector3).y - body.position.y, (points[0] as Vector3).z + 0.3)
 	deer_eyes.add_child(glow)
 
 func _make_eye(pos: Vector3) -> MeshInstance3D:

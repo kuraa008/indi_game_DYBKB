@@ -9,6 +9,14 @@ const DIR := "res://assets/textures/surface/"
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)
+	# "-- new" — только текстуры для моделей, остальные не трогать
+	if "new" in OS.get_cmdline_user_args():
+		_bone()
+		_fur()
+		_antler()
+		print("GEN DONE")
+		quit()
+		return
 	_wood("wood", false, 11)
 	_wood("wood_h", true, 12)
 	_plaster()
@@ -18,6 +26,9 @@ func _init() -> void:
 	_bark_log()
 	_soil()
 	_wallpaper()
+	_bone()
+	_fur()
+	_antler()
 	print("GEN DONE")
 	quit()
 
@@ -266,3 +277,55 @@ func _wallpaper() -> void:
 		alb[i] = 0.74 - motif * 0.17 + vein * 0.1 + (f - 0.5) * 0.32 + (g - 0.5) * 0.06 - d * 0.22
 		hgt[i] = 0.5 + motif * 0.14 + (g - 0.5) * 0.18
 	_save("wallpaper", alb, hgt, 1.1, Color(0.86, 0.8, 0.66))
+
+
+# Старая кость: поры, тонкие трещины, пятна; светлая, цвет даёт модель
+func _bone() -> void:
+	var soft := _noise(0.006, 91, 4)
+	var pores := _noise(0.08, 92, 2, FastNoiseLite.TYPE_CELLULAR)
+	var fine := _noise(0.5, 93, 2)
+	var crack := _noise(0.012, 94, 5)
+	var alb := _floats()
+	var hgt := _floats()
+	for i in range(SIZE * SIZE):
+		var s := soft[i] / 255.0
+		var p := smoothstep(0.2, 0.06, pores[i] / 255.0)
+		var f := fine[i] / 255.0
+		var c := smoothstep(0.035, 0.0, absf(crack[i] / 255.0 - 0.5))
+		alb[i] = 0.82 + (s - 0.5) * 0.3 + (f - 0.5) * 0.08 - p * 0.35 - c * 0.5
+		hgt[i] = 0.6 + (f - 0.5) * 0.2 + (s - 0.5) * 0.2 - p * 0.55 - c * 0.6
+	_save("bone", alb, hgt, 2.6, Color(1.0, 0.97, 0.9))
+
+
+# Короткая шерсть: волоски вдоль U, пряди и проплешины
+func _fur() -> void:
+	var hair := _streaks(0.6, 24, 101, true)
+	var strand := _streaks(0.12, 12, 102, true)
+	var clump := _noise(0.02, 103, 4)
+	var alb := _floats()
+	var hgt := _floats()
+	for i in range(SIZE * SIZE):
+		var h := hair[i] / 255.0
+		var st := strand[i] / 255.0
+		var c := clump[i] / 255.0
+		alb[i] = 0.7 + (h - 0.5) * 0.45 + (st - 0.5) * 0.3 + (c - 0.5) * 0.2
+		hgt[i] = 0.5 + (h - 0.5) * 0.7 + (st - 0.5) * 0.5 + (c - 0.5) * 0.25
+	_save("fur", alb, hgt, 3.4)
+
+
+# Рог: продольные борозды и жемчужины-бугорки
+func _antler() -> void:
+	var grooves := _streaks(0.07, 16, 111, true)
+	var fine := _streaks(0.35, 24, 112, true)
+	var pearls := _noise(0.06, 113, 2, FastNoiseLite.TYPE_CELLULAR)
+	var tone := _noise(0.008, 114, 3)
+	var alb := _floats()
+	var hgt := _floats()
+	for i in range(SIZE * SIZE):
+		var g := grooves[i] / 255.0
+		var f := fine[i] / 255.0
+		var p := smoothstep(0.25, 0.08, pearls[i] / 255.0)
+		var t := tone[i] / 255.0
+		alb[i] = 0.68 + (g - 0.5) * 0.5 + (f - 0.5) * 0.15 + p * 0.15 + (t - 0.5) * 0.25
+		hgt[i] = 0.5 + (g - 0.5) * 0.8 + (f - 0.5) * 0.25 + p * 0.45
+	_save("antler", alb, hgt, 4.0, Color(1.0, 0.94, 0.86))

@@ -21,7 +21,7 @@ const FOREST_VOICE := Vector3(40.0, 2.0, -12.0)
 const DEER_AT := Vector3(37.5, 0.0, -21.0)
 
 var station: GasStation
-var car: EthanCar
+var car: Node3D
 var deer_node: Node3D
 var money: Node3D
 var path: Curve3D
@@ -48,13 +48,10 @@ func build() -> void:
 	station.build_forest = true
 	add_child(station)
 	# Отцовская машина у колонки
-	car = EthanCar.new()
+	car = load("res://scripts/models/FatherCar.gd").new()
 	add_child(car)
 	car.position = CAR_AT
-	var paint: StandardMaterial3D = car._mats["paint"]
-	paint.albedo_color = Color(0.16, 0.22, 0.17)
-	(car._mats["paint2"] as StandardMaterial3D).albedo_color = Color(0.11, 0.15, 0.12)
-	car.set_lights(false, false)
+	car.call("set_lights", false, 0.0)
 	# Чёрный олень на опушке за заправкой (виден, только если обернуться)
 	deer_node = CutsceneKit.deer(self, 2.25)
 	deer_node.position = DEER_AT
@@ -90,7 +87,7 @@ func tick(delta: float) -> void:
 	car.position = p
 	if q.distance_to(p) > 0.01:
 		car.look_at_from_position(p, q, Vector3.UP)
-	car.set_motion(delta, _speed, 0.0)
+	car.call("set_motion", delta, _speed, 0.0)
 
 
 func run() -> void:
@@ -196,7 +193,7 @@ func _drive_off() -> void:
 	breathe = 0.0
 	fade_in(1.0)
 	var eng := sfx("res://assets/audio/intro/engine_start.wav", -6.0, 1.0, CAR_AT, 8.0)
-	car.set_lights(true, false)
+	car.call("set_lights", true, 0.0)
 	await wait(2.4)
 	var idle := loop("res://assets/audio/intro/engine_ext.wav", -12.0, 0.4, CAR_AT, 8.0)
 	_drive = true

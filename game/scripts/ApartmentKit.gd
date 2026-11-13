@@ -565,6 +565,9 @@ const SURFACES := {
 	"concrete": ["concrete", 0.4, 1.0, Color(1.22, 1.22, 1.22)],
 	"plaster": ["plaster", 0.75, 0.5, Color(1.1, 1.1, 1.1)],
 	"soil": ["soil", 0.5, 1.3, Color(1.34, 1.34, 1.34)],
+	"bone": ["bone", 9.0, 1.0, Color(1.25, 1.25, 1.25)],
+	"fur": ["fur", 2.6, 1.0, Color(1.45, 1.45, 1.45)],
+	"antler": ["antler", 7.0, 1.2, Color(1.45, 1.45, 1.45)],
 	"metal": ["metal", 1.2, 0.5, Color(1.14, 1.14, 1.14)],
 }
 static var _vmats := {}

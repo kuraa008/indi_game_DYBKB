@@ -21,7 +21,7 @@ var left_spot_light: SpotLight3D = null
 var left_spill_light: SpotLight3D = null
 var _hotspot_energy := 4.5
 var _spill_energy := 1.4
-var left_base_pos: Vector3 = Vector3(-0.27, -0.26, -0.38)
+var left_base_pos: Vector3 = Vector3(-0.2, -0.2, -0.34)
 
 # Правая рука (предмет)
 var right_arm_root: Node3D = null
@@ -190,73 +190,23 @@ func _build_left_hand_flashlight() -> void:
 	left_arm_root.position = left_base_pos
 	add_child(left_arm_root)
 
-	var arm_mesh = _build_arm_mesh_hierarchy(true)
-	left_arm_root.add_child(arm_mesh)
-
-	# Точка крепления фонарика
+	# Точка крепления фонарика: он лежит в кулаке и смотрит почти прямо вперёд
 	var fl_pivot = Node3D.new()
 	fl_pivot.name = "FlashlightPivot"
-	if GameManager and GameManager.show_viewmodel_arms:
-		fl_pivot.position = Vector3(0.012, 0.008, -0.045)
-		fl_pivot.rotation_degrees = Vector3(6.0, 7.0, -4.0)
-	else:
-		fl_pivot.position = Vector3(0.02, -0.01, -0.05)
-		fl_pivot.rotation_degrees = Vector3(5.0, 6.0, -3.0)
+	fl_pivot.position = Vector3(0.0, 0.0, -0.05)
+	fl_pivot.rotation_degrees = Vector3(4.0, -2.0, -6.0)
 	left_arm_root.add_child(fl_pivot)
 
-	# Рукоять фонарика (анодированный темный алюминий)
-	var barrel = MeshInstance3D.new()
-	var bm = CylinderMesh.new()
-	bm.top_radius = 0.019
-	bm.bottom_radius = 0.017
-	bm.height = 0.17
-	var b_mat = StandardMaterial3D.new()
-	b_mat.albedo_color = Color(0.16, 0.18, 0.20)
-	b_mat.metallic = 0.85
-	b_mat.roughness = 0.35
-	bm.surface_set_material(0, b_mat)
-	barrel.mesh = bm
-	barrel.rotation_degrees.x = 90.0
-	fl_pivot.add_child(barrel)
-
-	# Резиновое рифленое кольцо хвата
-	var grip_ring = MeshInstance3D.new()
-	var grm = CylinderMesh.new()
-	grm.top_radius = 0.020
-	grm.bottom_radius = 0.020
-	grm.height = 0.05
-	var gr_mat = StandardMaterial3D.new()
-	gr_mat.albedo_color = Color(0.08, 0.09, 0.10)
-	gr_mat.roughness = 0.95
-	grm.surface_set_material(0, gr_mat)
-	grip_ring.mesh = grm
-	grip_ring.rotation_degrees.x = 90.0
-	grip_ring.position = Vector3(0, 0, 0.01)
-	fl_pivot.add_child(grip_ring)
-
-	# Безель головки фонарика
-	var head = MeshInstance3D.new()
-	var head_m = CylinderMesh.new()
-	head_m.top_radius = 0.028
-	head_m.bottom_radius = 0.019
-	head_m.height = 0.045
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.28, 0.30, 0.35)
-	head_mat.metallic = 0.9
-	head_mat.roughness = 0.25
-	head_m.surface_set_material(0, head_mat)
-	head.mesh = head_m
-	head.rotation_degrees.x = 90.0
-	head.position = Vector3(0, 0, -0.105)
-	fl_pivot.add_child(head)
+	_build_flashlight_body(fl_pivot)
+	_build_left_hand_grip(fl_pivot)
 
 	# Стекло / светящаяся линза фонарика
 	left_flashlight_lens = MeshInstance3D.new()
 	left_flashlight_lens.name = "Lens"
 	var lens_m = CylinderMesh.new()
-	lens_m.top_radius = 0.025
-	lens_m.bottom_radius = 0.025
-	lens_m.height = 0.006
+	lens_m.top_radius = 0.0255
+	lens_m.bottom_radius = 0.0255
+	lens_m.height = 0.004
 	var lens_mat = StandardMaterial3D.new()
 	lens_mat.albedo_color = Color(0.96, 0.93, 0.82)
 	lens_mat.emission_enabled = true
@@ -266,7 +216,7 @@ func _build_left_hand_flashlight() -> void:
 	lens_m.material = lens_mat
 	left_flashlight_lens.mesh = lens_m
 	left_flashlight_lens.rotation_degrees.x = 90.0
-	left_flashlight_lens.position = Vector3(0, 0, -0.128)
+	left_flashlight_lens.position = Vector3(0, 0, -0.131)
 	fl_pivot.add_child(left_flashlight_lens)
 
 	# 1. Центральный яркий луч фонарика (Hotspot) с объемным туманом
@@ -294,6 +244,146 @@ func _build_left_hand_flashlight() -> void:
 	left_spill_light.shadow_enabled = false
 	left_spill_light.position = Vector3(0, 0, -0.14)
 	fl_pivot.add_child(left_spill_light)
+
+# ── Фонарик: металлический корпус с насечкой, хвостовик с кнопкой, расширенная головка ──
+func _hand_mat(col: Color, rough: float, metal: float = 0.0) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = col
+	m.roughness = rough
+	m.metallic = metal
+	return m
+
+
+func _cyl_z(parent: Node3D, r_front: float, r_back: float, length: float, z: float, mat: Material, sides: int = 20) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = r_back
+	cm.bottom_radius = r_front
+	cm.height = length
+	cm.radial_segments = sides
+	cm.rings = 1
+	cm.material = mat
+	mi.mesh = cm
+	mi.rotation_degrees.x = -90.0
+	mi.position = Vector3(0, 0, z)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+	return mi
+
+
+func _build_flashlight_body(fl_pivot: Node3D) -> void:
+	var body := _hand_mat(Color(0.3, 0.31, 0.33), 0.38, 0.75)
+	var dark := _hand_mat(Color(0.12, 0.12, 0.13), 0.6, 0.5)
+	var rubber := _hand_mat(Color(0.07, 0.07, 0.075), 0.9)
+	var chrome := _hand_mat(Color(0.7, 0.7, 0.72), 0.18, 0.95)
+	# Ствол, хвост и колпачок с резиновой кнопкой
+	_cyl_z(fl_pivot, 0.0175, 0.0175, 0.15, 0.005, body)
+	_cyl_z(fl_pivot, 0.0185, 0.0185, 0.022, 0.085, dark)
+	_cyl_z(fl_pivot, 0.011, 0.012, 0.008, 0.099, rubber, 14)
+	# Насечка на рукояти: тонкие тёмные кольца
+	for i in range(9):
+		_cyl_z(fl_pivot, 0.0182, 0.0182, 0.0035, 0.06 - float(i) * 0.0085, dark, 18)
+	# Переход к головке, головка, хромированное кольцо у стекла
+	_cyl_z(fl_pivot, 0.024, 0.018, 0.03, -0.085, body)
+	_cyl_z(fl_pivot, 0.0275, 0.0245, 0.026, -0.113, body)
+	_cyl_z(fl_pivot, 0.0285, 0.0285, 0.006, -0.127, chrome)
+	# Рёбра охлаждения на головке
+	for i in range(3):
+		_cyl_z(fl_pivot, 0.0262, 0.0262, 0.003, -0.104 - float(i) * 0.006, dark, 20)
+
+
+# ── Левая кисть: пальцы обхватывают корпус снизу, большой палец лежит сверху ──
+func _seg(parent: Node3D, a: Vector3, b: Vector3, r: float, mat: Material) -> void:
+	var d := b - a
+	var len := d.length()
+	if len < 0.0005:
+		return
+	var mi := MeshInstance3D.new()
+	var cm := CapsuleMesh.new()
+	cm.radius = r
+	cm.height = len + r * 2.0
+	cm.radial_segments = 12
+	cm.rings = 4
+	cm.material = mat
+	mi.mesh = cm
+	var y := d / len
+	var x := y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
+	mi.transform = Transform3D(Basis(x, y, x.cross(y)), (a + b) * 0.5)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+
+
+func _blob(parent: Node3D, at: Vector3, radii: Vector3, rot: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 1.0
+	sm.height = 2.0
+	sm.radial_segments = 18
+	sm.rings = 10
+	sm.material = mat
+	mi.mesh = sm
+	mi.transform = Transform3D(Basis.from_euler(rot * (PI / 180.0)) * Basis.from_scale(radii), at)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+
+
+func _ring_point(theta_deg: float, r: float, z: float) -> Vector3:
+	var t := deg_to_rad(theta_deg)
+	return Vector3(cos(t) * r, sin(t) * r, z)
+
+
+func _build_left_hand_grip(fl_pivot: Node3D) -> void:
+	var skin := _hand_mat(Color(0.58, 0.42, 0.33), 0.62)
+	skin.rim_enabled = true
+	skin.rim = 0.25
+	var skin_dark := _hand_mat(Color(0.5, 0.35, 0.27), 0.7)
+	var jacket := _hand_mat(Color(0.17, 0.18, 0.2), 0.9)
+	var cuff := _hand_mat(Color(0.11, 0.115, 0.13), 0.95)
+	var hand := Node3D.new()
+	hand.name = "LeftHand"
+	fl_pivot.add_child(hand)
+	# Четыре пальца: от костяшек слева, под корпусом, кончики выходят справа
+	var fr := [0.0088, 0.0092, 0.009, 0.0078]
+	for i in range(4):
+		var z := -0.036 + float(i) * 0.019
+		var r: float = fr[i]
+		var path := 0.0175 + r + 0.001
+		var p0 := _ring_point(168.0, path + 0.006, z + 0.004)
+		var p1 := _ring_point(236.0, path, z)
+		var p2 := _ring_point(296.0, path, z - 0.002)
+		var p3 := _ring_point(344.0 - float(i) * 6.0, path - 0.001, z - 0.003)
+		_seg(hand, p0, p1, r, skin)
+		_seg(hand, p1, p2, r * 0.95, skin)
+		_seg(hand, p2, p3, r * 0.88, skin)
+		# Ноготь на кончике
+		_blob(hand, p3 + Vector3(0.002, 0.004, 0.0), Vector3(0.006, 0.0025, 0.006), Vector3(0, 0, 30), skin_dark)
+		# Костяшка
+		_blob(hand, p0 + Vector3(-0.003, 0.002, 0.0), Vector3(0.008, 0.008, 0.009), Vector3.ZERO, skin)
+	# Тыльная сторона кисти и ладонь: от костяшек назад к запястью
+	_blob(hand, Vector3(-0.036, 0.0, 0.006), Vector3(0.017, 0.03, 0.05), Vector3(4, 8, -8), skin)
+	_blob(hand, Vector3(-0.022, -0.02, 0.012), Vector3(0.022, 0.016, 0.044), Vector3(0, 6, 0), skin)
+	# Большой палец: от основания ладони поверх корпуса вперёд
+	var t0 := Vector3(-0.03, 0.018, 0.022)
+	var t1 := Vector3(-0.014, 0.027, -0.004)
+	var t2 := Vector3(0.0, 0.029, -0.03)
+	var t3 := Vector3(0.006, 0.0275, -0.05)
+	_seg(hand, t0, t1, 0.012, skin)
+	_seg(hand, t1, t2, 0.0098, skin)
+	_seg(hand, t2, t3, 0.0088, skin)
+	_blob(hand, t3 + Vector3(0.0, 0.006, -0.002), Vector3(0.0065, 0.0025, 0.007), Vector3.ZERO, skin_dark)
+	# Запястье и предплечье уходят в левый нижний угол экрана
+	var wrist := Vector3(-0.045, -0.012, 0.062)
+	var dir := Vector3(-0.42, -0.5, 1.0).normalized()
+	_seg(hand, Vector3(-0.038, -0.006, 0.035), wrist, 0.021, skin)
+	_seg(hand, wrist, wrist + dir * 0.05, 0.023, skin)
+	# Рукав куртки с манжетой
+	var c0 := wrist + dir * 0.03
+	_seg(hand, c0, c0 + dir * 0.025, 0.031, cuff)
+	_seg(hand, c0 + dir * 0.02, c0 + dir * 0.36, 0.04, jacket)
+	for k in range(3):
+		var at := c0 + dir * (0.07 + 0.08 * float(k))
+		_blob(hand, at + Vector3(0, 0.004, 0), Vector3(0.043, 0.012, 0.043), Vector3.ZERO, jacket)
+
 
 func _on_graphics_quality_changed(quality: String) -> void:
 	var is_low = (quality == "low")

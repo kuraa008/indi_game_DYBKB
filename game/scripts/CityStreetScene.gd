@@ -25,7 +25,7 @@ void vertex() { w = VERTEX; }
 void fragment() {
 	vec2 p = w.xz;
 	float grain = n(p * 34.0) * 0.5 + n(p * 90.0) * 0.5;
-	grain = mix(0.5, grain, 1.0 - smoothstep(0.3, 1.0, fwidth(p.x) * 60.0));
+	grain = mix(0.5, grain, 1.0 - smoothstep(0.15, 0.6, fwidth(p.x) * 120.0));
 	float wet = smoothstep(0.56, 0.68, n(p * 0.42) * 0.65 + n(p * 1.3) * 0.35);
 	vec3 c = vec3(0.075, 0.075, 0.08) * (0.75 + 0.55 * grain);
 	ALBEDO = c * mix(1.0, 0.55, wet);
@@ -72,7 +72,7 @@ void vertex() { w = VERTEX; }
 void fragment() {
 	vec2 p = w.xz;
 	float blades = n(p * 80.0) * 0.55 + n(p * 210.0) * 0.45;
-	blades = mix(0.5, blades, 1.0 - smoothstep(0.3, 1.0, fwidth(p.x) * 120.0));
+	blades = mix(0.5, blades, 1.0 - smoothstep(0.15, 0.6, fwidth(p.x) * 240.0));
 	float patches = n(p * 0.8) * 0.6 + n(p * 3.1) * 0.4;
 	vec3 grass = mix(vec3(0.05, 0.075, 0.025), vec3(0.11, 0.13, 0.04), blades);
 	vec3 dirt = vec3(0.075, 0.055, 0.035) * (0.7 + 0.6 * blades);
@@ -147,6 +147,7 @@ void fragment() {
 
 var _posters: Array = []
 var _pole_tops: Array = []
+var _traffic: Array = []
 
 
 func _ready() -> void:
@@ -164,6 +165,7 @@ func _ready() -> void:
 	_build_poles()
 	_build_posters()
 	_build_car()
+	_build_traffic()
 	_face_street.call_deferred()
 
 
@@ -253,6 +255,8 @@ func _build_ground() -> void:
 
 	_plate(-34.0, -1.6, 2.6, YARD_END, 0.02)
 	_plate(1.6, 14.0, 2.6, YARD_END, 0.02)
+	_plate(-112.0, -46.0, 22.0, YARD_END, 0.03)
+	_plate(40.0, 112.0, 22.0, YARD_END, 0.03)
 	_flush(_shader(GRASS_SHADER))
 
 	var road := Node3D.new()
@@ -582,9 +586,22 @@ func _build_street_furniture() -> void:
 		_bx(Vector3(0.08, 2.5, 0.08), Vector3(sx, 1.25, -1.2), frame)
 	for sx in [-2.0, 2.0]:
 		_bx(Vector3(0.08, 2.5, 0.08), Vector3(sx, 1.25, 0.4), frame)
-	_bx(Vector3(4.5, 0.1, 2.2), Vector3(0, 2.55, -0.4), frame.darkened(0.2))
+	# Рама крыши: сама крыша из прозрачного пластика, рисуется отдельно
+	for sz in [-1.5, 0.7]:
+		_bx(Vector3(4.5, 0.08, 0.08), Vector3(0, 2.55, sz), frame.darkened(0.2))
+	for sx in [-2.25, 0.0, 2.25]:
+		_bx(Vector3(0.08, 0.08, 2.2), Vector3(sx, 2.55, -0.4), frame.darkened(0.2))
 	_bx(Vector3(4.0, 0.06, 0.06), Vector3(0, 0.3, -1.2), frame)
 	_flush(_vmat(0.5, 0.4))
+	_base = _xf(at)
+	_bx(Vector3(4.42, 0.02, 2.12), Vector3(0, 2.57, -0.4), Color.WHITE)
+	var roof := StandardMaterial3D.new()
+	roof.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	roof.albedo_color = Color(0.55, 0.62, 0.66, 0.28)
+	roof.roughness = 0.12
+	roof.metallic_specular = 0.6
+	roof.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_flush(roof)
 	_base = _xf(at)
 	_bx(Vector3(4.0, 2.05, 0.012), Vector3(0, 1.32, -1.2), Color(0.34, 0.4, 0.44))
 	_flush(_vmat(0.06, 0.1))
@@ -597,21 +614,7 @@ func _build_street_furniture() -> void:
 
 	_bin(Vector3(-16.5, 0.012, 25.0))
 	_bin(Vector3(21.0, 0.012, 25.0))
-
-	# Красно-белые ограждения на концах улицы
-	var red := Color(0.6, 0.14, 0.1)
-	var white := Color(0.8, 0.78, 0.72)
-	for s in [-1.0, 1.0]:
-		var z := CURB - 3.4
-		while z < 40.0:
-			_base = _xf(Vector3(s * LIMIT_X, 0.0, z + 1.1))
-			for sz in [-0.85, 0.85]:
-				_bx(Vector3(0.08, 1.05, 0.08), Vector3(0, 0.52, sz), Color(0.2, 0.2, 0.22))
-				_bx(Vector3(0.5, 0.06, 0.12), Vector3(0, 0.03, sz), Color(0.2, 0.2, 0.22))
-			for k in range(6):
-				_bx(Vector3(0.04, 0.22, 0.34), Vector3(0, 0.86, -0.85 + 0.17 + float(k) * 0.34 - 0.17), red if k % 2 == 0 else white)
-			z += 2.4
-	_flush(_vmat(0.6))
+	# Красно-белых ограждений больше нет: конец улицы держит только невидимая стена (_solid в _build_blocks)
 
 
 # ── Район: разметка, переход, знаки, тумба, контейнеры, кусты, листья, мелочи на домах ──
@@ -650,9 +653,9 @@ func _build_district() -> void:
 	_flush(_vmat(0.55, 0.4))
 
 	# Знаки: пешеходный переход и остановка
-	_sign(Vector3(-2.3, 0.0, 27.5), Color(0.1, 0.24, 0.5), 90.0)
-	_sign(Vector3(2.3, 0.0, 37.5), Color(0.1, 0.24, 0.5), -90.0)
-	_sign(Vector3(-17.3, 0.0, 27.6), Color(0.62, 0.55, 0.14), 90.0)
+	_sign(Vector3(-2.3, 0.0, 27.5), "crossing", 90.0)
+	_sign(Vector3(2.3, 0.0, 37.5), "crossing", -90.0)
+	_sign(Vector3(-17.3, 0.0, 27.6), "bus", 90.0)
 
 	# Рекламная тумба с объявлениями о пропаже
 	var at := Vector3(-10.0, 0.012, 25.5)
@@ -767,20 +770,112 @@ func _leaf_ball(st: SurfaceTool, c: Vector3, radii: Vector3, count: int) -> void
 			st.add_vertex(corners[idx])
 
 
-func _sign(pos: Vector3, col: Color, yaw: float) -> void:
+func _sign(pos: Vector3, kind: String, yaw: float) -> void:
 	_base = _xf(pos, Vector3(0, yaw, 0))
 	var steel := Color(0.42, 0.43, 0.45)
 	_cy(0.032, 0.036, 2.55, Vector3(0, 1.28, 0), steel, Vector3.ZERO, 8)
+	# Хомуты, которыми щит прикручен к столбу, и серая изнанка щита
+	_bx(Vector3(0.09, 0.03, 0.09), Vector3(0, 2.2, 0.0), steel.darkened(0.2))
+	_bx(Vector3(0.09, 0.03, 0.09), Vector3(0, 2.52, 0.0), steel.darkened(0.2))
+	_bx(Vector3(0.6, 0.6, 0.016), Vector3(0, 2.36, 0.04), Color(0.55, 0.56, 0.57))
 	_flush(_vmat(0.45, 0.5))
-	_base = _xf(pos, Vector3(0, yaw, 0))
-	_bx(Vector3(0.62, 0.62, 0.02), Vector3(0, 2.36, 0.04), Color(0.72, 0.72, 0.68))
-	_bx(Vector3(0.55, 0.55, 0.004), Vector3(0, 2.36, 0.052), col)
-	_bx(Vector3(0.3, 0.3, 0.004), Vector3(0, 2.34, 0.056), Color(0.76, 0.76, 0.72), Vector3(0, 0, 45))
-	_bx(Vector3(0.05, 0.2, 0.004), Vector3(0, 2.35, 0.059), Color(0.05, 0.05, 0.06), Vector3(0, 0, 8))
-	_bl(Vector3(0.036, 0.036, 0.003), Vector3(0.02, 2.47, 0.059), Color(0.05, 0.05, 0.06))
-	_flush(_vmat(0.5))
 	_base = Transform3D.IDENTITY
+	var face := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.6, 0.6)
+	face.mesh = quad
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = _sign_texture(kind)
+	m.roughness = 0.45
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	face.material_override = m
+	face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(face)
+	face.transform = _xf(pos, Vector3(0, yaw, 0)) * _xf(Vector3(0, 2.36, 0.0495))
 	_solid(pos + Vector3(0, 1.25, 0), Vector3(0.1, 2.5, 0.1))
+
+
+# Картинка знака рисуется один раз: расстояние до фигуры даёт ровные сглаженные края
+static var _sign_cache := {}
+const SIGN_PX := 192
+
+
+static func _sign_texture(kind: String) -> ImageTexture:
+	if _sign_cache.has(kind):
+		return _sign_cache[kind]
+	var img := Image.create(SIGN_PX, SIGN_PX, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.55, 0.56, 0.57))
+	var white := Color(0.93, 0.93, 0.9)
+	var blue := Color(0.05, 0.27, 0.62)
+	var black := Color(0.04, 0.04, 0.05)
+	_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(96, 96), Vector2(95, 95), 14.0), white)
+	_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(96, 96), Vector2(88, 88), 10.0), blue)
+	if kind == "crossing":
+		# Пешеходный переход: белый треугольник, человек на зебре
+		var tri := [Vector2(96, 22), Vector2(170, 162), Vector2(22, 162)]
+		_paint(img, func(p: Vector2) -> float: return _sd_poly(p, tri) - 6.0, white)
+		_paint(img, func(p: Vector2) -> float: return _sd_circle(p, Vector2(101, 62), 9.5), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(98, 76), Vector2(91, 112), 6.5), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(96, 83), Vector2(80, 101), 4.0), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(96, 83), Vector2(113, 97), 4.0), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(91, 112), Vector2(77, 140), 5.0), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(91, 112), Vector2(106, 127), 5.0), black)
+		_paint(img, func(p: Vector2) -> float: return _sd_seg(p, Vector2(106, 127), Vector2(111, 143), 5.0), black)
+		for i in range(6):
+			var x := 52.0 + float(i) * 18.0
+			_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(x, 151), Vector2(4.5, 3.5), 1.0), black)
+	elif kind == "bus":
+		# Остановка автобуса: белое поле и автобус сбоку
+		_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(96, 100), Vector2(62, 52), 6.0), white)
+		_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(96, 96), Vector2(50, 26), 9.0), black)
+		for i in range(4):
+			var x := 62.0 + float(i) * 19.0
+			_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(x, 86), Vector2(6.5, 7.0), 2.0), white)
+		_paint(img, func(p: Vector2) -> float: return _sd_box(p, Vector2(138, 92), Vector2(4.0, 13.0), 1.5), white)
+		for x: float in [68.0, 124.0]:
+			_paint(img, func(p: Vector2) -> float: return _sd_circle(p, Vector2(x, 122), 13.0), white)
+			_paint(img, func(p: Vector2) -> float: return _sd_circle(p, Vector2(x, 122), 9.5), black)
+	img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	_sign_cache[kind] = tex
+	return tex
+
+
+static func _paint(img: Image, sdf: Callable, col: Color) -> void:
+	for y in range(SIGN_PX):
+		for x in range(SIGN_PX):
+			var d: float = sdf.call(Vector2(float(x) + 0.5, float(y) + 0.5))
+			if d > 1.0:
+				continue
+			var a := clampf(0.5 - d, 0.0, 1.0)
+			img.set_pixel(x, y, img.get_pixel(x, y).lerp(col, a))
+
+
+static func _sd_circle(p: Vector2, c: Vector2, r: float) -> float:
+	return p.distance_to(c) - r
+
+
+static func _sd_seg(p: Vector2, a: Vector2, b: Vector2, r: float) -> float:
+	var ab := b - a
+	var t := clampf((p - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+	return p.distance_to(a + ab * t) - r
+
+
+static func _sd_box(p: Vector2, c: Vector2, half: Vector2, r: float) -> float:
+	var q := (p - c).abs() - half + Vector2(r, r)
+	return Vector2(maxf(q.x, 0.0), maxf(q.y, 0.0)).length() + minf(maxf(q.x, q.y), 0.0) - r
+
+
+# Выпуклый многоугольник по часовой стрелке (в координатах картинки, ось Y вниз)
+static func _sd_poly(p: Vector2, pts: Array) -> float:
+	var d := -INF
+	for i in range(pts.size()):
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[(i + 1) % pts.size()]
+		var e := (b - a).normalized()
+		var n := Vector2(e.y, -e.x)
+		d = maxf(d, (p - a).dot(n))
+	return d
 
 
 # Жильцы: водосточные трубы, бельё на балконах, коробки, антенны, ворота гаражей
@@ -924,6 +1019,84 @@ func _build_posters() -> void:
 	set_mi.material_override = paper
 	set_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(set_mi)
+
+
+# ── Движение на улице: машины ездят по двум полосам туда-сюда мимо машины Итана ──
+# Полоса A идёт на запад (-X), полоса B на восток (+X). У ограждений машина уезжает
+# и через несколько секунд возвращается по другой полосе. Столкновений у них нет.
+const LANE_A_Z := 31.5
+const LANE_B_Z := 33.6
+const TRAFFIC_END := 104.0
+
+
+func _build_traffic() -> void:
+	var cols := [Color(0.22, 0.25, 0.3), Color(0.42, 0.38, 0.3), Color(0.5, 0.5, 0.47), Color(0.3, 0.12, 0.1), Color(0.16, 0.2, 0.17)]
+	var engine := load("res://assets/audio/car_engine.wav") as AudioStreamWAV
+	for i in range(cols.size()):
+		var car := EthanCar.new()
+		car._mats["paint"].albedo_color = cols[i]
+		car._mats["paint2"].albedo_color = (cols[i] as Color).darkened(0.3)
+		add_child(car)
+		_lighten_car(car)
+		car.set_lights(true, 0.0)
+		for mi: MeshInstance3D in car.find_children("*", "MeshInstance3D", true, false):
+			if mi.visibility_range_end == 0.0:
+				mi.visibility_range_end = 62.0
+			mi.visibility_range_end_margin = 12.0
+			mi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		if engine:
+			var st := engine.duplicate() as AudioStreamWAV
+			st.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			st.loop_begin = 0
+			st.loop_end = int(st.get_length() * float(st.mix_rate))
+			var snd := AudioStreamPlayer3D.new()
+			snd.stream = st
+			snd.volume_db = -6.0
+			snd.unit_size = 7.0
+			snd.max_distance = 55.0
+			snd.pitch_scale = _rng.randf_range(0.78, 1.0)
+			car.add_child(snd)
+			snd.play()
+		var west := i % 2 == 0
+		var t := {
+			"car": car,
+			"dir": -1.0 if west else 1.0,
+			"speed": _rng.randf_range(6.5, 10.0),
+			"wait": float(i) * 3.5,
+		}
+		_traffic_place(t, _rng.randf_range(-TRAFFIC_END, TRAFFIC_END))
+		_traffic.append(t)
+
+
+func _traffic_place(t: Dictionary, x: float) -> void:
+	var car: Node3D = t["car"]
+	var west: bool = float(t["dir"]) < 0.0
+	car.position = Vector3(x, 0.0, LANE_A_Z if west else LANE_B_Z)
+	# Перед машины смотрит вдоль -Z модели: на запад поворот +90, на восток -90
+	car.rotation_degrees = Vector3(0, 90.0 if west else -90.0, 0)
+
+
+func _process(delta: float) -> void:
+	for t: Dictionary in _traffic:
+		var car: Node3D = t["car"]
+		if not is_instance_valid(car):
+			continue
+		if float(t["wait"]) > 0.0:
+			t["wait"] = float(t["wait"]) - delta
+			car.visible = false
+			continue
+		car.visible = true
+		var dir: float = t["dir"]
+		var speed: float = t["speed"]
+		car.position.x += dir * speed * delta
+		car.set_motion(delta, speed, 0.0)
+		if absf(car.position.x) > TRAFFIC_END:
+			# Доехала до края: разворот, другая полоса, пауза перед возвращением
+			t["dir"] = -dir
+			t["speed"] = _rng.randf_range(6.5, 10.0)
+			t["wait"] = _rng.randf_range(4.0, 14.0)
+			_traffic_place(t, TRAFFIC_END * signf(car.position.x) * 0.98)
+			car.visible = false
 
 
 func _build_car() -> void:
