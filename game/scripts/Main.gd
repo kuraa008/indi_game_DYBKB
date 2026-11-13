@@ -1033,6 +1033,12 @@ func _spawn_player() -> void:
 
 	if _is_crane_house():
 		add_child(load("res://scripts/CraneHouseMap.gd").new())
+		# Глава 4: Сэм на стуле «Старший», ремни → кат-сцена Ch4Sam (Jan-ky)
+		add_child(load("res://scripts/cutscenes/CraneHouseSam.gd").new())
+
+	if _is_gas_station():
+		# Финал: заправка днём, «Марта…», кат-сцены Finale (Jan-ky)
+		add_child(load("res://scripts/cutscenes/FinaleStation.gd").new())
 
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
@@ -1414,8 +1420,11 @@ func _is_street() -> bool:
 func _is_crane_house() -> bool:
 	return "крейна" in map_json_path.to_lower() or "лесная" in map_json_path.to_lower()
 
+func _is_gas_station() -> bool:
+	return "заправка" in map_json_path.to_lower()
+
 func _is_prologue_map() -> bool:
-	return _is_apartment() or _is_street() or _is_crane_house()
+	return _is_apartment() or _is_street() or _is_crane_house() or _is_gas_station()
 
 func _is_highway() -> bool:
 	return highway_map or "шоссе" in map_json_path.to_lower()

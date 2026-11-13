@@ -21,6 +21,8 @@ const TABLE_Y := 0.78
 const WIN_L := Vector3(0.8, 1.35, -2.5)  # окно в стене z = -2.5 (с гнилыми ставнями)
 const WIN_R := Vector3(-1.2, 1.35, 2.5)  # окно в стене z = +2.5
 const DOOR := Vector3(3.0, 0, 1.2)
+const SAM_WALL := Vector3(-2.62, 0.0, 1.62)   # Сэм у стены рядом с очагом (очаг шириной ±1.05 по z)
+const SAM_WORDS := "ПОЗДНО.\nОНО ИДЁТ.\nОГОНЬ — ОЧАГ."
 
 
 # Дом Досыма без стульев и ставней и без того, что нужно только в игре
@@ -139,13 +141,7 @@ static func build(root: Node3D, _broken_window: bool = false) -> Dictionary:
 		shutters.append(s)
 	out["shutters"] = shutters
 	# Надпись Сэма на пыльном столе (появляется по буквам)
-	var writing := CutsceneKit.text3d(root, "", Vector3(-0.32, TABLE_Y + 0.006, -0.2), Vector3(-90, 0, 0), 0.0011, Color(0.17, 0.14, 0.11), 64)
-	writing.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	writing.autowrap_mode = TextServer.AUTOWRAP_OFF
-	# Пальцем по пыли: следы темнее пыльной столешницы Досыма
-	writing.shaded = false
-	writing.modulate = Color(0.07, 0.06, 0.045, 0.95)
-	out["writing"] = writing
+	out["writing"] = dust_writing(root)
 	# Пепел в топке — часть очага Досыма; узел оставлен, чтобы старые кат-сцены могли его «прятать»
 	var ash := Node3D.new()
 	ash.name = "HearthAsh"
@@ -154,3 +150,36 @@ static func build(root: Node3D, _broken_window: bool = false) -> Dictionary:
 	out["fire_pos"] = Vector3(-2.68, 0.1, 0.0)
 	out["plates"] = []
 	return out
+
+
+# Надпись Сэма на пыльном столе. Пальцем по пыли: следы темнее пыльной столешницы Досыма
+static func dust_writing(root: Node3D) -> Label3D:
+	var writing := CutsceneKit.text3d(root, "", Vector3(-0.32, TABLE_Y + 0.006, -0.2), Vector3(-90, 0, 0), 0.0011, Color(0.17, 0.14, 0.11), 64)
+	writing.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	writing.autowrap_mode = TextServer.AUTOWRAP_OFF
+	writing.shaded = false
+	writing.modulate = Color(0.07, 0.06, 0.045, 0.95)
+	return writing
+
+
+# Сэм на стуле «Старший», руки привязаны ремнями из оленьей кожи. Один и тот же Сэм
+# в игре (CraneHouseSam.gd) и в кат-сцене Ch4Sam. Возвращает {sam, straps}.
+static func sam_tied(root: Node3D) -> Dictionary:
+	var sam := CutsceneCast.sam()
+	root.add_child(sam)
+	sam.position = ELDER + Vector3(0, 0, -0.04)
+	CutsceneCast.pose(sam, CutsceneCast.sit_tied())
+	var leather := CutsceneKit.mat(Color(0.3, 0.2, 0.13), 0.8)
+	var straps := []
+	for s in [-1.0, 1.0]:
+		var st := CutsceneKit.box(root, Vector3(0.09, 0.05, 0.07), ELDER + Vector3(0.21 * s, 0.5, 0.05), leather)
+		CutsceneKit.box(st, Vector3(0.02, 0.18, 0.02), Vector3(0, -0.11, 0), leather)
+		straps.append(st)
+	return {"sam": sam, "straps": straps}
+
+
+# Сэм сидит на полу у стены рядом с очагом (конец главы 4)
+static func sam_by_hearth(sam: PlayerModel) -> void:
+	sam.position = SAM_WALL
+	sam.rotation_degrees = Vector3(0, 90, 0)
+	CutsceneCast.pose(sam, CutsceneCast.sit_floor())
