@@ -76,19 +76,24 @@ func _start() -> void:
 	check(leftovers == 0, "Точки главы 1 убраны")
 
 	var aims := {
-		"crowbar": [Vector3(-59.6, 0.62, -231.62), Vector3(-59.6, 0.15, -233.2)],
+		"crowbar": [Vector3(-71.5, 0.5, -238.9), Vector3(-71.0, 0.15, -237.5)],
 		"board1": [Vector3(-62.0, 1.88, -231.4), Vector3(-62.0, 0.15, -233.4)],
 	}
 	for key in aims:
 		await aim(player, aims[key][0], aims[key][1])
 		var got: Node = player.call("_get_interactable")
 		check(got == ch.spots.get(key), "Прицел берёт: %s" % key)
+		if key == "crowbar":
+			await shot("ch3_crowbar.png")
 	await shot("ch3_window.png")
 
 	ch.spots.board0.interact(player)
 	check(ch.boards_left == 3, "Без монтировки доску не оторвать")
+	check(ch.spots.crowbar.global_position.distance_to(Vector3(-71.45, 0.45, -238.9)) < 0.2, "Монтировка лежит в сарае")
 	ch.spots.crowbar.interact(player)
+	check(ch._shed_crowbar() != null, "Монтировка из сарая (FatherYard)")
 	check(ch.has_crowbar, "Монтировка взята")
+	check(not ch._shed_crowbar().visible, "Монтировки больше нет в сарае")
 	for i in range(3):
 		ch.spots["board%d" % i].interact(player)
 		if i < 2:

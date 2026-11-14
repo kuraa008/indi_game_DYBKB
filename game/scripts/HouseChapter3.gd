@@ -2,7 +2,7 @@ extends "res://scripts/BasementChapter.gd"
 
 # Глава 3, комната отца (сюжет Досыма). Начинается во дворе, когда Итан выбрался из лаза.
 #
-# Монтировка у задней стены → три доски на окне кладовки → в дом → комната отца →
+# Монтировка в сарае → три доски на окне кладовки → в дом → комната отца →
 # тряпки из комода под ножки кровати → кровать отодвигается тихо → наступить на доски,
 # одна скрипит → под ней коробка, заперта → письма Сэма на столе → ключ в часах с
 # кукушкой в коридоре (кукушку придержать, иначе бьют) → коробка: записка отца и череп →
@@ -10,7 +10,7 @@ extends "res://scripts/BasementChapter.gd"
 #
 # Предметы — модели HouseProps (Куро, узел в главе «Шоссе»): здесь только действия,
 # а движения делают их методы (tear_off, move_bed, lift_plank, open_box, take_key…).
-# Сарая на карте нет, поэтому монтировка лежит у задней стены дома.
+# Монтировка — модель FatherYard в сарае двора, здесь её только берут.
 
 const CH3_MINE := "res://scenes/cutscenes/Ch3Mine.tscn"
 const HouseCreature := preload("res://scripts/HouseCreature.gd")
@@ -18,7 +18,7 @@ const FATHER_ROOM_POINT := Vector3(-62.5, 3.55, -221.0)
 const MAIN_SCENE := "res://scenes/Main.tscn"
 const NEXT_MAP := "res://scenes/Лесная_тропа.json"   # глава 4 (пока без гаража)
 
-const CROWBAR_AT := Vector3(-59.6, 0.62, -231.62)
+const CROWBAR_AT := Vector3(-71.45, 0.45, -238.9)   # в сарае, FatherYard.CROWBAR_POS
 const WINDOW := Vector3(-62.0, 1.85, -231.4)
 const INSIDE_PANTRY := Vector3(-62.0, 0.2, -230.2)
 const BOARD_PRY_COOLDOWN := 1.4
@@ -104,9 +104,8 @@ func _remove_chapter_one_spots() -> void:
 
 
 func _add_house_spots() -> void:
-	_crowbar_mesh()
-	_spot("crowbar", CROWBAR_AT, Vector3(0.4, 1.1, 0.4), "Взять монтировку", _on_crowbar)
-	_outline("crowbar", get_node_or_null("Crowbar"))
+	_spot("crowbar", CROWBAR_AT, Vector3(0.45, 1.0, 0.45), "Взять монтировку", _on_crowbar)
+	_outline("crowbar", _shed_crowbar())
 	if _props:
 		var boards: Array = _props.get("pantry_boards")
 		for i in range(boards.size()):
@@ -129,15 +128,10 @@ func _obj_pos(id: int) -> Vector3:
 	return (n as Node3D).global_position if n is Node3D else Vector3.ZERO
 
 
-func _crowbar_mesh() -> void:
-	var root := Node3D.new()
-	root.name = "Crowbar"
-	add_child(root)
-	root.global_position = CROWBAR_AT
-	root.rotation_degrees = Vector3(14, 0, 8)
-	var iron := _mat(Color(0.2, 0.08, 0.06), 0.55, 0.6)
-	_part(root, _cyl(0.014, 0.95), Vector3.ZERO, iron)
-	_part(root, _cyl(0.014, 0.12), Vector3(0.05, 0.47, 0), iron, Vector3(0, 0, 60))
+# Монтировка стоит в сарае двора (FatherYard, black-n1ght)
+func _shed_crowbar() -> Node3D:
+	var chapter := get_parent().get_node_or_null("HighwayChapter")
+	return chapter.get_node_or_null("FatherYard/ShedCrowbar") if chapter else null
 
 
 func _start_house_missions() -> void:
@@ -157,16 +151,16 @@ func _start_house_missions() -> void:
 func _on_crowbar() -> void:
 	has_crowbar = true
 	_drop_spot("crowbar")
-	var bar := get_node_or_null("Crowbar")
+	var bar := _shed_crowbar()
 	if bar:
-		bar.queue_free()
+		bar.visible = false
 	_play(SFX + "bag_item_select.wav", -6.0)
 	_toast("Монтировка")
 
 
 func _on_board(index: int) -> void:
 	if not has_crowbar:
-		_say("Голыми руками не оторвать. Нужна монтировка.", 2.4)
+		_say("Голыми руками не оторвать. В сарае была монтировка.", 2.6)
 		return
 	if _clock - _last_pry < BOARD_PRY_COOLDOWN:
 		return
