@@ -11,6 +11,9 @@ extends "res://scripts/models/SculptKit.gd"
 #   Олений череп и записка   skull, note (лежат в коробке)
 #   Ящик с письмами Сэма     letters_lid, open_letters(on)
 #   Часы с кукушкой          cuckoo(on), open_secret(on), take_key() -> ключ от коробки
+#   Глава 4, гараж:
+#   Керосин                  kerosene, take_kerosene()   (на полу у стеллажа)
+#   Карта леса               forest_map, take_map()      (приколота к стене рядом с доской инструментов)
 #
 # Чтобы взять предмет, ставь Area3D на нужный узел и вызывай метод. Позиции совпадают с картой.
 
@@ -26,6 +29,8 @@ const LETTERS_AT := Vector3(-63.6, 4.23, -219.55)   # ящик с письмам
 const CLOCK_AT := Vector3(-58.77, 1.935, -223.6)    # часы с кукушкой на стене коридора, смотрят на +X
 const BED_FROM := Vector3(-69.3, 3.41, -220.7)       # кровать отца на карте стоит над досками
 const BED_TO := Vector3(-69.45, 3.41, -223.25)      # отодвинута к середине комнаты (как в кат-сцене Ch3Mine)
+const KEROSENE_AT := Vector3(-41.62, 0.1, -204.72)  # гараж: на полу у северного конца стеллажа
+const FOREST_MAP_AT := Vector3(-48.55, 1.58, -204.172) # гараж: на северной стене, смотрит в гараж (-Z)
 const OLD_IDS := [4000, 4001, 4004, 4005, 4006, 4008, 4009, 4010, 4011, 4019, 4020, 4021]
 
 const OLD_WOOD := Color(0.42, 0.33, 0.24)
@@ -52,6 +57,8 @@ var clock_bird: Node3D
 var clock_secret: Node3D
 var clock_key: Node3D
 var pendulum: Node3D
+var kerosene: Node3D
+var forest_map: Node3D
 var _tween_swing: Tween
 var _key_taken := false
 
@@ -64,6 +71,8 @@ func _ready() -> void:
 	_build_box()
 	_build_letters()
 	_build_clock()
+	_build_kerosene()
+	_build_forest_map()
 	_remove_old.call_deferred()
 
 
@@ -608,6 +617,185 @@ func take_key() -> Node3D:
 	key_taken.emit()
 	k.visible = false
 	return k
+
+
+# ═══ Глава 4, гараж: керосин и карта леса ═══
+
+# Жестяная канистра керосина: красная краска стёрта до металла, ручка, носик с крышкой, бумажная этикетка
+func _build_kerosene() -> void:
+	kerosene = _part("Kerosene", KEROSENE_AT, Vector3(0, 204, 0))
+	var paint := Color(0.46, 0.12, 0.08)
+	var worn := Color(0.36, 0.33, 0.3)
+	var w := 0.22
+	var h := 0.3
+	var d := 0.12
+	_bx(Vector3(w, h - 0.02, d), Vector3(0, h * 0.5, 0), paint)
+	# Загнутые кромки сверху и снизу, стёртые до металла
+	_bx(Vector3(w + 0.006, 0.012, d + 0.006), Vector3(0, 0.006, 0), worn)
+	_bx(Vector3(w + 0.006, 0.012, d + 0.006), Vector3(0, h - 0.004, 0), worn)
+	for sx: float in [-1.0, 1.0]:
+		_bx(Vector3(0.006, h - 0.03, 0.01), Vector3(sx * (w * 0.5 + 0.001), h * 0.5, d * 0.5 - 0.003), worn.darkened(0.1))
+		_bx(Vector3(0.006, h - 0.03, 0.01), Vector3(sx * (w * 0.5 + 0.001), h * 0.5, -d * 0.5 + 0.003), worn.darkened(0.1))
+	# Выштампованная рамка на боках
+	for sz: float in [-1.0, 1.0]:
+		_bx(Vector3(w - 0.05, h - 0.08, 0.004), Vector3(0, h * 0.5 - 0.005, sz * (d * 0.5 + 0.001)), paint.lightened(0.06))
+	# Царапины и ржавые потёки
+	for i in range(10):
+		var sz := 1.0 if i % 2 == 0 else -1.0
+		_bx(Vector3(_rng.randf_range(0.01, 0.05), _rng.randf_range(0.004, 0.03), 0.0015), Vector3(_rng.randf_range(-0.09, 0.09), _rng.randf_range(0.03, h - 0.03), sz * (d * 0.5 + 0.003)), worn if i % 3 else RUST)
+	# Ручка сверху и носик с латунной крышкой
+	for sx: float in [-0.06, 0.06]:
+		_bx(Vector3(0.012, 0.04, 0.02), Vector3(sx, h + 0.02, 0), worn)
+	_bx(Vector3(0.13, 0.016, 0.026), Vector3(0, h + 0.044, 0), Color(0.1, 0.1, 0.1))
+	_cy(0.017, 0.02, 0.03, Vector3(0.085, h + 0.012, 0), worn, Vector3.ZERO, 12)
+	_cy(0.021, 0.021, 0.018, Vector3(0.085, h + 0.034, 0), BRASS, Vector3.ZERO, 12)
+	_emit(kerosene, _metal())
+	# Этикетка на боку
+	var label := _part("Label", Vector3(0, h * 0.5, d * 0.5 + 0.0045), Vector3.ZERO, kerosene)
+	_bx(Vector3(0.14, 0.12, 0.002), Vector3.ZERO, PAPER.darkened(0.05))
+	_bx(Vector3(0.14, 0.018, 0.0024), Vector3(0, 0.035, 0.0003), Color(0.12, 0.1, 0.09))
+	_emit(label, _matte(), false)
+	var txt := Label3D.new()
+	txt.text = "КЕРОСИН"
+	txt.font_size = 40
+	txt.pixel_size = 0.0007
+	txt.modulate = Color(0.1, 0.08, 0.07)
+	txt.outline_size = 0
+	txt.shaded = true
+	txt.double_sided = false
+	txt.position = Vector3(0, -0.012, 0.0016)
+	label.add_child(txt)
+	var small := Label3D.new()
+	small.text = "осветительный\n5 л"
+	small.font_size = 24
+	small.pixel_size = 0.0006
+	small.modulate = Color(0.16, 0.13, 0.11)
+	small.outline_size = 0
+	small.shaded = true
+	small.double_sided = false
+	small.position = Vector3(0, -0.04, 0.0016)
+	label.add_child(small)
+
+
+func take_kerosene() -> Node3D:
+	if kerosene == null or not kerosene.visible:
+		return null
+	kerosene.visible = false
+	return kerosene
+
+
+# Старая карта леса, нарисованная от руки: дом отца внизу, тропа через лес, дом Крейна наверху
+func _build_forest_map() -> void:
+	forest_map = _part("ForestMap", FOREST_MAP_AT, Vector3(0, 180, -2))
+	var sheet := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.62, 0.46)
+	sheet.mesh = quad
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = _forest_map_texture()
+	m.roughness = 0.92
+	m.albedo_color = Color(0.82, 0.82, 0.82)
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	sheet.material_override = m
+	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	forest_map.add_child(sheet)
+	# Кнопки по углам
+	for c: Vector2 in [Vector2(-0.29, 0.21), Vector2(0.29, 0.21), Vector2(-0.29, -0.21), Vector2(0.29, -0.21)]:
+		_cy(0.007, 0.008, 0.008, Vector3(c.x, c.y, 0.004), Color(0.6, 0.1, 0.08), Vector3(90, 0, 0), 10)
+	_emit(forest_map, _matte())
+
+
+func take_map() -> Node3D:
+	if forest_map == null or not forest_map.visible:
+		return null
+	forest_map.visible = false
+	return forest_map
+
+
+static var _map_tex: ImageTexture
+
+
+static func _forest_map_texture() -> ImageTexture:
+	if _map_tex:
+		return _map_tex
+	var w := 512
+	var h := 380
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1815
+	img.fill(Color(0.78, 0.72, 0.57))
+	# Пятна и потемневшие края старой бумаги
+	for i in range(40):
+		_map_disc(img, Vector2(rng.randf() * w, rng.randf() * h), rng.randf_range(12, 60), Color(0.62, 0.53, 0.38), 0.12)
+	for x in range(w):
+		for y in [0, 1, 2, 3, h - 1, h - 2, h - 3, h - 4]:
+			img.set_pixel(x, y, img.get_pixel(x, y).darkened(0.25))
+	for y in range(h):
+		for x in [0, 1, 2, 3, w - 1, w - 2, w - 3, w - 4]:
+			img.set_pixel(x, y, img.get_pixel(x, y).darkened(0.25))
+	# Лес: много тёмно-зелёных пятен, вдоль тропы просека
+	var trail := [Vector2(70, 330), Vector2(130, 290), Vector2(170, 240), Vector2(250, 220), Vector2(300, 170), Vector2(360, 140), Vector2(420, 80)]
+	for i in range(520):
+		var p := Vector2(rng.randf() * w, rng.randf() * h)
+		var near := INF
+		for k in range(trail.size() - 1):
+			near = minf(near, _seg_dist(p, trail[k], trail[k + 1]))
+		if near < 16.0 or p.distance_to(Vector2(70, 330)) < 40.0:
+			continue
+		_map_disc(img, p, rng.randf_range(4, 9), Color(0.2, 0.3, 0.16), 0.75)
+	# Ручей
+	var river := [Vector2(0, 150), Vector2(80, 170), Vector2(160, 150), Vector2(230, 175), Vector2(300, 230), Vector2(380, 260), Vector2(512, 250)]
+	for k in range(river.size() - 1):
+		_map_line(img, river[k], river[k + 1], 3.0, Color(0.22, 0.34, 0.5), 1.0, 0)
+	# Дорога внизу и дом отца у неё
+	_map_line(img, Vector2(0, 352), Vector2(512, 340), 4.0, Color(0.3, 0.27, 0.22), 1.0, 0)
+	_map_rect(img, Vector2(58, 318), Vector2(84, 340), Color(0.08, 0.07, 0.06))
+	# Тропа пунктиром, дом Крейна обведён красным, крест рядом
+	for k in range(trail.size() - 1):
+		_map_line(img, trail[k], trail[k + 1], 2.2, Color(0.5, 0.08, 0.06), 1.0, 9)
+	_map_rect(img, Vector2(408, 66), Vector2(432, 88), Color(0.08, 0.07, 0.06))
+	for a in range(0, 360, 2):
+		var t := deg_to_rad(float(a))
+		var r := 26.0 + 2.0 * sin(t * 3.0)
+		_map_disc(img, Vector2(420, 77) + Vector2(cos(t), sin(t)) * r, 2.2, Color(0.62, 0.08, 0.06), 1.0)
+	# Сгибы листа
+	for x in range(w):
+		img.set_pixel(x, h / 2, img.get_pixel(x, h / 2).darkened(0.18))
+		img.set_pixel(x, h / 2 + 1, img.get_pixel(x, h / 2 + 1).lightened(0.08))
+	for y in range(h):
+		img.set_pixel(w / 2, y, img.get_pixel(w / 2, y).darkened(0.18))
+		img.set_pixel(w / 2 + 1, y, img.get_pixel(w / 2 + 1, y).lightened(0.08))
+	img.generate_mipmaps()
+	_map_tex = ImageTexture.create_from_image(img)
+	return _map_tex
+
+
+static func _seg_dist(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var t := clampf((p - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+	return p.distance_to(a + ab * t)
+
+
+static func _map_disc(img: Image, c: Vector2, r: float, col: Color, alpha: float) -> void:
+	for y in range(maxi(0, int(c.y - r - 1)), mini(img.get_height(), int(c.y + r + 2))):
+		for x in range(maxi(0, int(c.x - r - 1)), mini(img.get_width(), int(c.x + r + 2))):
+			var a := clampf(r - Vector2(x + 0.5, y + 0.5).distance_to(c) + 0.5, 0.0, 1.0) * alpha
+			if a > 0.0:
+				img.set_pixel(x, y, img.get_pixel(x, y).lerp(col, a))
+
+
+static func _map_line(img: Image, a: Vector2, b: Vector2, r: float, col: Color, alpha: float, dash: int) -> void:
+	var len := a.distance_to(b)
+	var steps := int(len / 1.5) + 1
+	for i in range(steps + 1):
+		var t := float(i) / float(steps)
+		if dash > 0 and int(t * len / float(dash)) % 2 == 1:
+			continue
+		_map_disc(img, a.lerp(b, t), r, col, alpha * 0.6)
+
+
+static func _map_rect(img: Image, a: Vector2, b: Vector2, col: Color) -> void:
+	img.fill_rect(Rect2i(Vector2i(a), Vector2i(b - a)), col)
 
 
 # ═══ Убрать из карты старые кубики-заглушки, которые эти модели заменяют ═══
