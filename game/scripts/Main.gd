@@ -1045,6 +1045,10 @@ func _spawn_player() -> void:
 		# Объявления и посадка в машину → дорога и авария (Jan-ky)
 		add_child(preload("res://scripts/cutscenes/StreetCar.gd").new())
 
+	# Фонарик ищут только в квартире; на остальных картах он уже в руке (если пролог пропустили)
+	if not _is_apartment() and not GameManager.has_flashlight:
+		GameManager.give_flashlight(true)
+
 	var p = load("res://scenes/Player.tscn").instantiate() as CharacterBody3D
 	p.name     = "Player"
 	p.position = player_spawn

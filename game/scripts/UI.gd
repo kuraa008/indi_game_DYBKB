@@ -428,7 +428,7 @@ func _refresh_hotbar() -> void:
 		var cnt = hotbar_slot_counts[i]
 		var itm: Dictionary = items[i] if i < items.size() else {}
 		var has_item: bool = not itm.is_empty() and itm.get("id", "empty") != "empty"
-		var is_active: bool = (i == active_idx) and has_item
+		var is_active: bool = GameManager.is_slot_in_hand(i) and has_item
 
 		var s = StyleBoxFlat.new()
 
@@ -471,6 +471,9 @@ func _refresh_hotbar() -> void:
 				var DoorScript = load("res://scripts/Door.gd")
 				var th = DoorScript.get_lock_theme(int(itm["key_id"]))
 				tag_color = th.get("color", Color(1.0, 0.85, 0.25))
+			elif iid == "flashlight":
+				short_tag = "ФОН"
+				tag_color = Color(1.0, 0.93, 0.7)
 			elif iid == "crowbar":
 				short_tag = "ЛОМ"
 				tag_color = Color(0.95, 0.35, 0.30)
@@ -1322,7 +1325,7 @@ func _refresh_backpack() -> void:
 		for c in btn.get_children():
 			c.queue_free()
 
-		var is_active = (i == act_idx)
+		var is_active = GameManager.is_slot_in_hand(i)
 		var is_cursor = (GameManager.is_gamepad and i == backpack_cursor_index)
 		var itm = items[i] if i < items.size() else null
 		var has_item = (itm != null and itm.get("id", "empty") != "empty")
@@ -1399,7 +1402,7 @@ func _update_backpack_desc(idx: int) -> void:
 	if idx >= 0 and idx < items.size():
 		var itm = items[idx]
 		if itm.get("id", "empty") != "empty":
-			var in_hand = "  (в руке)" if idx == GameManager.active_item_index else ""
+			var in_hand = "  (в руке)" if GameManager.is_slot_in_hand(idx) else ""
 			backpack_active_lbl.text = str(itm["name"]) + in_hand
 			backpack_desc_lbl.text = itm.get("desc", "")
 			return
@@ -1976,7 +1979,24 @@ var crosshair_dot: ColorRect = null
 var crosshair_ring: Control = null
 var crosshair_hover_active: bool = false
 var throw_charge_container: Control = null
+var hold_ring: HoldRing = null
 var throw_charge_bar: ColorRect = null
+
+
+# Кольцо вокруг прицела: заполняется, пока держишь кнопку, чтобы взять вещь
+class HoldRing extends Control:
+	var progress := 0.0
+	var flash := 0.0
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := 15.0 + flash * 6.0
+		if progress <= 0.0 and flash <= 0.0:
+			return
+		draw_arc(c, r, 0.0, TAU, 48, Color(1, 1, 1, 0.16 * (1.0 - flash)), 2.5, true)
+		if progress > 0.0:
+			var a0 := -PI * 0.5
+			draw_arc(c, r, a0, a0 + TAU * clampf(progress, 0.0, 1.0), 48, Color(0.97, 0.93, 0.82, 0.95 * (1.0 - flash)), 2.5, true)
 var throw_charge_bg: ColorRect = null
 
 func _build_crosshair_ui() -> void:
@@ -2032,6 +2052,13 @@ func _build_crosshair_ui() -> void:
 
 	crosshair_container.add_child(crosshair_ring)
 
+	hold_ring = HoldRing.new()
+	hold_ring.name = "HoldRing"
+	hold_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hold_ring.size = Vector2(56, 56)
+	hold_ring.position = Vector2(-28, -28)
+	crosshair_container.add_child(hold_ring)
+
 	# Полоска заряда броска (Throw Charge Meter)
 	throw_charge_container = Control.new()
 	throw_charge_container.name = "ThrowChargeContainer"
@@ -2074,6 +2101,36 @@ func set_crosshair_hover(hover: bool) -> void:
 		tw.tween_property(crosshair_ring, "scale", Vector2(0.6, 0.6), 0.15)
 		tw.tween_property(crosshair_dot, "color", Color(1.0, 1.0, 1.0, 0.65), 0.15)
 		tw.tween_property(crosshair_dot, "scale", Vector2(1.0, 1.0), 0.15)
+
+# Сколько уже удержано (0..1); 0 прячет кольцо
+func set_hold_progress(v: float) -> void:
+	if not hold_ring:
+		return
+	hold_ring.progress = clampf(v, 0.0, 1.0)
+	if v > 0.0:
+		hold_ring.flash = 0.0
+		hold_ring.modulate.a = 1.0
+	hold_ring.queue_redraw()
+	if crosshair_ring:
+		crosshair_ring.scale = Vector2.ONE * (1.0 - 0.25 * hold_ring.progress) if v > 0.0 else crosshair_ring.scale
+
+
+# Вещь взята: кольцо вспыхивает и расходится
+func finish_hold() -> void:
+	if not hold_ring:
+		return
+	hold_ring.progress = 1.0
+	var tw := create_tween()
+	tw.tween_method(func(f: float) -> void:
+		hold_ring.flash = f
+		hold_ring.queue_redraw(), 0.0, 1.0, 0.28).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void:
+		hold_ring.progress = 0.0
+		hold_ring.flash = 0.0
+		hold_ring.queue_redraw())
+	if crosshair_ring:
+		create_tween().tween_property(crosshair_ring, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 
 func update_throw_charge(charge_val: float) -> void:
 	if not throw_charge_container or not throw_charge_bar:

@@ -98,6 +98,48 @@ func _ready() -> void:
 	_mirror_bar(bath)
 	_omni(bath, Vector3(5.2, FL + 2.02, -0.72), 0.42, 2.6)
 	_switch(Vector3(4.262, FL + 1.25, 0.1), 90.0, bath)
+	_collect_lights.call_deferred()
+
+
+# ── Свет не должен проходить сквозь стены: тени включаются у ламп, чей свет достаёт до игрока ──
+# Тени всех ламп сразу стоили бы много FPS, а лампы в дальних комнатах игрок всё равно не видит.
+# Комнаты неподвижные, так что тени почти не перерисовываются и стоят дёшево.
+var _shadowed: Array[OmniLight3D] = []
+var _shadow_timer := 0.0
+
+
+func _collect_lights() -> void:
+	var scene := get_parent()
+	var window_light: Variant = scene.get("_window_light")
+	for n in scene.find_children("*", "OmniLight3D", true, false):
+		if n == window_light:
+			continue
+		var l := n as OmniLight3D
+		l.shadow_blur = 1.5
+		_shadowed.append(l)
+	_update_shadows()
+
+
+func _process(delta: float) -> void:
+	_shadow_timer -= delta
+	if _shadow_timer <= 0.0:
+		_shadow_timer = 0.2
+		_update_shadows()
+
+
+func _update_shadows() -> void:
+	var pl = GameManager.player_ref
+	var cam_pos := Vector3.INF
+	if is_instance_valid(pl) and pl.is_inside_tree():
+		cam_pos = pl.global_position + Vector3(0, 1.5, 0)
+	elif get_viewport() and get_viewport().get_camera_3d():
+		cam_pos = get_viewport().get_camera_3d().global_position
+	for l in _shadowed:
+		if not is_instance_valid(l):
+			continue
+		var near := cam_pos != Vector3.INF and l.global_position.distance_to(cam_pos) < l.omni_range + 1.0
+		# Даже на низкой графике: без тени свет комнаты горит на стене соседней
+		l.shadow_enabled = near and l.visible
 
 
 func _omni(group: LightGroup, pos: Vector3, energy: float, rng: float) -> void:

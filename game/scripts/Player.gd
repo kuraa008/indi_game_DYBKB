@@ -34,6 +34,14 @@ var highlight_material: StandardMaterial3D = null
 const OUTLINE_COLOR := Color(0.95, 0.94, 0.9, 1.0)
 var current_highlighted_node: Node = null
 
+# ── Удержание: вещи берутся не сразу, а если держать кнопку HOLD_TIME секунд ──
+const HOLD_TIME: float = 1.0
+const HOLD_VERBS := ["взять", "подобрать", "забрать", "съесть", "доесть", "снять турку", "поднять доску"]
+const INSTANT_TYPES := ["note", "note_safe", "note_safe_code", "light_switch", "door", "story_spot"]
+var _hold_target: Node = null
+var _hold_t: float = 0.0
+var _hold_pickup: bool = false
+
 # ── Автоприцел и выбор предметов стрелками D-Pad ──
 var nearby_interactables: Array[Node] = []
 var active_interactable_idx: int = 0
@@ -150,6 +158,11 @@ func _ready() -> void:
 		_on_graphics_quality_changed(GameManager.graphics_quality)
 
 	_setup_input_map()
+	if GameManager:
+		GameManager.flashlight_equip_changed.connect(_on_flashlight_equip_changed)
+		flashlight_on = GameManager.flashlight_out and GameManager.has_flashlight
+		if player_hands:
+			player_hands.set_flashlight_out(flashlight_on, false)
 
 func _setup_input_map() -> void:
 	# 1. Движение: W, A, S, D + Левый стик + D-Pad
@@ -499,12 +512,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		elif event.button_index == JOY_BUTTON_DPAD_UP:
-			flashlight_on = not flashlight_on
-			if player_hands:
-				player_hands.set_flashlight_state(flashlight_on, 1.0 if flashlight_on else 0.0)
-			elif flashlight:
-				flashlight.visible = flashlight_on
-			GameManager.emit_signal("flashlight_toggled", flashlight_on)
+			_press_flashlight_key()
 			get_viewport().set_input_as_handled()
 			return
 		elif event.button_index == JOY_BUTTON_DPAD_DOWN:
@@ -952,13 +960,8 @@ func _physics_process(delta: float) -> void:
 		_use_road_flare()
 
 	# ── Фонарик [F] (на левой руке) ───────────
-	if Input.is_action_just_pressed("toggle_flashlight"):
-		flashlight_on = not flashlight_on
-		if player_hands:
-			player_hands.set_flashlight_state(flashlight_on, 1.0 if flashlight_on else 0.0)
-		elif flashlight:
-			flashlight.visible = flashlight_on
-		GameManager.emit_signal("flashlight_toggled", flashlight_on)
+	if Input.is_action_just_pressed("toggle_flashlight") and not Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_UP):
+		_press_flashlight_key()
 
 	# ── Взаимодействие [ЛКМ / E / RT] (двери, шкафы, записки, рубильники) ──
 	var is_interact_pressed: bool = (
@@ -966,7 +969,8 @@ func _physics_process(delta: float) -> void:
 		rt_just_pressed
 	)
 	if is_interact_pressed:
-		_try_interact()
+		if not _begin_hold(false):
+			_try_interact()
 
 	# ── Взять предмет [E / Y] (лом, ключи, батарейки, предохранители, предметы) ──
 	var is_pickup_pressed: bool = (
@@ -976,7 +980,10 @@ func _physics_process(delta: float) -> void:
 		)
 	)
 	if is_pickup_pressed:
-		_try_pick_up()
+		if not _begin_hold(true):
+			_try_pick_up()
+
+	_update_hold(delta, rt_is_down or joy_y_down)
 
 	_update_hover_hint()
 	_update_flashlight(delta)
@@ -999,6 +1006,8 @@ func _cycle_backpack_slot(step: int) -> void:
 	if cur == -1:
 		cur = 0 if step > 0 else items.size() - 1
 	else:
+		cur = posmod(cur + step, items.size())
+	if str(items[cur].get("id", "")) == "flashlight":
 		cur = posmod(cur + step, items.size())
 	GameManager.set_active_backpack_slot(cur)
 
@@ -1118,7 +1127,7 @@ func _cycle_quick_slot(step: int) -> void:
 		_select_quick_slot(-1)
 		return
 
-	if candidate < items.size() and items[candidate].get("id", "empty") != "empty":
+	if candidate < items.size() and items[candidate].get("id", "empty") not in ["empty", "flashlight"]:
 		_select_quick_slot(candidate)
 	else:
 		var found = false
@@ -1130,7 +1139,7 @@ func _cycle_quick_slot(step: int) -> void:
 				_select_quick_slot(-1)
 				found = true
 				break
-			elif candidate < items.size() and items[candidate].get("id", "empty") != "empty":
+			elif candidate < items.size() and items[candidate].get("id", "empty") not in ["empty", "flashlight"]:
 				_select_quick_slot(candidate)
 				found = true
 				break
@@ -1530,6 +1539,8 @@ func _update_heartbeat(delta: float) -> void:
 func _update_flashlight(_delta: float) -> void:
 	# Батарейка фонарика бесконечная (по запросу пользователя)
 	flash_battery = 100.0
+	if flashlight_on and not (GameManager.flashlight_out and GameManager.has_flashlight):
+		flashlight_on = false
 
 	if not flashlight_on:
 		if player_hands and player_hands.left_spot_light and player_hands.left_spot_light.visible:
@@ -1548,6 +1559,96 @@ func _update_flashlight(_delta: float) -> void:
 # ──────────────────────────────────────────────
 #  Взаимодействие
 # ──────────────────────────────────────────────
+# [F]: если фонарик в рюкзаке — достать его, если в руке — включить / выключить
+func _press_flashlight_key() -> void:
+	if not GameManager.has_flashlight:
+		if GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
+			GameManager.ui_ref.call("show_hint", "Фонарика нет", 1.6)
+		return
+	if not GameManager.flashlight_out:
+		GameManager.set_flashlight_out(true)
+		return
+	flashlight_on = not flashlight_on
+	if player_hands:
+		player_hands.set_flashlight_state(flashlight_on, 1.0 if flashlight_on else 0.0)
+	elif flashlight:
+		flashlight.visible = flashlight_on
+	GameManager.emit_signal("flashlight_toggled", flashlight_on)
+
+
+func _on_flashlight_equip_changed(is_out: bool) -> void:
+	flashlight_on = is_out
+	if player_hands:
+		player_hands.set_flashlight_out(is_out, true)
+	GameManager.emit_signal("flashlight_toggled", flashlight_on)
+
+
+# Что брать надо удержанием: вещи (предметы, переносимое, «Взять…»), а не двери и выключатели
+func _needs_hold(n: Node) -> bool:
+	if n == null or not is_instance_valid(n):
+		return false
+	if n.has_meta("instant_use") or n.has_meta("hiding_type") or n.is_in_group("doors"):
+		return false
+	if _find_door_in_hierarchy(n) != null or _find_hiding_spot_in_hierarchy(n) != null:
+		return false
+	if n.get_meta("hold_to_use", false):
+		return true
+	if n.has_method("get_interaction_hint"):
+		var hint := str(n.call("get_interaction_hint")).to_lower()
+		for v in HOLD_VERBS:
+			if v in hint:
+				return true
+	var itype := str(n.get_meta("item_type", "")).to_lower()
+	if itype != "" and itype not in INSTANT_TYPES and not itype.begins_with("prop_") and not n.has_method("get_interaction_hint"):
+		return true
+	if itype in ["prop_alarm_clock", "prop_tv_remote"]:
+		return true
+	return n.get_meta("is_pickable", false) and itype != "prop_chair"
+
+
+func _begin_hold(pickup: bool) -> bool:
+	if is_hiding or GameManager.is_reading_note or GameManager.is_backpack_open:
+		return false
+	if held_object != null and is_instance_valid(held_object):
+		return false
+	var target := _get_interactable()
+	if not _needs_hold(target):
+		return false
+	_hold_target = target
+	_hold_t = 0.0
+	_hold_pickup = pickup
+	return true
+
+
+func _update_hold(delta: float, pad_down: bool) -> void:
+	if _hold_target == null:
+		return
+	var key_down := Input.is_action_pressed("interact") or Input.is_action_pressed("pick_up") or pad_down
+	if not key_down or not is_instance_valid(_hold_target) or _get_interactable() != _hold_target or is_hiding:
+		_cancel_hold()
+		return
+	_hold_t += delta
+	if GameManager.ui_ref and GameManager.ui_ref.has_method("set_hold_progress"):
+		GameManager.ui_ref.call("set_hold_progress", _hold_t / HOLD_TIME)
+	if _hold_t < HOLD_TIME:
+		return
+	var pickup := _hold_pickup
+	_hold_target = null
+	if GameManager.ui_ref and GameManager.ui_ref.has_method("finish_hold"):
+		GameManager.ui_ref.call("finish_hold")
+	if pickup:
+		_try_pick_up()
+	else:
+		_try_interact()
+
+
+func _cancel_hold() -> void:
+	_hold_target = null
+	_hold_t = 0.0
+	if GameManager.ui_ref and GameManager.ui_ref.has_method("set_hold_progress"):
+		GameManager.ui_ref.call("set_hold_progress", 0.0)
+
+
 func _try_interact() -> void:
 	if is_hiding:
 		exit_hiding()
@@ -1726,7 +1827,7 @@ func _try_pick_up() -> void:
 	if not is_pickable and inter_obj.get_parent():
 		is_pickable = inter_obj.get_parent().get_meta("is_pickable", false)
 
-	if is_pickable or itype == "prop_chair":
+	if is_pickable and itype != "prop_chair":
 		_pick_up_object(inter_obj)
 		return
 
@@ -1826,7 +1927,8 @@ func _update_nearby_interactables(delta: float) -> void:
 
 	var new_candidates: Array[Node] = []
 	for k in found_map.keys():
-		new_candidates.append(found_map[k])
+		if not _is_ignored_interactable(found_map[k]):
+			new_candidates.append(found_map[k])
 
 	# Сортируем кандидатов слева-направо на экране камеры для естественного переключения стрелками
 	var inv_cam: Transform3D = camera.global_transform.affine_inverse()
@@ -1889,10 +1991,15 @@ func _get_interactable() -> Node:
 			if c == null:
 				break
 			if c.has_meta("item_type") or c.has_meta("hiding_type") or c.has_meta("is_pickable") or c.has_method("interact"):
-				return c
+				return null if _is_ignored_interactable(c) else c
 			c = c.get_parent()
 
 	return null
+
+
+# Стулья стоят как мебель: подсказки «Поднять стул» больше нет ни на одной карте
+func _is_ignored_interactable(n: Node) -> bool:
+	return is_instance_valid(n) and str(n.get_meta("item_type", "")) == "prop_chair"
 
 func _find_nearby_facing_door(max_dist: float = 2.4) -> Node:
 	if not is_inside_tree():

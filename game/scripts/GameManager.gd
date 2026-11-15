@@ -18,6 +18,8 @@ signal graphics_quality_changed(quality: String)
 signal legacy_graphics_changed(enabled: bool)
 signal backpack_toggled(is_open: bool)
 signal active_item_changed(index: int, item: Dictionary)
+signal flashlight_toggled(is_on: bool)
+signal flashlight_equip_changed(is_out: bool)   # фонарик достали из рюкзака в левую руку или убрали
 signal stamina_changed(current_stamina: float, max_stamina: float, is_exhausted: bool)
 signal score_updated(player_score: int, monster_score: int, reason: String)
 signal pain_triggered(who: String, penalty: int, reason: String)
@@ -108,6 +110,14 @@ var has_fuse_red:       bool = false
 var has_fuse_blue:      bool = false
 var has_fuse_green:     bool = false
 var stored_props:       Array[Dictionary] = []
+
+# ──────────────────────────────────────────────
+#  Фонарик: лежит в рюкзаке, в левую руку его достают и убирают обратно.
+#  В квартире (пролог) его сначала надо найти в ящике стола; на остальных картах он
+#  уже есть. Между картами состояние сохраняется.
+# ──────────────────────────────────────────────
+var has_flashlight:  bool = true
+var flashlight_out:  bool = true
 
 # ──────────────────────────────────────────────
 #  Батарейки для фонарика
@@ -707,6 +717,16 @@ func pick_up_fuse(color: String) -> void:
 func get_backpack_items() -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 
+	# 0. Фонарик всегда первым: [1] достаёт и убирает его
+	if has_flashlight:
+		items.append({
+			"id": "flashlight",
+			"name": "Фонарик",
+			"icon": "—",
+			"count": 1,
+			"desc": "Металлический фонарик. Выбери его, чтобы достать в левую руку или убрать в рюкзак. [F] — включить / выключить."
+		})
+
 	# 1. Бутылки для отвлечения (если есть)
 	if throwables_count > 0:
 		items.append({
@@ -850,7 +870,51 @@ func close_backpack() -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		emit_signal("backpack_toggled", false)
 
+# Фонарик держит левая рука, поэтому его слот не занимает правую руку, а достаёт/убирает фонарик
+func set_flashlight_out(out: bool) -> void:
+	if not has_flashlight:
+		out = false
+	if flashlight_out == out:
+		return
+	flashlight_out = out
+	emit_signal("flashlight_equip_changed", out)
+	emit_signal("inventory_changed")
+
+
+func give_flashlight(take_out: bool = true) -> void:
+	if not has_flashlight and active_item_index >= 0:
+		active_item_index += 1   # фонарик встаёт в первый слот, остальное сдвигается
+	has_flashlight = true
+	emit_signal("inventory_changed")
+	set_flashlight_out(take_out)
+
+
+func take_flashlight_away() -> void:
+	if has_flashlight and active_item_index > 0:
+		active_item_index -= 1
+	has_flashlight = false
+	flashlight_out = false
+	emit_signal("flashlight_equip_changed", false)
+	emit_signal("inventory_changed")
+
+
+# Слот подсвечивается как «в руке»: предмет в правой руке или фонарик в левой
+func is_slot_in_hand(idx: int) -> bool:
+	var items = get_backpack_items()
+	if idx < 0 or idx >= items.size():
+		return false
+	var iid := str(items[idx].get("id", "empty"))
+	if iid == "flashlight":
+		return flashlight_out
+	return iid != "empty" and idx == active_item_index
+
+
 func set_active_backpack_slot(idx: int) -> void:
+	if idx >= 0:
+		var all_items = get_backpack_items()
+		if idx < all_items.size() and str(all_items[idx].get("id", "")) == "flashlight":
+			set_flashlight_out(not flashlight_out)
+			return
 	if idx < 0:
 		if active_item_index != -1:
 			active_item_index = -1
@@ -876,7 +940,7 @@ func get_active_item() -> Dictionary:
 	var items = get_backpack_items()
 	if active_item_index >= 0 and active_item_index < items.size():
 		var it = items[active_item_index]
-		if it.get("id", "empty") != "empty":
+		if it.get("id", "empty") != "empty" and it.get("id", "") != "flashlight":
 			return it
 	return {}
 
@@ -916,6 +980,12 @@ func drop_backpack_slot(idx: int, custom_drop_pos: Vector3 = Vector3.ZERO) -> bo
 		drop_pos.y = player_ref.global_position.y + 0.35
 	elif drop_pos == Vector3.ZERO:
 		drop_pos = Vector3(0, 0.5, 0)
+
+	# Фонарик не выбрасывается: без него в лесу делать нечего
+	if item_id == "flashlight":
+		if ui_ref and ui_ref.has_method("show_hint"):
+			ui_ref.call("show_hint", "Фонарик лучше не выбрасывать", 2.0)
+		return false
 
 	var spawned: Node = null
 	if item_id == "crowbar":

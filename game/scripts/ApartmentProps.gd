@@ -10,6 +10,13 @@ const DESK_Y := FL + 0.75
 const PIZZA_SEGS := 64
 const PIZZA_SLICE_SEGS := 8
 const PIZZA_EATEN := 2
+const PIZZA_SLICES := PIZZA_SEGS / PIZZA_SLICE_SEGS
+
+# Пиццу едят по куску: eat_pizza_slice() перестраивает круг и убирает пепперони этого куска
+var pizza_eaten := PIZZA_EATEN
+var _pizza_disc: MeshInstance3D
+var _pizza_xf := Transform3D.IDENTITY
+var _pep_slices: Array = []        # кусок -> Node3D с его пепперони
 
 const PIZZA_SHADER := """
 shader_type spatial;
@@ -147,12 +154,21 @@ func _build_pizza() -> void:
 	_flush(_shader(CARDBOARD_SHADER))
 
 	_base = at
-	_add_pizza_disc(at * Transform3D(Basis.IDENTITY, Vector3(0.004, T, -0.004)))
-	# Пепперони лежит только на оставшихся кусках
+	_pizza_xf = at * Transform3D(Basis.IDENTITY, Vector3(0.004, T, -0.004))
+	_add_pizza_disc(_pizza_xf)
+	# Пепперони лежит только на оставшихся кусках; у каждого куска свои, чтобы исчезать вместе с ним
 	var pep := [[1.95, 0.075], [2.45, 0.12], [2.9, 0.06], [3.25, 0.122], [3.75, 0.083], [4.2, 0.128],
 		[4.6, 0.05], [5.0, 0.112], [5.5, 0.072], [5.95, 0.125], [0.0 + 4.0, 0.02]]
-	var y := T + 0.0135
-	_base = at * Transform3D(Basis.IDENTITY, Vector3(0.004, 0, -0.004))
+	var y := 0.0135
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.22, 0.05, 0.03)
+	dark.roughness = 0.6
+	for k in range(PIZZA_SLICES):
+		var holder := Node3D.new()
+		holder.name = "PizzaSlicePep%d" % k
+		add_child(holder)
+		holder.transform = _pizza_xf
+		_pep_slices.append(holder)
 	for q in pep:
 		var ang: float = q[0]
 		var r: float = q[1]
@@ -160,8 +176,13 @@ func _build_pizza() -> void:
 		var pos := Vector3(cos(ang) * r, y, sin(ang) * r)
 		var tone := _rng.randf_range(0.85, 1.1)
 		var rad := _rng.randf_range(0.0185, 0.0225)
-		_cy(rad + 0.0015, rad + 0.0015, 0.0022, pos, Color(0.22, 0.05, 0.03), tilt, 16)
-		_cy(rad - 0.0005, rad, 0.0036, pos, Color(0.5 * tone, 0.13 * tone, 0.08 * tone), tilt, 16)
+		var slice := clampi(int(fposmod(ang, TAU) / (TAU / PIZZA_SLICES)), 0, PIZZA_SLICES - 1)
+		var top := StandardMaterial3D.new()
+		top.albedo_color = Color(0.5 * tone, 0.13 * tone, 0.08 * tone)
+		top.roughness = 0.45
+		_pep_piece(_pep_slices[slice], rad + 0.0015, 0.0022, pos, tilt, dark)
+		_pep_piece(_pep_slices[slice], rad, 0.0036, pos, tilt, top)
+	_base = at
 	# Крошки в месте съеденных кусков
 	for k in range(9):
 		var ang := _rng.randf_range(0.15, 1.45)
@@ -171,11 +192,41 @@ func _build_pizza() -> void:
 	_flush(_vmat(0.7))
 
 
+func _pep_piece(parent: Node3D, r: float, h: float, pos: Vector3, tilt: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = r
+	cm.bottom_radius = r
+	cm.height = h
+	cm.radial_segments = 16
+	cm.rings = 1
+	mi.mesh = cm
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+	mi.transform = _xf(pos, tilt)
+
+
+# Съесть следующий кусок; возвращает, сколько кусков осталось
+func eat_pizza_slice() -> int:
+	if pizza_eaten >= PIZZA_SLICES:
+		return 0
+	if pizza_eaten < _pep_slices.size():
+		(_pep_slices[pizza_eaten] as Node3D).visible = false
+	pizza_eaten += 1
+	if is_instance_valid(_pizza_disc):
+		_pizza_disc.queue_free()
+		_pizza_disc = null
+	if pizza_eaten < PIZZA_SLICES:
+		_add_pizza_disc(_pizza_xf)
+	return PIZZA_SLICES - pizza_eaten
+
+
 # Круг с настоящим бортиком из теста; съеденные куски в сетке отсутствуют
 func _add_pizza_disc(xf: Transform3D) -> void:
 	var radii := [0.0, 0.05, 0.1, 0.135, 0.147, 0.154, 0.161, 0.166, 0.168]
 	var heights := [0.012, 0.012, 0.012, 0.0125, 0.017, 0.0245, 0.0255, 0.016, 0.002]
-	var first_seg := PIZZA_EATEN * PIZZA_SLICE_SEGS
+	var first_seg := pizza_eaten * PIZZA_SLICE_SEGS
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_color(Color.BLACK)
@@ -214,6 +265,7 @@ func _add_pizza_disc(xf: Transform3D) -> void:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	mi.transform = xf
+	_pizza_disc = mi
 
 
 # ── Диван: мягкие сиденья и спинка, круглые подлокотники, ножки, декоративные подушки ──

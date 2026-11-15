@@ -21,6 +21,8 @@ const SOFA_CENTER := Vector3(0.25, 0.58, 1.75)
 const SOFA_SEAT := Vector3(0.25, 0.01, 1.45)
 const SOFA_EYE_HEIGHT := 1.12
 
+const PIZZA_COOLDOWN := 7.0   # между кусками надо прожевать
+const PIZZA_TO_EAT := 3        # столько кусков, чтобы задача «Поесть» засчиталась
 const BOIL_SECONDS := 7.0
 const FOAM_LEAD := 1.6
 const WIPES_NEEDED := 4
@@ -32,6 +34,8 @@ const CALLER := "Неизвестный номер"
 
 var spots: Dictionary = {}     # имя -> Spot, для проверок
 var pizza_eaten := false
+var pizza_slices := 0
+var _pizza_ready_at := 0.0
 var coffee_started := false
 var coffee_spilled := false
 var coffee_taken := false
@@ -139,7 +143,7 @@ func _hide_baked_clothes() -> void:
 # ─── Точки действий ─────────────────────────────────────────
 
 func _add_spots() -> void:
-	_spot("pizza", PIZZA_BOX + Vector3(0, 0.05, 0), Vector3(0.46, 0.2, 0.46), "Доесть пиццу", _on_pizza)
+	_spot("pizza", PIZZA_BOX + Vector3(0, 0.05, 0), Vector3(0.46, 0.2, 0.46), "Съесть кусок пиццы", _on_pizza)
 	_spot("turka", TURKA + Vector3(0, 0.05, 0), Vector3(0.3, 0.24, 0.3), "Сварить кофе", _on_turka)
 	_spot("shirt", Vector3(1.12, 0.08, -3.07), Vector3(0.78, 0.2, 0.7), "Подобрать рубашку", _on_cloth.bind("shirt"))
 	_spot("jeans", Vector3(-0.03, 0.08, -3.32), Vector3(0.55, 0.2, 1.12), "Подобрать джинсы", _on_cloth.bind("jeans"))
@@ -193,14 +197,27 @@ func _start_missions() -> void:
 
 # ─── Дела ───────────────────────────────────────────────────
 
+# Пицца съедается по куску; между кусками PIZZA_COOLDOWN секунд
 func _on_pizza() -> void:
-	if pizza_eaten:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now < _pizza_ready_at:
+		if GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
+			GameManager.ui_ref.call("show_hint", "Ещё жую… %d с" % ceili(_pizza_ready_at - now), 1.2)
 		return
-	pizza_eaten = true
-	_drop_spot("pizza")
+	var props := get_parent().get_node_or_null(PROPS_PATH)
+	var left: int = props.call("eat_pizza_slice") if props and props.has_method("eat_pizza_slice") else 0
+	pizza_slices += 1
+	_pizza_ready_at = now + PIZZA_COOLDOWN
 	_play(SFX + "bag_item_select.wav", -6.0)
-	_cover_pizza()
-	_say("Вчерашняя. Сойдёт.", 2.0)
+	if pizza_slices == 1:
+		_say("Вчерашняя. Сойдёт.", 2.0)
+	if pizza_slices >= PIZZA_TO_EAT and not pizza_eaten:
+		pizza_eaten = true
+		_say("Наелся.", 1.6)
+	if left <= 0:
+		_drop_spot("pizza")
+		return
+	(spots["pizza"] as Spot).hint = "[ЛКМ / E]  Съесть кусок пиццы (осталось %d)" % left
 
 
 # Диск пиццы слит с коробкой: сверху ложится пустое жирное дно

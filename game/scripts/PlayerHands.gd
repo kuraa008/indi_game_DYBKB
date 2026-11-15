@@ -3,7 +3,8 @@ extends Node3D
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PlayerHands.gd — Реалистичные 3D руки от первого лица (FPS Viewmodel)
-#  • Левая рука: НАВСЕГДА держит металлический фонарик в нижнем левом углу.
+#  • Левая рука: держит фонарик, если его достали из рюкзака; убранный фонарик
+#    уезжает вниз за край экрана (set_flashlight_out).
 #  • Правая рука: держит выбранный предмет из рюкзака (бутылка, лом, ключ и др.).
 #  • Если правая рука пуста — она аккуратно опущена за пределы экрана.
 #  • Анатомическая форма кистей: перчатка, ладонь, большой палец и 4 пальца хвата.
@@ -22,6 +23,10 @@ var left_spill_light: SpotLight3D = null
 var _hotspot_energy := 4.5
 var _spill_energy := 1.4
 var left_base_pos: Vector3 = Vector3(-0.2, -0.2, -0.34)
+var left_lower_root: Node3D = null   # опускает руку с фонариком целиком, когда его убирают
+var _left_lower: float = 0.0         # 0 — фонарик в руке, 1 — убран в рюкзак
+var _lower_tween: Tween = null
+var _light_was_on: bool = true
 
 # Правая рука (предмет)
 var right_arm_root: Node3D = null
@@ -83,6 +88,13 @@ func _process(delta: float) -> void:
 		walk_y = abs(cos(walk_phase)) * 0.006
 	else:
 		walk_phase = lerp(walk_phase, 0.0, delta * 4.0)
+
+	# Убранный фонарик: рука уходит вниз-влево и наклоняется, как будто его кладут в карман
+	if left_lower_root:
+		var k := _left_lower
+		left_lower_root.position = Vector3(-0.06 * k, -0.34 * k, 0.05 * k)
+		left_lower_root.rotation = Vector3(-0.9 * k, 0.0, 0.35 * k)
+		left_lower_root.visible = k < 0.98
 
 	# Применяем покачивание к левой руке (фонарик)
 	if left_arm_root:
@@ -185,10 +197,13 @@ func _build_arm_mesh_hierarchy(is_left: bool) -> Node3D:
 #  Левая рука — 3D Фонарик (направлен в центр обзора)
 # ══════════════════════════════════════════════════════════════════════════════
 func _build_left_hand_flashlight() -> void:
+	left_lower_root = Node3D.new()
+	left_lower_root.name = "LeftHandLower"
+	add_child(left_lower_root)
 	left_arm_root = Node3D.new()
 	left_arm_root.name = "LeftHandRoot"
 	left_arm_root.position = left_base_pos
-	add_child(left_arm_root)
+	left_lower_root.add_child(left_arm_root)
 
 	# Точка крепления фонарика: он лежит в кулаке и смотрит почти прямо вперёд
 	var fl_pivot = Node3D.new()
@@ -397,7 +412,36 @@ func _on_graphics_quality_changed(quality: String) -> void:
 	if left_spill_light:
 		left_spill_light.visible = (left_spot_light and left_spot_light.visible and not is_low)
 
+# Достать фонарик из рюкзака (рука поднимается снизу) или убрать (рука опускается)
+func set_flashlight_out(out: bool, animate: bool = true) -> void:
+	var target := 0.0 if out else 1.0
+	if _lower_tween:
+		_lower_tween.kill()
+	if not animate or not is_inside_tree():
+		_left_lower = target
+		return
+	_lower_tween = create_tween()
+	_lower_tween.tween_property(self, "_left_lower", target, 0.45 if out else 0.38) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT if out else Tween.EASE_IN)
+	_play_flashlight_cloth(out)
+
+
+func _play_flashlight_cloth(out: bool) -> void:
+	var st: AudioStream = load("res://assets/audio/bag_item_select.wav")
+	if st == null:
+		return
+	var p := AudioStreamPlayer.new()
+	p.stream = st
+	p.volume_db = -9.0
+	p.pitch_scale = 1.08 if out else 0.9
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+
+
 func set_flashlight_state(is_on: bool, energy_ratio: float = 1.0) -> void:
+	# Пока рука поднимается, свет ещё не включён: фонарик включается уже в руке
+	is_on = is_on and _left_lower < 0.35
 	var is_low = (GameManager.graphics_quality == "low") if GameManager else false
 	if left_spot_light:
 		left_spot_light.visible = is_on
@@ -412,8 +456,11 @@ func set_flashlight_state(is_on: bool, energy_ratio: float = 1.0) -> void:
 			mat.emission_enabled = is_on
 			mat.emission_energy_multiplier = 3.2 * energy_ratio
 
-	# Легкий тактильный щелчок/наклон кисти при переключении
-	if left_arm_root and is_inside_tree():
+	# Легкий тактильный щелчок/наклон кисти при переключении (только когда свет правда сменился)
+	if is_on == _light_was_on:
+		return
+	_light_was_on = is_on
+	if left_arm_root and is_inside_tree() and _left_lower < 0.05:
 		var tw = create_tween()
 		tw.tween_property(left_arm_root, "rotation_degrees:x", -5.0, 0.05).set_trans(Tween.TRANS_QUAD)
 		tw.tween_property(left_arm_root, "rotation_degrees:x", 0.0, 0.09).set_trans(Tween.TRANS_QUAD)
