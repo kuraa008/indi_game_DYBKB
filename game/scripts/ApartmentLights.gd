@@ -110,10 +110,7 @@ var _shadow_timer := 0.0
 
 func _collect_lights() -> void:
 	var scene := get_parent()
-	var window_light: Variant = scene.get("_window_light")
 	for n in scene.find_children("*", "OmniLight3D", true, false):
-		if n == window_light:
-			continue
 		var l := n as OmniLight3D
 		l.shadow_blur = 1.5
 		_shadowed.append(l)
@@ -137,8 +134,10 @@ func _update_shadows() -> void:
 	for l in _shadowed:
 		if not is_instance_valid(l):
 			continue
-		var near := cam_pos != Vector3.INF and l.global_position.distance_to(cam_pos) < l.omni_range + 1.0
+		# Свет дальней лампы тоже виден на стенах вокруг игрока, поэтому запас большой:
+		# тень есть у каждой лампы, чей свет может долететь до того, что игрок видит в квартире.
 		# Даже на низкой графике: без тени свет комнаты горит на стене соседней
+		var near := cam_pos != Vector3.INF and l.global_position.distance_to(cam_pos) < l.omni_range + 10.0
 		l.shadow_enabled = near and l.visible
 
 

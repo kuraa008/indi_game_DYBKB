@@ -99,12 +99,8 @@ func _ready() -> void:
 	_build_lights()
 
 
-# Тень от окна нужна только в самой комнате: в остальных она лишь тратила бы FPS
-func _process(_delta: float) -> void:
-	var pl = GameManager.player_ref
-	if is_instance_valid(_window_light) and is_instance_valid(pl):
-		var p: Vector3 = pl.global_position
-		_window_light.shadow_enabled = p.x < 3.2 and p.z > -2.6
+# Тенями всех ламп, и ночного света из окна тоже, управляет ApartmentLights:
+# без тени свет пробивает стены в соседние комнаты
 
 
 func _on_quality_changed(_q: String) -> void:
