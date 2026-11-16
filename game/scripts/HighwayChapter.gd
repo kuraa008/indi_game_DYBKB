@@ -96,6 +96,8 @@ func _ready() -> void:
 
 
 func _say(speaker: String, line: String, hold: float) -> void:
+	if speaker != "":
+		hold = maxf(hold, preload("res://scripts/GameVoice.gd").play(self, line) + 0.3)
 	_speaker.text = speaker
 	_line.text = line
 	if _sub_tween and _sub_tween.is_valid():
@@ -1190,7 +1192,7 @@ func _on_father_bed() -> void:
 		return
 	_done["father"] = true
 	_say("ИТАН", "Пустая… Простыня смята, будто он встал минуту назад.", 3.2)
-	await get_tree().create_timer(3.8, false).timeout
+	await get_tree().create_timer(maxf(3.8, preload("res://scripts/GameVoice.gd").left() + 0.3), false).timeout
 	_say("ИТАН", FATHER_LINE, 8.5)
 
 

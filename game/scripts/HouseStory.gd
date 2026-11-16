@@ -13,6 +13,8 @@ const GY := 0.16   # пол первого этажа
 static func build(chapter: Node3D) -> void:
 	chapter.add_child(load("res://scripts/FatherYard.gd").new())
 	chapter.add_child(load("res://scripts/HouseProps.gd").new())
+	chapter.add_child(load("res://scripts/HouseDressing.gd").new())
+	chapter.add_child(load("res://scripts/HighwayDressing.gd").new())
 	_names_and_blood(chapter)
 	_claw_marks(chapter, Vector3(-58.84, GY + 2.3, -226.6), 90.0)
 	_claw_marks(chapter, Vector3(-53.16, GY + 2.4, -223.4), -90.0)

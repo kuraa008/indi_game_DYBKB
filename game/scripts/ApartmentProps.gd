@@ -14,6 +14,9 @@ const PIZZA_SLICES := PIZZA_SEGS / PIZZA_SLICE_SEGS
 
 # Пиццу едят по куску: eat_pizza_slice() перестраивает круг и убирает пепперони этого куска
 var pizza_eaten := PIZZA_EATEN
+# Сколько съел игрок в прологе: PrologueApartment кладёт сюда перед кат-сценой «Звонок»,
+# чтобы в ней пицца была такой же, а не целой снова (-1 — как по умолчанию)
+static var carry_eaten := -1
 var _pizza_disc: MeshInstance3D
 var _pizza_xf := Transform3D.IDENTITY
 var _pep_slices: Array = []        # кусок -> Node3D с его пепперони
@@ -98,6 +101,9 @@ const BOOK_COLORS := [
 func _ready() -> void:
 	name = "ApartmentProps"
 	_rng.seed = 7741
+	if carry_eaten >= 0:
+		pizza_eaten = carry_eaten
+		carry_eaten = -1
 	_build_pizza()
 	_build_table_small()
 	_build_laptop()
@@ -155,7 +161,8 @@ func _build_pizza() -> void:
 
 	_base = at
 	_pizza_xf = at * Transform3D(Basis.IDENTITY, Vector3(0.004, T, -0.004))
-	_add_pizza_disc(_pizza_xf)
+	if pizza_eaten < PIZZA_SLICES:
+		_add_pizza_disc(_pizza_xf)
 	# Пепперони лежит только на оставшихся кусках; у каждого куска свои, чтобы исчезать вместе с ним
 	var pep := [[1.95, 0.075], [2.45, 0.12], [2.9, 0.06], [3.25, 0.122], [3.75, 0.083], [4.2, 0.128],
 		[4.6, 0.05], [5.0, 0.112], [5.5, 0.072], [5.95, 0.125], [0.0 + 4.0, 0.02]]
@@ -182,6 +189,8 @@ func _build_pizza() -> void:
 		top.roughness = 0.45
 		_pep_piece(_pep_slices[slice], rad + 0.0015, 0.0022, pos, tilt, dark)
 		_pep_piece(_pep_slices[slice], rad, 0.0036, pos, tilt, top)
+	for k in range(mini(pizza_eaten, _pep_slices.size())):
+		(_pep_slices[k] as Node3D).visible = false
 	_base = at
 	# Крошки в месте съеденных кусков
 	for k in range(9):

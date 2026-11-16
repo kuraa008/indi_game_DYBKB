@@ -448,6 +448,9 @@ func _run_phone_and_call() -> void:
 	})
 	Phone.allow_in_cutscene = false
 	if result == Phone.ANSWERED:
+		var props := get_parent().get_node_or_null(PROPS_PATH)
+		if props:
+			preload("res://scripts/ApartmentProps.gd").carry_eaten = int(props.get("pizza_eaten"))
 		preload("res://scripts/cutscenes/PrologueFlow.gd").answer_call(get_tree())
 
 
@@ -530,6 +533,7 @@ func _fade(alpha: float, seconds: float) -> void:
 
 
 func _say(text: String, hold: float) -> void:
+	hold = maxf(hold, preload("res://scripts/GameVoice.gd").play(self, text) + 0.3)
 	_sub.text = "ИТАН: " + text
 	if _sub_tween:
 		_sub_tween.kill()

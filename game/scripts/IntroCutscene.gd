@@ -2446,6 +2446,8 @@ func _make_label(text: String, font_px: int, color: Color) -> Label:
 	return l
 
 func _say(speaker: String, line: String, hold: float) -> void:
+	if speaker == "ИТАН" or speaker == THOUGHT:   # Сэм и шёпот в прологе — в tape_whisper / voice_call / whisper_behind
+		hold = maxf(hold, preload("res://scripts/GameVoice.gd").play(self, line) + 0.3)
 	speaker_label.text = speaker
 	line_label.text = line
 	if _sub_tween and _sub_tween.is_valid():

@@ -442,7 +442,7 @@ func _on_soldier() -> void:
 	tw.tween_property(warm, "color:a", 0.62, 1.0)
 	await tw.finished
 	_say_as("", "Прятки. Сэм прятался так, что я искал его целый час.", 3.4)
-	await get_tree().create_timer(3.8, false).timeout
+	await get_tree().create_timer(maxf(3.8, preload("res://scripts/GameVoice.gd").left() + 0.3), false).timeout
 	_say_as("СЭМ", "Я был там, где дует ветер. Папа запретил туда лазить, так что никому не говори.", 4.2)
 	await get_tree().create_timer(4.6, false).timeout
 	var back := create_tween()
@@ -960,6 +960,7 @@ func _say(text: String, hold: float) -> void:
 
 
 func _say_as(who: String, text: String, hold: float) -> void:
+	hold = maxf(hold, preload("res://scripts/GameVoice.gd").play(self, text) + 0.3)
 	_sub.text = text if who == "" else "%s: %s" % [who, text]
 	if _sub_tween:
 		_sub_tween.kill()

@@ -194,7 +194,7 @@ func _start() -> void:
 	# Солдатик
 	ch.spots.soldier.interact(player)
 	check(player.get("is_in_cutscene") == true, "Воспоминание")
-	await wait(10.5)
+	await wait(12.5)   # фразы озвучены: воспоминание ждёт, пока Итан и Сэм договорят
 	check(player.get("is_in_cutscene") != true and not ch.spots.has("soldier"), "Солдатик взят, управление вернулось")
 
 	# Свеча и сквозняк

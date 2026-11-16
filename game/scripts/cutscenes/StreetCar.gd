@@ -144,6 +144,7 @@ func _build_ui() -> void:
 
 
 func _say(who: String, text: String, hold: float) -> void:
+	hold = maxf(hold, preload("res://scripts/GameVoice.gd").play(self, text) + 0.3)
 	_sub.text = "%s: %s" % [who, text]
 	if _sub_tween:
 		_sub_tween.kill()

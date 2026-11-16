@@ -550,6 +550,7 @@ func _ring_pulse() -> void:
 
 
 func _say(line: String) -> void:
+	preload("res://scripts/GameVoice.gd").play(self, line)
 	if line != "" and GameManager.ui_ref and GameManager.ui_ref.has_method("show_hint"):
 		GameManager.ui_ref.call("show_hint", line, 3.0)
 

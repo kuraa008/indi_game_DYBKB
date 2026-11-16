@@ -235,7 +235,7 @@ func _build_garage_inside() -> void:
 	# Старые шины в углу и пятна масла на полу
 	_base = _xf(Vector3(-51.7, 0.1, -209.0))
 	for k in range(3):
-		_torus(0.17, 0.32, Vector3(float(k) * 0.015, 0.1 + float(k) * 0.19, float(k % 2) * 0.03), Color(0.04, 0.04, 0.045), Vector3(0, 0, 0), Vector3(1, 0.62, 1))
+		_torus(0.17, 0.32, Vector3(float(k) * 0.015, 0.098 + float(k) * 0.192, float(k % 2) * 0.03), Color(0.04, 0.04, 0.045), Vector3(0, 0, 0), Vector3(1, 1.28, 1))
 	_flush(_vmat(0.82))
 	_solid(Vector3(-51.7, 0.45, -209.0), Vector3(0.7, 0.7, 0.7))
 	_base = Transform3D.IDENTITY
