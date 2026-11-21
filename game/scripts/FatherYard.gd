@@ -27,6 +27,7 @@ func _ready() -> void:
 	_build_porch()
 	_build_yard_hatch()
 	_build_well()
+	_build_shed_crowbar()
 	_remove_old_hatch.call_deferred()
 
 
@@ -318,13 +319,8 @@ func _build_shed() -> void:
 	_bx(Vector3(w + 0.36, 0.05, 0.12), Vector3(0, eave + rise + 0.05, 0), rust.darkened(0.3))
 	_flush(_vmat(0.62, 0.35))
 
-	# Вещи в сарае: монтировка, лопата, грабли, банки
+	# Вещи в сарае: лопата, грабли, банки (монтировка отдельным узлом, см. _build_shed_crowbar)
 	_base = _xf(SHED)
-	var bar := Color(0.46, 0.08, 0.06)
-	var wall_side := -w * 0.5 + 0.1
-	var low := Vector3(wall_side + 0.06, 0.02, -0.95)
-	var high := Vector3(wall_side, 0.82, -0.86)
-	_tube(_smooth([low + Vector3(0.05, 0.0, -0.05), low, low.lerp(high, 0.5), high, high + Vector3(-0.01, 0.06, 0.05), high + Vector3(-0.012, 0.075, 0.1)], 4), 0.011, bar, 7)
 	for q in [[0.42, Color(0.34, 0.25, 0.16)], [0.82, Color(0.3, 0.23, 0.15)]]:
 		var tx: float = q[0]
 		_pipe(Vector3(tx, 0.1, -d * 0.5 + 0.2), Vector3(tx + 0.1, 1.62, -d * 0.5 + 0.08), 0.015, q[1])
@@ -349,6 +345,19 @@ func _build_shed() -> void:
 	for s in [-1.0, 1.0]:
 		_solid(SHED + Vector3(s * (door_half + side_w * 0.5), 1.2, d * 0.5), Vector3(side_w, 2.4, 0.08))
 	_solid(SHED + Vector3(w * 0.5 - 0.4, 0.42, -0.25), Vector3(0.7, 0.84, 1.5))
+
+
+# Монтировка прислонена к западной стене сарая. Отдельный узел ShedCrowbar:
+# в главе 3 её берут (HouseChapter3 обводит и убирает его). Строится последней,
+# чтобы номера остальных мешей в кэше карты не сдвинулись.
+func _build_shed_crowbar() -> void:
+	_base = _xf(SHED)
+	var wall_side := -3.4 * 0.5 + 0.1
+	var low := Vector3(wall_side + 0.06, 0.02, -0.95)
+	var high := Vector3(wall_side, 0.82, -0.86)
+	_tube(_smooth([low + Vector3(0.05, 0.0, -0.05), low, low.lerp(high, 0.5), high, high + Vector3(-0.01, 0.06, 0.05), high + Vector3(-0.012, 0.075, 0.1)], 4), 0.012, Color(0.46, 0.08, 0.06), 7)
+	var bar := _flush(_vmat(0.6, 0.3))
+	bar.name = "ShedCrowbar"
 
 
 # ── Поленница у западной стены гаража, навес и колода с топором ──

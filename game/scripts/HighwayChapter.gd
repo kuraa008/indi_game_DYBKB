@@ -64,6 +64,7 @@ var _creature: Node3D
 var _creature_gait := "idle"
 var _creature_speed := 0.0
 var _spots: Array = []
+var _count: Label
 
 
 func _ready() -> void:
@@ -74,6 +75,7 @@ func _ready() -> void:
 	_hide_city_horizon()
 	_build_screen()
 	_setup_fog()
+	_place_moon.call_deferred()
 	_build_ground()
 	_build_mountains()
 	_build_boundaries()
@@ -333,6 +335,9 @@ func _load_map_data() -> void:
 		var data = JSON.parse_string(file.get_as_text())
 		if data is Dictionary:
 			_map = data
+	# Узкая тропинка от разбитой машины через лес к тропе у проводов: «Итан пошёл через лес»
+	if _map.has("trails"):
+		(_map["trails"] as Array).append([[[-9.6, -242.6], [-12.4, -238.0], [-14.6, -232.6], [-15.4, -228.4], [-16.0, -225.6]], 1.3])
 
 
 # Туман скрывает край мира, и дальше него ничего не рисуется: это главный выигрыш в FPS
@@ -362,7 +367,7 @@ func _apply_fog() -> void:
 	env.ambient_light_energy = 0.55
 	var moon = get_parent().get("moon_light")
 	if moon:
-		moon.light_energy = 0.55
+		moon.light_energy = 0.7
 	env.fog_sun_scatter = 0.0
 	env.volumetric_fog_enabled = false
 	env.ssil_enabled = false
@@ -860,7 +865,8 @@ func _dress_house() -> void:
 func _build_forest() -> void:
 	var chunks: Dictionary = {}
 	var solid: Dictionary = {}
-	for t in get_parent().get("highway_trees"):
+	var trees: Array = get_parent().get("highway_trees")
+	for t in trees + _fill_forest(trees):
 		var pos: Vector3 = t[0]
 		pos.y = 0.0
 		_add_forest_tree(chunks, pos, t[1], float(t[2]))
@@ -882,6 +888,155 @@ func _build_forest() -> void:
 			col.shape = shape
 			body.add_child(col)
 			col.global_position = p + Vector3.UP * 3.0
+
+
+# Между дорогой и двором был почти пустой луг, а по сюжету Итан идёт к дому через лес.
+# Здесь лес загущается: ели ставятся случайно, но всегда одинаково (постоянное зерно),
+# не ближе FILL_GAP друг к другу и к старым елям, не на дорогу, не на тропы, не под провода,
+# не у разбитой машины и не во дворе. У тропы растут молодые ёлки, чтобы она читалась.
+# Все стволы с коллизией: между ними можно пройти, но короче всего по тропе.
+const FILL_SEED := 5150
+const FILL_ZONES := [Rect2(-38.5, -261.0, 30.0, 60.5), Rect2(9.3, -261.0, 6.2, 60.5)]
+const FILL_GAP := 3.4
+const WRECK_CLEAR := Vector3(-8.6, 0.0, -249.6)
+
+
+func _fill_forest(existing: Array) -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = FILL_SEED
+	var taken: Array = []
+	for t in existing:
+		var p: Vector3 = t[0]
+		taken.append(Vector3(p.x, 0.0, p.z))
+	var blockers: Array = []
+	for o in _map.get("objects", []):
+		var kind := str(o.get("type", ""))
+		if kind in ["prop_bush_foliage", "prop_bush_dead", "prop_rock_large", "prop_power_pole", "prop_streetlight"]:
+			var pa: Array = o.get("position", [0, 0, 0])
+			blockers.append(Vector3(float(pa[0]), 0.0, float(pa[2])))
+	var wires: Array = []
+	for pole in preload("res://scripts/HighwayDressing.gd").POLES:
+		wires.append(Vector2((pole as Vector3).x, (pole as Vector3).z))
+	var drop: Vector3 = preload("res://scripts/HighwayDressing.gd").HOUSE_DROP
+	for spot in preload("res://scripts/HighwayDressing.gd").FLOOR_SPOTS:
+		var c := Vector3(float(spot[1]), 0.0, float(spot[2]))
+		blockers.append(c)
+		if str(spot[0]) == "log":
+			var d := Vector3(sin(deg_to_rad(float(spot[3]))), 0.0, cos(deg_to_rad(float(spot[3])))) * float(spot[4]) * 0.5
+			blockers.append(c + d)
+			blockers.append(c - d)
+	wires.append(Vector2(drop.x, drop.z))
+	var out: Array = []
+	for zone: Rect2 in FILL_ZONES:
+		for i in range(int(zone.get_area() / 5.0)):
+			var p := Vector3(rng.randf_range(zone.position.x, zone.end.x), 0.0, rng.randf_range(zone.position.y, zone.end.y))
+			var h := rng.randf_range(6.0, 13.8)
+			var yaw := rng.randf() * TAU
+			var trail_d := _trail_distance(Vector2(p.x, p.z))
+			# Тропа и провода свободны; у самой тропы — только молодые ёлки
+			if trail_d < 1.9 or _line_distance(Vector2(p.x, p.z), wires) < 4.3:
+				continue
+			var young := trail_d < 4.2
+			if young:
+				h = rng.randf_range(1.6, 3.4)
+			if p.distance_to(WRECK_CLEAR) < 7.8:
+				continue
+			var gap := 2.2 if young else FILL_GAP
+			var free := true
+			for q: Vector3 in taken:
+				if p.distance_squared_to(q) < gap * gap:
+					free = false
+					break
+			if free:
+				for b: Vector3 in blockers:
+					if p.distance_squared_to(b) < 6.25:
+						free = false
+						break
+			if not free:
+				continue
+			taken.append(p)
+			var w := h * rng.randf_range(0.44, 0.5)
+			out.append([p, Vector3(w, h, w), yaw, true])
+	return out
+
+
+# Расстояние от точки до ближайшей тропы карты (от её края, а не от середины)
+func _trail_distance(p: Vector2) -> float:
+	var best := INF
+	for trail in _map.get("trails", []):
+		var pts: Array = []
+		for q in trail[0]:
+			pts.append(Vector2(float(q[0]), float(q[1])))
+		best = minf(best, _line_distance(p, pts) - float(trail[1]) * 0.5)
+	return best
+
+
+func _line_distance(p: Vector2, pts: Array) -> float:
+	var best := INF
+	for i in range(pts.size() - 1):
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
+		var ab := b - a
+		var t := clampf((p - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+		best = minf(best, p.distance_to(a + ab * t))
+	return best
+
+
+# Луна над домом: по пути от машины к дому она висит над лесом за крышей,
+# и лунный свет идёт оттуда же, поэтому дом встречает Итана тёмным силуэтом.
+# Луна Main стоит на севере, за туманом её не видно: здесь своя, туман её не прячет,
+# она держится на одном расстоянии от камеры, как настоящая.
+const MOON_DIR := Vector3(-0.887, 0.407, 0.219)   # к луне: на запад, за домом, 24° над горизонтом
+const MOON_DIST := 150.0
+var _moon: Node3D
+
+
+func _place_moon() -> void:
+	var light = get_parent().get("moon_light")
+	if light is DirectionalLight3D:
+		var l := light as DirectionalLight3D
+		l.look_at(l.global_position - MOON_DIR, Vector3.UP)
+	var sky := get_parent().get_node_or_null("SkyElements")
+	if sky:
+		for n in sky.get_children():
+			if n is MeshInstance3D and (n as Node3D).position.distance_to(Vector3(18.0, 48.0, -75.0)) < 6.0:
+				(n as Node3D).visible = false
+	_moon = Node3D.new()
+	_moon.name = "Moon"
+	add_child(_moon)
+	var ball := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 3.4
+	sphere.height = 6.8
+	sphere.radial_segments = 28
+	sphere.rings = 14
+	var face := StandardMaterial3D.new()
+	face.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	face.albedo_texture = TextureHelper.get_texture("res://assets/textures/moon_surface.png")
+	face.albedo_color = Color(0.86, 0.9, 0.98)
+	face.disable_fog = true
+	sphere.material = face
+	ball.mesh = sphere
+	ball.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ball.rotation_degrees = Vector3(12.0, 40.0, 0.0)
+	_moon.add_child(ball)
+	var glow_tex := TextureHelper.get_texture("res://assets/textures/moon_glow.png")
+	for g in [[20.0, Color(0.6, 0.74, 1.0, 0.5)], [62.0, Color(0.26, 0.4, 0.7, 0.2)]]:
+		var halo := MeshInstance3D.new()
+		var quad := QuadMesh.new()
+		quad.size = Vector2(g[0], g[0])
+		var gm := StandardMaterial3D.new()
+		gm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		gm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		gm.albedo_texture = glow_tex
+		gm.albedo_color = g[1]
+		gm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		gm.disable_fog = true
+		quad.material = gm
+		halo.mesh = quad
+		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_moon.add_child(halo)
 
 
 func _add_note(pos: Vector3, text: String) -> void:
@@ -959,6 +1114,10 @@ func _process(delta: float) -> void:
 		_update_interior(_player.global_position)
 	if is_instance_valid(_creature):
 		_creature.call("update_motion", delta, _creature_gait, _creature_speed)
+	if is_instance_valid(_moon):
+		var view_cam := get_viewport().get_camera_3d()
+		if view_cam:
+			_moon.global_position = view_cam.global_position + MOON_DIR * MOON_DIST
 	if _hide_watch and not _caught and is_instance_valid(_player) and not _is_hidden():
 		_on_caught()
 	if _ending or not is_instance_valid(_player) or _player.get("is_in_cutscene") == true:
@@ -1236,30 +1395,15 @@ func _hoof(kind: String, at: Vector3, db: float) -> void:
 func _run_hooves(retry: bool) -> void:
 	_caught = false
 	if not retry:
-		for k in range(4):
-			_hoof("ground", Vector3(-45.0 + k * 0.4, 0.2, -225.0 - k * 0.3), -2.0)
-			await get_tree().create_timer(0.85, false).timeout
-		_say("ИТАН", "…Это не шаги. Копыта.", 2.2)
-		_warn.text = "СПРЯЧЬСЯ"
-		var tw := create_tween()
-		tw.tween_property(_warn, "modulate:a", 1.0, 0.1)
-		tw.tween_interval(1.4)
-		tw.tween_property(_warn, "modulate:a", 0.0, 0.4)
-		await get_tree().create_timer(1.6, false).timeout
-		_sound_at("res://assets/audio/intro/door_creak.wav", FRONT_DOOR + Vector3.UP, -4.0, 0.8)
+		# Снаружи стук: не шаги человека, а копыта
 		for k in range(3):
-			_hoof("wood", FRONT_DOOR + Vector3(-1.0 - k * 0.9, 0.3, -0.5 - k * 0.6), 0.0)
-			await get_tree().create_timer(0.9, false).timeout
-	# Вверх по лестнице и по коридору, всё ближе и громче
-	var path := [Vector3(-56.0, 0.4, -228.6), Vector3(-56.0, 3.6, -224.6), Vector3(-54.0, 3.6, -225.2), Vector3(-54.0, 3.6, -228.0), Vector3(-58.2, 3.6, -228.0)]
-	var steps := 13
-	for k in range(steps):
-		var u := float(k) / float(steps - 1) * float(path.size() - 1)
-		var a := int(floor(u))
-		var b := mini(a + 1, path.size() - 1)
-		_hoof("wood", (path[a] as Vector3).lerp(path[b], u - a), lerpf(0.0, 5.0, float(k) / steps))
-		await get_tree().create_timer(0.78 - float(k) * 0.015, false).timeout
-	if not _is_hidden():
+			_hoof("ground", Vector3(-46.0 + k * 0.5, 0.2, -225.0), -2.0)
+			await get_tree().create_timer(0.8, false).timeout
+		_say("ИТАН", "…Это не шаги. Копыта.", 2.0)
+		await get_tree().create_timer(1.4, false).timeout
+	await _leg_cutscene(retry)
+	# Семь секунд, чтобы залезть в шкаф
+	if not await _hide_countdown(HIDE_SECONDS):
 		_on_caught()
 		return
 	_done["hidden"] = true
@@ -1309,6 +1453,136 @@ func _run_hooves(retry: bool) -> void:
 	_say("ИТАН", "Ушло в соседнюю комнату… Надо выбираться. Тихо.", 3.4)
 
 
+# Кат-сцена: камера у самого пола, видно только ноги существа. Копыта стучат в такт,
+# оно входит в открытую дверь, поднимается по лестнице и идёт по коридору к комнате Сэма.
+# При повторе после смерти показывается только последний кадр.
+const HIDE_SECONDS := 7.0
+const LEG_SHOTS := [
+	# откуда, куда, секунды, камера, взгляд камеры
+	[Vector3(-50.6, 0.16, -225.0), Vector3(-54.15, 0.16, -225.0), 3.0, Vector3(-55.65, 0.2, -225.0), Vector3(-53.0, 0.52, -225.0)],
+	# На лестнице камера идёт следом, низко у ступеней: в кадре только ноги
+	[Vector3(-56.0, 0.16, -223.9), Vector3(-56.0, 3.1, -228.6), 3.2, Vector3(0.38, 0.32, 1.05), Vector3(0.0, 0.5, -0.45), true],
+	[Vector3(-55.9, 3.48, -230.0), Vector3(-57.75, 3.48, -229.05), 2.6, Vector3(-58.65, 3.57, -228.15), Vector3(-56.9, 3.92, -229.55)],
+]
+
+
+func _leg_cutscene(short: bool) -> void:
+	_player.set("is_in_cutscene", true)
+	_player.velocity = Vector3.ZERO
+	var ui = GameManager.ui_ref
+	var ui_shown: bool = ui != null and ui.visible
+	if ui:
+		ui.visible = false
+	if is_instance_valid(_missions):
+		_missions.visible = false
+	var cam := Camera3D.new()
+	cam.fov = 50.0
+	cam.near = 0.03
+	add_child(cam)
+	var legs := SkinwalkerModel.new()
+	get_tree().current_scene.add_child(legs)
+	_dim_outline(legs)
+	_creature = legs
+	_creature_gait = "walk"
+	_creature_speed = 0.6
+	var shots: Array = LEG_SHOTS.duplicate()
+	if short:
+		shots = [LEG_SHOTS[2]]
+	for shot: Array in shots:
+		var from: Vector3 = shot[0]
+		var to: Vector3 = shot[1]
+		_black.color.a = 1.0
+		legs.global_position = from
+		legs.rotation.y = atan2(to.x - from.x, to.z - from.z) + PI
+		var follow: bool = shot.size() > 5 and shot[5]
+		if follow:
+			cam.global_position = from + (shot[3] as Vector3)
+			cam.look_at(from + (shot[4] as Vector3), Vector3.UP)
+		else:
+			cam.global_position = shot[3]
+			cam.look_at(shot[4], Vector3.UP)
+		cam.make_current()
+		await get_tree().process_frame
+		var fade := create_tween()
+		fade.tween_property(_black, "color:a", 0.0, 0.22)
+		var walk := create_tween()
+		walk.tween_property(legs, "global_position", to, float(shot[2]))
+		var t := 0.0
+		var step := 0.12
+		while walk.is_running():
+			await get_tree().process_frame
+			t += get_process_delta_time()
+			if follow:
+				cam.global_position = legs.global_position + (shot[3] as Vector3)
+				cam.look_at(legs.global_position + (shot[4] as Vector3), Vector3.UP)
+			if t >= step:
+				_hoof("wood", legs.global_position + Vector3(0.0, 0.1, 0.0), 4.0)
+				step += 0.5
+		await get_tree().create_timer(0.25, false).timeout
+	# Последний шаг уже у самой двери, и экран гаснет
+	_hoof("wood", SAM_DOOR + Vector3(0.6, 0.2, 0.0), 6.0)
+	_black.color.a = 1.0
+	legs.queue_free()
+	_creature = null
+	cam.queue_free()
+	var own_cam = _player.get("camera")
+	if own_cam:
+		(own_cam as Camera3D).make_current()
+	if ui and ui_shown:
+		ui.visible = true
+	if is_instance_valid(_missions):
+		_missions.visible = true
+	_player.set("is_in_cutscene", false)
+	var back := create_tween()
+	back.tween_property(_black, "color:a", 0.0, 0.3)
+
+
+# Отсчёт: крупные цифры и сердце. Залез в шкаф — оно подходит к двери чуть раньше
+func _hide_countdown(seconds: float) -> bool:
+	if _count == null:
+		_count = Label.new()
+		_count.add_theme_font_size_override("font_size", 96)
+		_count.add_theme_color_override("font_color", Color(0.86, 0.1, 0.08))
+		_count.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		_count.add_theme_constant_override("outline_size", 10)
+		_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_count.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		_count.offset_left = -200.0
+		_count.offset_right = 200.0
+		_count.offset_top = 150.0
+		_count.offset_bottom = 260.0
+		_layer.add_child(_count)
+	_warn.text = "СПРЯЧЬСЯ В ШКАФ"
+	_warn.modulate.a = 1.0
+	_count.visible = true
+	var heart := _sound("res://assets/heart.mp3", -4.0, 1.25)
+	var left := seconds
+	var beat := 0.0
+	var inside := 0.0
+	while left > 0.0:
+		await get_tree().process_frame
+		var dt := get_process_delta_time()
+		left -= dt
+		_count.text = str(maxi(1, int(ceil(left))))
+		beat -= dt
+		if beat <= 0.0:
+			# Стук всё ближе к двери комнаты
+			_hoof("wood", SAM_DOOR + Vector3(1.6 - (seconds - left) * 0.2, 0.3, -0.7), 3.0 + (seconds - left) * 0.6)
+			beat = 0.85
+		if _is_hidden():
+			inside += dt
+			if inside > 1.2:
+				break
+		else:
+			inside = 0.0
+	_count.visible = false
+	var fade := create_tween()
+	fade.tween_property(_warn, "modulate:a", 0.0, 0.3)
+	if is_instance_valid(heart):
+		heart.stop()
+	return _is_hidden()
+
+
 # В темноте видно только контур и глаза: слабый холодный свет из-за спины
 func _dim_outline(model: Node3D) -> void:
 	model.call("set_eye_glow", 1.0)
@@ -1335,10 +1609,16 @@ func _on_caught() -> void:
 	_caught = true
 	_hide_watch = false
 	_player.set("is_in_cutscene", true)
+	if _count:
+		_count.visible = false
+	_warn.modulate.a = 0.0
 	var scare := SkinwalkerScare.new()
 	add_child(scare)
 	await scare.finished
 	scare.queue_free()
+	_black.color.a = 1.0
+	_say("", "Оно нашло тебя.", 2.4)
+	await get_tree().create_timer(2.6, false).timeout
 	if is_instance_valid(_creature):
 		_creature.queue_free()
 	_creature = null
@@ -1351,8 +1631,8 @@ func _on_caught() -> void:
 	_player.set("is_in_cutscene", false)
 	var fade := create_tween()
 	fade.tween_property(_black, "color:a", 0.0, 1.2)
-	_say("ИТАН", "Нельзя, чтобы оно меня увидело. В шкаф, быстро…", 3.4)
-	await get_tree().create_timer(4.5, false).timeout
+	_say("ИТАН", "Нельзя, чтобы оно меня увидело. Шкаф… Только в шкаф.", 3.2)
+	await get_tree().create_timer(3.4, false).timeout
 	_run_hooves(true)
 
 

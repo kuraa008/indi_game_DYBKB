@@ -1,7 +1,8 @@
 extends "res://scripts/ApartmentKit.gd"
 
 # Шоссе у дома отца (карта «Шоссе»): отбойники с проломом там, где слетела машина Итана,
-# тормозной след, осколки, знаки, почтовый ящик Крейна у съезда к дому, провода между столбами.
+# тормозной след, осколки, знаки, почтовый ящик у съезда к дому, провода между столбами,
+# пни, поваленные стволы и камни у тропы к дому.
 # Механик здесь нет. Координаты — мировые (узел стоит в нуле).
 
 const ROAD_TOP := 0.12
@@ -34,6 +35,9 @@ func _ready() -> void:
 	_build_wires()
 	_flush(_vmat(0.7), false)
 	_labels()
+	# Последним, чтобы номера мешей выше в кэше карты не сдвинулись
+	_build_forest_floor()
+	_flush(_vmat(0.95), true)
 
 
 # ── Отбойники ──
@@ -263,6 +267,72 @@ func _sag(a: Vector3, b: Vector3, sag: float) -> Array:
 
 func _labels() -> void:
 	var white := Color(0.92, 0.93, 0.9)
-	CutsceneKit.text3d(self, "БЛЭК-ПАЙН   6 км", Vector3(-RAIL_X - 1.2, 2.25, -205.48), Vector3.ZERO, 0.0042, white, 64)
+	CutsceneKit.text3d(self, "ГОРОД   92 км", Vector3(-RAIL_X - 1.2, 2.25, -205.48), Vector3.ZERO, 0.0042, white, 64)
 	CutsceneKit.text3d(self, "8 км", Vector3(RAIL_X + 0.7, 1.655, -213.488), Vector3.ZERO, 0.0026, Color(0.06, 0.06, 0.06), 64)
-	CutsceneKit.text3d(self, "ДЖ. КРЕЙН", Vector3(-RAIL_X - 0.13, 1.23, -227.075), Vector3(0, 0, 3), 0.0016, Color(0.82, 0.8, 0.72), 64)
+
+
+# ── Лесная подстилка у тропы к дому и у тропинки от машины ──
+# Ели из HighwayChapter на эти места не встают: FLOOR_SPOTS для них заняты.
+const FLOOR_SPOTS := [
+	# вид, x, z, поворот (°), размер (у бревна — длина)
+	["stump", -11.0, -226.6, 0.0, 1.0],
+	["stump", -23.5, -220.4, 40.0, 0.85],
+	["stump", -17.4, -236.2, 80.0, 1.15],
+	["log", -33.6, -226.7, 72.0, 4.2],
+	["log", -10.9, -234.8, 24.0, 3.4],
+	["rock", -19.6, -227.6, 0.0, 0.7],
+	["rock", -38.6, -220.4, 0.0, 0.9],
+	["rock", -13.2, -241.4, 0.0, 0.55],
+	["rock", -16.9, -229.8, 0.0, 0.5],
+]
+const BARK := Color(0.17, 0.125, 0.09)
+const SAWN := Color(0.5, 0.4, 0.27)
+
+
+func _build_forest_floor() -> void:
+	for spot in FLOOR_SPOTS:
+		var at := Vector3(float(spot[1]), 0.0, float(spot[2]))
+		match str(spot[0]):
+			"stump":
+				_stump(at, float(spot[3]), float(spot[4]))
+			"log":
+				_log(at, float(spot[3]), float(spot[4]))
+			"rock":
+				_rock(at, float(spot[4]))
+
+
+# Пень: срез светлый, корни уходят в землю
+func _stump(at: Vector3, yaw: float, s: float) -> void:
+	var h := 0.42 * s
+	_cy(0.24 * s, 0.31 * s, h, at + Vector3(0, h * 0.5 - 0.02, 0), BARK, Vector3(0, yaw, 0), 11)
+	_cy(0.225 * s, 0.225 * s, 0.03, at + Vector3(0, h - 0.01, 0), SAWN, Vector3(0, yaw, 0), 11)
+	_cy(0.07 * s, 0.07 * s, 0.035, at + Vector3(0, h, 0), SAWN.darkened(0.25), Vector3(0, yaw, 0), 8)
+	for k in range(4):
+		var a := deg_to_rad(yaw + k * 90.0 + _rng.randf_range(5.0, 35.0))
+		var d := Vector3(sin(a), 0, cos(a))
+		var path := [at + d * 0.18 * s + Vector3(0, 0.14 * s, 0), at + d * 0.42 * s + Vector3(0, 0.05, 0), at + d * 0.66 * s + Vector3(0, -0.03, 0)]
+		_tube(path, func(t): return lerpf(0.085, 0.025, t) * s, BARK, 6)
+
+
+# Поваленный ствол: один торец спилен, другой обломан, на боку пара сучьев
+func _log(at: Vector3, yaw: float, length: float) -> void:
+	var d := Vector3(sin(deg_to_rad(yaw)), 0, cos(deg_to_rad(yaw)))
+	var a := at - d * length * 0.5 + Vector3(0, 0.19, 0)
+	var b := at + d * length * 0.5 + Vector3(0, 0.15, 0)
+	_tube([a, a.lerp(b, 0.5) + Vector3(0, 0.025, 0), b], func(t): return lerpf(0.22, 0.17, t), BARK, 10)
+	var along := Vector3(0, yaw + 90.0, 90.0)
+	_cy(0.205, 0.205, 0.03, a - d * 0.01, SAWN, along, 12)
+	_cy(0.03, 0.17, 0.34, b + d * 0.16, BARK.darkened(0.15), along, 7)
+	var side := Vector3(-d.z, 0, d.x)
+	for k in [[0.3, 1.0], [0.62, -1.0], [0.82, 1.0]]:
+		var o := a.lerp(b, k[0])
+		_tube([o + side * k[1] * 0.15, o + side * k[1] * 0.45 + Vector3(0, 0.22, 0) + d * 0.12], func(t): return lerpf(0.045, 0.015, t), BARK, 5)
+
+
+# Камень: две глыбы, сверху мох
+func _rock(at: Vector3, s: float) -> void:
+	var tone := Color(0.32, 0.33, 0.32).darkened(_rng.randf_range(0.0, 0.15))
+	var turn := Vector3(_rng.randf_range(-8.0, 8.0), _rng.randf_range(0.0, 360.0), _rng.randf_range(-8.0, 8.0))
+	_bl(Vector3(0.62, 0.38, 0.5) * s, at + Vector3(0, 0.08 * s, 0), tone, turn)
+	_bl(Vector3(0.5, 0.11, 0.4) * s, at + Vector3(0, 0.36 * s, 0), Color(0.19, 0.25, 0.13), turn)
+	_bl(Vector3(0.32, 0.22, 0.28) * s, at + Vector3(0.5 * s, 0.03, 0.22 * s), tone.lightened(0.06), turn + Vector3(0, 40, 0))

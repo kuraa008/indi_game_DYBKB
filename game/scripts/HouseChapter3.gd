@@ -2,7 +2,7 @@ extends "res://scripts/BasementChapter.gd"
 
 # Глава 3, комната отца (сюжет Досыма). Начинается во дворе, когда Итан выбрался из лаза.
 #
-# Монтировка у задней стены → три доски на окне кладовки → в дом → комната отца →
+# Монтировка в сарае → три доски на окне кладовки → в дом → комната отца →
 # тряпки из комода под ножки кровати → кровать отодвигается тихо → наступить на доски,
 # одна скрипит → под ней коробка, заперта → письма Сэма на столе → ключ в часах с
 # кукушкой в коридоре (кукушку придержать, иначе бьют) → коробка: записка отца и череп →
@@ -10,7 +10,8 @@ extends "res://scripts/BasementChapter.gd"
 #
 # Предметы — модели HouseProps (Куро, узел в главе «Шоссе»): здесь только действия,
 # а движения делают их методы (tear_off, move_bed, lift_plank, open_box, take_key…).
-# Сарая на карте нет, поэтому монтировка лежит у задней стены дома.
+# Монтировка лежит в сарае во дворе, как в сюжете: это узел FatherYard/ShedCrowbar.
+# Ночью дом другой: дверь Сэма настежь, мебель сдвинута (_night_house).
 
 const CH3_MINE := "res://scenes/cutscenes/Ch3Mine.tscn"
 const HouseCreature := preload("res://scripts/HouseCreature.gd")
@@ -18,7 +19,19 @@ const FATHER_ROOM_POINT := Vector3(-62.5, 3.55, -221.0)
 const MAIN_SCENE := "res://scenes/Main.tscn"
 const NEXT_MAP := "res://scenes/Лесная_тропа.json"   # глава 4 (пока без гаража)
 
-const CROWBAR_AT := Vector3(-59.6, 0.62, -231.62)
+const CROWBAR_AT := Vector3(-71.5, 0.45, -238.9)   # у западной стены сарая
+const SAM_DOOR := Vector3(-59.0, 3.48, -228.0)
+const FRONT_DOOR := Vector3(-53.0, 0.16, -225.0)
+# Сдвинутая мебель: id на карте, сдвиг, новый поворот (градусы).
+# Упавший стул лежит на боку, поэтому приподнят на полширины.
+const NIGHT_MOVES := [
+	[1201, Vector3(0.0, 0.225, 0.0), Vector3(0, 90, 90)],          # стул на кухне опрокинут
+	[1202, Vector3(-0.12, 0.0, -0.14), Vector3(0, 34, 0)],         # второй стул отодвинут
+	[1189, Vector3(0.3, 0.0, -0.25), Vector3(0, 21, 0)],           # журнальный стол
+	[1190, Vector3(0.35, 0.0, -0.3), Vector3(0, 104, 0)],          # кресло
+	[1188, Vector3(0.1, 0.0, -0.4), Vector3(0, 173, 0)],           # диван отодвинут от стены
+	[1218, Vector3(0.0, 0.225, 0.0), Vector3(0, 180, -90)],        # стул Сэма опрокинут
+]
 const WINDOW := Vector3(-62.0, 1.85, -231.4)
 const INSIDE_PANTRY := Vector3(-62.0, 0.2, -230.2)
 const BOARD_PRY_COOLDOWN := 1.4
@@ -50,6 +63,7 @@ var _last_pry := -10.0
 var _cuckoo_open_at := -1.0
 var _bed: Node3D
 var _props: Node
+var _crowbar: Node3D
 
 
 func _ready() -> void:
@@ -73,6 +87,7 @@ func _begin_house() -> void:
 	if _props:
 		_props.show_box(false)
 		_props.plank_stepped.connect(_on_plank_stepped)
+	_night_house()
 	_add_house_spots()
 	_start_house_missions()
 	_light_phone()
@@ -103,10 +118,37 @@ func _remove_chapter_one_spots() -> void:
 			child.queue_free()
 
 
+# «Внутри дом изменился. Мебель сдвинута, дверь в комнату Сэма открыта настежь»
+func _night_house() -> void:
+	for n in get_parent().find_children("*", "Node3D", true, false):
+		if n.has_method("get_door_info") and n.name != "Panel" and n.global_position.distance_to(SAM_DOOR) < 1.0:
+			if n.get("hinge_node") == null and n.has_method("_find_hinge"):
+				n.call("_find_hinge")
+			var hinge: Node3D = n.get("hinge_node") if n.get("hinge_node") != null else n
+			# Распахнута внутрь комнаты, как будто её толкнули из коридора
+			var hall: Vector3 = n.global_transform.affine_inverse() * (SAM_DOOR + Vector3(0.9, 0.0, 0.0))
+			var angle := 108.0 * (-1.0 if hall.z < 0.0 else 1.0)
+			n.set("is_open", true)
+			n.set("current_open_angle", angle)
+			for ch in n.get_children():
+				if ch.has_method("open_by_enemy"):
+					ch.set("is_open", true)
+			hinge.rotation_degrees.y = angle
+			break
+	for move: Array in NIGHT_MOVES:
+		var obj = _objects.get(move[0])
+		if obj is Node3D:
+			(obj as Node3D).global_position += move[1]
+			(obj as Node3D).rotation_degrees = move[2]
+
+
 func _add_house_spots() -> void:
 	_crowbar_mesh()
-	_spot("crowbar", CROWBAR_AT, Vector3(0.4, 1.1, 0.4), "Взять монтировку", _on_crowbar)
-	_outline("crowbar", get_node_or_null("Crowbar"))
+	_spot("crowbar", CROWBAR_AT, Vector3(0.45, 1.1, 0.5), "Взять монтировку", _on_crowbar)
+	_outline("crowbar", _crowbar)
+	# «Через переднюю дверь нельзя: существо ходит по первому этажу». Тонкая точка
+	# вплотную к двери перехватывает «открыть» снаружи; существо дверь открыть может.
+	_spot("front", FRONT_DOOR + Vector3(0.28, 1.15, 0.0), Vector3(0.2, 2.4, 2.2), "Открыть дверь", _on_front_door)
 	if _props:
 		var boards: Array = _props.get("pantry_boards")
 		for i in range(boards.size()):
@@ -129,8 +171,15 @@ func _obj_pos(id: int) -> Vector3:
 	return (n as Node3D).global_position if n is Node3D else Vector3.ZERO
 
 
+# Монтировка из сарая во дворе (FatherYard). Если двора нет, своя на том же месте.
 func _crowbar_mesh() -> void:
+	var chapter := get_parent().get_node_or_null("HighwayChapter")
+	var shed_bar := chapter.get_node_or_null("FatherYard/ShedCrowbar") if chapter else null
+	if shed_bar is Node3D:
+		_crowbar = shed_bar
+		return
 	var root := Node3D.new()
+	_crowbar = root
 	root.name = "Crowbar"
 	add_child(root)
 	root.global_position = CROWBAR_AT
@@ -143,6 +192,7 @@ func _crowbar_mesh() -> void:
 func _start_house_missions() -> void:
 	_missions = MissionTracker.new()
 	_missions.setup([
+		{"text": "Взять монтировку в сарае", "done": func(): return has_crowbar or inside},
 		{"text": "Попасть в дом", "done": func(): return inside},
 		{"text": "Попасть в комнату отца", "done": func(): return in_father_room},
 		{"text": "Найти скрипучую доску", "done": func(): return board_lifted},
@@ -157,11 +207,14 @@ func _start_house_missions() -> void:
 func _on_crowbar() -> void:
 	has_crowbar = true
 	_drop_spot("crowbar")
-	var bar := get_node_or_null("Crowbar")
-	if bar:
-		bar.queue_free()
+	if is_instance_valid(_crowbar):
+		_crowbar.queue_free()
 	_play(SFX + "bag_item_select.wav", -6.0)
 	_toast("Монтировка")
+
+
+func _on_front_door() -> void:
+	_say("Через переднюю нельзя: оно ходит по первому этажу.", 2.8)
 
 
 func _on_board(index: int) -> void:
@@ -195,6 +248,7 @@ func _on_window() -> void:
 	_player.velocity = Vector3.ZERO
 	_player.rotation.y = 0.0
 	inside = true
+	_drop_spot("front")
 	if creature:
 		creature.checkpoint = INSIDE_PANTRY
 	await get_tree().create_timer(0.4, false).timeout

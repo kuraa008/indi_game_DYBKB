@@ -1134,3 +1134,36 @@ func _build_forest() -> void:
 		z += 4.5
 	for key in chunks:
 		NatureKit.add_spruce_chunk(self, chunks[key], key[2], posmod(key[0], 3), Color.WHITE, 40.0, 200.0)
+	_build_forest_depth()
+
+
+# Днём сквозь четыре ряда елей видно пустое поле до горизонта (финал). Рядом с заправкой лес
+# уходит вглубь ещё на несколько рядов и закрывает пустой угол за магазином. У этих елей свой rng:
+# первые ряды стоят на прежних местах, кадры вступления не меняются.
+# Участки 30 × 30 м, чтобы подробными оставались только ближние ели
+func _build_forest_depth() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 40712
+	var chunks := {}
+	var z := -130.0
+	while z < 130.0:
+		for side in [-1.0, 1.0]:
+			var base := 9.4
+			if side > 0.0 and absf(z) < 26.0:
+				base = 38.5
+			elif side > 0.0 and z > 0.0 and z < 76.0:
+				base = 17.0
+			elif side < 0.0 and absf(z) < 30.0:
+				base = 15.0
+			for row in range(4, 8):
+				var x: float = side * (base + row * 6.0 + rng.randf_range(-1.6, 1.6))
+				var tz := z + rng.randf_range(-2.0, 2.0)
+				var h := rng.randf_range(9.0, 16.0)
+				var big := h > 10.5
+				var key := [int(floor(tz / 30.0)), int(floor(x / 30.0)), big]
+				if not chunks.has(key):
+					chunks[key] = []
+				chunks[key].append([Vector3(x, 0.0, tz), Vector3(h * 0.5, h, h * 0.5), rng.randf() * TAU])
+		z += 4.5
+	for key in chunks:
+		NatureKit.add_spruce_chunk(self, chunks[key], key[2], posmod(key[0] + key[1], 3), Color.WHITE, 40.0, 200.0)

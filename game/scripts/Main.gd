@@ -1039,6 +1039,8 @@ func _spawn_player() -> void:
 	if _is_gas_station():
 		# Финал: заправка днём, «Марта…», кат-сцены Finale (Jan-ky)
 		add_child(load("res://scripts/cutscenes/FinaleStation.gd").new())
+		# Вид заправки днём (лесная земля вместо газона) и точки финала (Досым)
+		add_child(load("res://scripts/GasStationDay.gd").new())
 
 	if _is_street():
 		add_child(preload("res://scripts/CityStreetScene.gd").new())
